@@ -53,7 +53,8 @@ namespace Inventory_Management_System.Repositories.Implementations
             var NewBrand = new Brand
             {
                 Name = brand.Name,
-                Description = brand.Description
+                Description = brand.Description,
+                CreatedAt = DateTime.UtcNow     
             };
             await Context.Brand.AddAsync(NewBrand);
             await Context.SaveChangesAsync();
@@ -70,6 +71,7 @@ namespace Inventory_Management_System.Repositories.Implementations
 
             ExistingBrand.Name = brand.Name;
             ExistingBrand.Description = brand.Description;
+            ExistingBrand.UpdatedAt = DateTime.UtcNow;
 
             Context.Brand.Update(ExistingBrand);
             await Context.SaveChangesAsync();

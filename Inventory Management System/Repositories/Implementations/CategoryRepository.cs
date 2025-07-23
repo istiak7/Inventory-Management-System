@@ -51,7 +51,10 @@ namespace Inventory_Management_System.Repositories.Implementations
             var NewCategory = new Category
             {
                 Name = category.Name,
-                Description = category.Description
+                Description = category.Description,
+                CreatedAt = DateTime.UtcNow,
+                
+           
             };
             await Context.Category.AddAsync(NewCategory);
             await Context.SaveChangesAsync();
@@ -68,6 +71,7 @@ namespace Inventory_Management_System.Repositories.Implementations
 
             ExistingCategory.Name = category.Name;
             ExistingCategory.Description = category.Description;
+            ExistingCategory.UpdatedAt = DateTime.UtcNow;
 
             Context.Category.Update(ExistingCategory);
             await Context.SaveChangesAsync();

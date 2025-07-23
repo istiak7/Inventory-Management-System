@@ -57,7 +57,8 @@ namespace Inventory_Management_System.Repositories.Implementations
                 Name = customer.Name,
                 Phone = customer.Phone,
                 Email = customer.Email,
-                Address = customer.Address
+                Address = customer.Address,
+                CreatedAt = DateTime.UtcNow
             };
             await Context.Customers.AddAsync(NewCustomer);
             await Context.SaveChangesAsync();
@@ -76,6 +77,7 @@ namespace Inventory_Management_System.Repositories.Implementations
             ExistingUser.Phone = customer.Phone;
             ExistingUser.Email = customer.Email;
             ExistingUser.Address = customer.Address;
+            ExistingUser.UpdatedAt = DateTime.UtcNow;
 
             Context.Customers.Update(ExistingUser);
             await Context.SaveChangesAsync();

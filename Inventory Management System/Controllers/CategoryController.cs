@@ -9,7 +9,7 @@ namespace Inventory_Management_System.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryRepository CategoryRepository;
-        public CategoryController(IBrandRepository BrandRepository)
+        public CategoryController(ICategoryRepository CategoryRepository)
         {
             this.CategoryRepository = CategoryRepository;
         }
