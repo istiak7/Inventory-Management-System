@@ -1,17 +1,18 @@
-﻿namespace Inventory_Management_System.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Inventory_Management_System.Models
 {
-    public class Stock
+    public class Stock : BaseEntity
     {
-        public int Id { get; set; }
 
         public int ProductId { get; set; }
-        public Product Product { get; set; }
+        [ForeignKey(nameof(ProductId))]
+        public virtual Product Product { get; set; }
 
-        public int CategoryId { get; set; }
-        public Category Category { get; set; }
-
+ 
         public int WarehouseId { get; set; }
-        public Warehouse Warehouse { get; set; }
+        [ForeignKey(nameof(WarehouseId))]
+        public virtual Warehouse Warehouse { get; set; }
 
         public int CurrentStock { get; set; }
     }

@@ -11,7 +11,9 @@ namespace Inventory_Management_System.ApplicationDb
         public DbSet<Customer> Customers { get; set; } 
         public DbSet<Product> Products { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
+        public DbSet<PurchaseDetails> PurchaseDetails { get; set; }
         public DbSet<Sale> Sales { get; set; }
+        public DbSet<SaleDetails> SaleDetails { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<Stock> Stocks { get; set; }

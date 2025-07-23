@@ -1,11 +1,10 @@
 ﻿namespace Inventory_Management_System.Models
 {
-    public class Warehouse
+    public class Warehouse : BaseEntity
     {
-        public int Id { get; set; }
-        public string ? Name { get; set; }
+        public string Name { get; set; }
 
-        public string ? Location { get; set; }
-        public string ? PhoneNumber { get; set; }
+        public string Location { get; set; }
+        public string PhoneNumber { get; set; }
     }
 }
