@@ -62,10 +62,9 @@ namespace Inventory_Management_System.Repositories.Implementations
 
             foreach (var product in PendingProduct)
             {
-                Console.WriteLine(product.ProductId);
                 var stock = await Context.Stocks.FirstOrDefaultAsync(s => s.ProductId == product.ProductId &&
                   s.WarehouseId == product.Sale.WarehouseId);
-                if (stock != null && product.Quantity >= stock.CurrentStock)
+                if (stock != null && product.Quantity <= stock.CurrentStock)
                 {
                     stock.CurrentStock -= product.Quantity;
                 }

@@ -17,13 +17,17 @@ namespace Inventory_Management_System.Controllers
         public async Task<IActionResult> UpdateStockPurchase()
         {
             await repository.UpdateStockPurchase();
-            return Ok("Successfully Updated!");
+            return Ok("Successfully Purchase Updated!");
         }
         [HttpPatch("Update-Stock-Sale/")]
         public async Task<IActionResult> UpdateStockSale()
         {
-            await repository.UpdateStockSale();
-            return Ok("Successfully Updated!");
+            bool result = await repository.UpdateStockSale();
+            if (result == false)
+            {
+                return BadRequest("Not available in stock");
+            }
+            return Ok("Successfully Sale Updated!");
         }
     }
 }

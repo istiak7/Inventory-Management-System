@@ -7,12 +7,11 @@ namespace Inventory_Management_System.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
-    public class SaleController
-    {
-        public class PurchaseController : ControllerBase
+   
+        public class SaleController : ControllerBase
         {
             private readonly ISaleRepository repository;
-            public PurchaseController(ISaleRepository repository)
+            public SaleController(ISaleRepository repository)
             {
                 this.repository = repository;
             }
@@ -25,5 +24,3 @@ namespace Inventory_Management_System.Controllers
             }
         }
     }
-
-}
