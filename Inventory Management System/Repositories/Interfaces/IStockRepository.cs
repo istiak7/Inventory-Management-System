@@ -2,5 +2,7 @@
 {
     public interface IStockRepository
     {
+        Task<bool> UpdateStockPurchase();
+        Task<bool> UpdateStockSale();
     }
 }

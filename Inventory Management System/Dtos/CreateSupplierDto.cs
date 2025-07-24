@@ -1,6 +1,6 @@
 ﻿namespace Inventory_Management_System.Dtos
 {
-    public class CreateCustomerDto
+    public class CreateSupplierDto
     {
         public string Name { get; set; }
         public string Phone { get; set; }

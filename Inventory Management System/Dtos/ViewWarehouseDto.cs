@@ -1,10 +1,9 @@
 ﻿namespace Inventory_Management_System.Dtos
 {
-    public class CreateCustomerDto
+    public class ViewWarehouseDto
     {
         public string Name { get; set; }
+        public string Location { get; set; }
         public string Phone { get; set; }
-        public string Email { get; set; }
-        public string Address { get; set; }
     }
 }
