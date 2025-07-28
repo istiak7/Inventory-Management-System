@@ -1,4 +1,5 @@
-﻿using Inventory_Management_System.Repositories.Implementations;
+﻿using Inventory_Management_System.Dtos.StockInsertDto;
+using Inventory_Management_System.Repositories.Implementations;
 using Inventory_Management_System.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,21 +14,11 @@ namespace Inventory_Management_System.Controllers
         {
             this.repository = repository;
         }
-        [HttpPatch("Update-Stock-Purchase/")]
-        public async Task<IActionResult> UpdateStockPurchase()
+        [HttpPost("Add-from-Purchase/")]
+        public async Task<IActionResult> AddStockFromPurchase([FromForm] StockInsertDto stockDto)
         {
-            await repository.UpdateStockPurchase();
-            return Ok("Successfully Purchase Updated!");
-        }
-        [HttpPatch("Update-Stock-Sale/")]
-        public async Task<IActionResult> UpdateStockSale()
-        {
-            bool result = await repository.UpdateStockSale();
-            if (result == false)
-            {
-                return BadRequest("Not available in stock");
-            }
-            return Ok("Successfully Sale Updated!");
+            await repository.AddStockFromPurchase(stockDto);
+            return Ok("Successfully stocked from Purchase!");
         }
     }
 }

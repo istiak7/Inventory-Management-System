@@ -1,8 +1,9 @@
-﻿namespace Inventory_Management_System.Repositories.Interfaces
+﻿using Inventory_Management_System.Dtos.StockInsertDto;
+
+namespace Inventory_Management_System.Repositories.Interfaces
 {
     public interface IStockRepository
     {
-        Task<bool> UpdateStockPurchase();
-        Task<bool> UpdateStockSale();
+        Task<bool> AddStockFromPurchase(StockInsertDto stockDto);
     }
 }

@@ -4,16 +4,16 @@ namespace Inventory_Management_System.Models
 {
     public class Stock : BaseEntity
     {
-
-        public int ProductId { get; set; }
-        [ForeignKey(nameof(ProductId))]
-        public virtual Product Product { get; set; }
-
- 
         public int WarehouseId { get; set; }
         [ForeignKey(nameof(WarehouseId))]
         public virtual Warehouse Warehouse { get; set; }
 
-        public int CurrentStock { get; set; }
+        public int PurchaseDetailsId { get; set; }
+        [ForeignKey(nameof(PurchaseDetailsId))]
+        public virtual PurchaseDetails PurchaseDetails { get; set; }
+
+        public int Quantity { get; set; }
+
+        public string Status = "Pending";
     }
 }

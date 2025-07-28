@@ -3,6 +3,7 @@ using System;
 using Inventory_Management_System.ApplicationDb;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory_Management_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728173749_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -214,39 +217,6 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("PurchaseDetails");
                 });
 
-            modelBuilder.Entity("Inventory_Management_System.Models.RecivedProductReport", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Damage")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Missing")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Normal")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("StockId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StockId");
-
-                    b.ToTable("ProductReport");
-                });
-
             modelBuilder.Entity("Inventory_Management_System.Models.Sale", b =>
                 {
                     b.Property<int>("Id")
@@ -326,7 +296,10 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("PurchaseDetailsId")
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Quantity")
@@ -340,7 +313,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PurchaseDetailsId");
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("PurchaseId");
 
                     b.HasIndex("WarehouseId");
 
@@ -461,17 +436,6 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Purchase");
                 });
 
-            modelBuilder.Entity("Inventory_Management_System.Models.RecivedProductReport", b =>
-                {
-                    b.HasOne("Inventory_Management_System.Models.Stock", "Stock")
-                        .WithMany()
-                        .HasForeignKey("StockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Stock");
-                });
-
             modelBuilder.Entity("Inventory_Management_System.Models.Sale", b =>
                 {
                     b.HasOne("Inventory_Management_System.Models.Customer", "Customer")
@@ -512,9 +476,15 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Models.Stock", b =>
                 {
+                    b.HasOne("Inventory_Management_System.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Inventory_Management_System.Models.PurchaseDetails", "PurchaseDetails")
                         .WithMany()
-                        .HasForeignKey("PurchaseDetailsId")
+                        .HasForeignKey("PurchaseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -523,6 +493,8 @@ namespace Inventory_Management_System.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Product");
 
                     b.Navigation("PurchaseDetails");
 

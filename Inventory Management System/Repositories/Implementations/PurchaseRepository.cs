@@ -18,7 +18,6 @@ namespace Inventory_Management_System.Repositories.Implementations
             var purchase = new Purchase
             {
                 SupplierId = request.SupplierID,
-                WarehouseId = request.WarehouseID,
                 CreatedAt = DateTime.UtcNow
             };
             Context.Purchases.Add(purchase);

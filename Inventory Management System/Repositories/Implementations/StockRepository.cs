@@ -1,4 +1,5 @@
 ﻿using Inventory_Management_System.ApplicationDb;
+using Inventory_Management_System.Dtos.StockInsertDto;
 using Inventory_Management_System.Models;
 using Inventory_Management_System.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -13,68 +14,27 @@ namespace Inventory_Management_System.Repositories.Implementations
             this.Context = Context;
         }
 
-        public async Task<bool> UpdateStockPurchase()
+        public async Task<bool> AddStockFromPurchase(StockInsertDto stockDto)
         {
+            var purchaseDetails = await Context.PurchaseDetails
+           .FirstOrDefaultAsync(p => p.Id == stockDto.PurchaseDetailsId && p.Status == "Pending");
 
-            var PendingProduct = await Context.PurchaseDetails.Include(p => p.Purchase).Where(purchase => purchase.Status == "Pending").ToListAsync();
-            foreach(var product in PendingProduct)
+            if (purchaseDetails == null)
             {
-                product.Status = "Shifted";
+                return false;
             }
-            await Context.SaveChangesAsync();
-
-            foreach(var product in PendingProduct)
+            var stock = new Stock
             {
-                Console.WriteLine(product.ProductId);
-                var stock = await Context.Stocks.FirstOrDefaultAsync(s => s.ProductId == product.ProductId &&
-                  s.WarehouseId == product.Purchase.WarehouseId);
-                if(stock != null)
-                {
-                    stock.CurrentStock += product.Quantity;
-                }
-                else
-                {
-                    var newstock = new Stock
-                    {
-                        ProductId = product.ProductId,
-                        WarehouseId = product.Purchase.WarehouseId,
-                        CurrentStock = product.Quantity,
-                        CreatedAt = DateTime.UtcNow
-                       
-                    };
-                    Context.Stocks.Add(newstock);
-                }
-            }
+                WarehouseId = stockDto.WarehouseId,
+                PurchaseDetailsId = stockDto.PurchaseDetailsId,
+                Quantity = purchaseDetails.Quantity,
+                Status = "Stored"
+            };
+            Context.Stocks.Add(stock);
+            purchaseDetails.Status = "Shifed";
             await Context.SaveChangesAsync();
             return true;
-        }
-
-
-        public async Task<bool> UpdateStockSale()
-        {
-
-            var PendingProduct = await Context.SaleDetails.Include(p => p.Sale).Where(purchase => purchase.Status == "Pending").ToListAsync();
-            foreach (var product in PendingProduct)
-            {
-                product.Status = "Shifted";
-            }
-            await Context.SaveChangesAsync();
-
-            foreach (var product in PendingProduct)
-            {
-                var stock = await Context.Stocks.FirstOrDefaultAsync(s => s.ProductId == product.ProductId &&
-                  s.WarehouseId == product.Sale.WarehouseId);
-                if (stock != null && product.Quantity <= stock.CurrentStock)
-                {
-                    stock.CurrentStock -= product.Quantity;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            await Context.SaveChangesAsync();
-            return true;
+            
         }
     }
 }

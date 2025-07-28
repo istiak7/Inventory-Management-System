@@ -9,10 +9,5 @@ namespace Inventory_Management_System.Models
         [ForeignKey(nameof(SupplierId))]
         public virtual Supplier Supplier { get; set; }
 
-        public int WarehouseId { get; set; }
-        [ForeignKey(nameof(WarehouseId))]
-        public virtual Warehouse Warehouse { get; set; }
-
-
     }
 }
