@@ -245,9 +245,8 @@ namespace Inventory_Management_System.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProductId = table.Column<int>(type: "integer", nullable: false),
                     WarehouseId = table.Column<int>(type: "integer", nullable: false),
-                    PurchaseId = table.Column<int>(type: "integer", nullable: false),
+                    PurchaseDetailsId = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -256,14 +255,8 @@ namespace Inventory_Management_System.Migrations
                 {
                     table.PrimaryKey("PK_Stocks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Stocks_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Stocks_PurchaseDetails_PurchaseId",
-                        column: x => x.PurchaseId,
+                        name: "FK_Stocks_PurchaseDetails_PurchaseDetailsId",
+                        column: x => x.PurchaseDetailsId,
                         principalTable: "PurchaseDetails",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -274,6 +267,35 @@ namespace Inventory_Management_System.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "ProductReport",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StockId = table.Column<int>(type: "integer", nullable: false),
+                    Normal = table.Column<int>(type: "integer", nullable: false),
+                    Damage = table.Column<int>(type: "integer", nullable: false),
+                    Missing = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductReport", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductReport_Stocks_StockId",
+                        column: x => x.StockId,
+                        principalTable: "Stocks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductReport_StockId",
+                table: "ProductReport",
+                column: "StockId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_BrandId",
@@ -321,14 +343,9 @@ namespace Inventory_Management_System.Migrations
                 column: "WarehouseId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Stocks_ProductId",
+                name: "IX_Stocks_PurchaseDetailsId",
                 table: "Stocks",
-                column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Stocks_PurchaseId",
-                table: "Stocks",
-                column: "PurchaseId");
+                column: "PurchaseDetailsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stocks_WarehouseId",
@@ -339,6 +356,9 @@ namespace Inventory_Management_System.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ProductReport");
+
             migrationBuilder.DropTable(
                 name: "SaleDetails");
 

@@ -1,7 +1,7 @@
 ﻿using Inventory_Management_System.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Inventory_Management_System.Dtos
+namespace Inventory_Management_System.Dtos.Products
 {
     public class CreateProductDto
     {

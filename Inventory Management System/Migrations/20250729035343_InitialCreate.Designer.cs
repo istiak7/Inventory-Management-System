@@ -3,6 +3,7 @@ using System;
 using Inventory_Management_System.ApplicationDb;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory_Management_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250729035343_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,9 +267,14 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("WarehouseId");
 
                     b.ToTable("Sales");
                 });
@@ -310,35 +318,6 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("SaleDetails");
                 });
 
-            modelBuilder.Entity("Inventory_Management_System.Models.SaleManager", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("SaleDetailsId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("WarehouseId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SaleDetailsId");
-
-                    b.HasIndex("WarehouseId");
-
-                    b.ToTable("SalesManager");
-                });
-
             modelBuilder.Entity("Inventory_Management_System.Models.Stock", b =>
                 {
                     b.Property<int>("Id")
@@ -355,10 +334,6 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -508,7 +483,15 @@ namespace Inventory_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Inventory_Management_System.Models.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Customer");
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Models.SaleDetails", b =>
@@ -528,25 +511,6 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Sale");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Models.SaleManager", b =>
-                {
-                    b.HasOne("Inventory_Management_System.Models.SaleDetails", "SaleDetails")
-                        .WithMany()
-                        .HasForeignKey("SaleDetailsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Inventory_Management_System.Models.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SaleDetails");
-
-                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Models.Stock", b =>

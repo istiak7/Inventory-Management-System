@@ -8,8 +8,5 @@ namespace Inventory_Management_System.Models
         [ForeignKey(nameof(CustomerId))]
         public virtual Customer Customer { get; set; }
 
-        public int WarehouseId { get; set; }
-        [ForeignKey(nameof(WarehouseId))]
-        public virtual Warehouse Warehouse { get; set; }
     }
 }

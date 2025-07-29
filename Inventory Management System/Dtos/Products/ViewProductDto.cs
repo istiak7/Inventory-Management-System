@@ -1,4 +1,4 @@
-﻿namespace Inventory_Management_System.Dtos
+﻿namespace Inventory_Management_System.Dtos.Products
 {
     public class ViewProductDto
     {

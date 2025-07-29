@@ -1,4 +1,4 @@
-﻿using Inventory_Management_System.Dtos;
+﻿using Inventory_Management_System.Dtos.Products;
 using Inventory_Management_System.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

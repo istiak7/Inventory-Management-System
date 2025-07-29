@@ -14,6 +14,6 @@ namespace Inventory_Management_System.Models
 
         public int Quantity { get; set; }
 
-        public string Status = "Pending";
+        public string Status { get; set; } = "Pending";
     }
 }

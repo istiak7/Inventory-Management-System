@@ -28,7 +28,9 @@ namespace Inventory_Management_System.Repositories.Implementations
                 WarehouseId = stockDto.WarehouseId,
                 PurchaseDetailsId = stockDto.PurchaseDetailsId,
                 Quantity = purchaseDetails.Quantity,
-                Status = "Stored"
+                Status = purchaseDetails.Status,
+                CreatedAt = DateTime.UtcNow
+                
             };
             Context.Stocks.Add(stock);
             purchaseDetails.Status = "Shifed";

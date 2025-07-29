@@ -32,6 +32,7 @@ namespace Inventory_Management_System.Repositories.Implementations
                 CreatedAt = DateTime.UtcNow
                 
             };
+            stock.Status = "Stored";
             Context.ProductReport.Add(received);
             await Context.SaveChangesAsync();
             return true;

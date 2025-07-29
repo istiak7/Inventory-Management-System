@@ -1,4 +1,4 @@
-﻿using Inventory_Management_System.Dtos;
+﻿using Inventory_Management_System.Dtos.Products;
 
 namespace Inventory_Management_System.Repositories.Interfaces
 {

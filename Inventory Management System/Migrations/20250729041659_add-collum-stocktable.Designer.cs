@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory_Management_System.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250728174235_InitialCreate2")]
-    partial class InitialCreate2
+    [Migration("20250729041659_add-collum-stocktable")]
+    partial class addcollumstocktable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -329,11 +329,15 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("PurchaseId")
+                    b.Property<int>("PurchaseDetailsId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -343,7 +347,7 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PurchaseId");
+                    b.HasIndex("PurchaseDetailsId");
 
                     b.HasIndex("WarehouseId");
 
@@ -517,7 +521,7 @@ namespace Inventory_Management_System.Migrations
                 {
                     b.HasOne("Inventory_Management_System.Models.PurchaseDetails", "PurchaseDetails")
                         .WithMany()
-                        .HasForeignKey("PurchaseId")
+                        .HasForeignKey("PurchaseDetailsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
