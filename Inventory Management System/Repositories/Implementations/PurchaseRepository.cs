@@ -20,8 +20,9 @@ namespace Inventory_Management_System.Repositories.Implementations
                 SupplierId = request.SupplierID,
                 CreatedAt = DateTime.UtcNow
             };
-            Context.Purchases.Add(purchase);
-            await Context.SaveChangesAsync();
+
+                Context.Purchases.Add(purchase);
+                await Context.SaveChangesAsync();     
 
             var purchaseDetails = request.Products.Select(product => new PurchaseDetails
             {

@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Repositories.Implementations
 {
+    public class NotFoundStockException : Exception
+    {
+        public NotFoundStockException(string message) : base(message) { }
+    }
     public class SalesManagerRepository : ISalesManager
     {
         private readonly ApplicationDbContext Context;
@@ -17,7 +21,9 @@ namespace Inventory_Management_System.Repositories.Implementations
 
         public async Task<bool> CanApproveSale(SaleManagerDto salemanagerDto)
         {
-            var TotalNormalPerWarehouse= await Context.ProductReport.Where(report => report.Stock.PurchaseDetails.ProductId == salemanagerDto.ProductId &&
+
+            //Total Normal Product Based on Warehouse, Product.
+            var TotalNormalProductPerWarehouse = await Context.ProductReport.Where(report => report.Stock.PurchaseDetails.ProductId == salemanagerDto.ProductId &&
             report.Stock.WarehouseId == salemanagerDto.WarehouseId).
             GroupBy(report => report.Stock.PurchaseDetails.Product.Name).
             Select(g => new ViewProductReportDto
@@ -26,27 +32,45 @@ namespace Inventory_Management_System.Repositories.Implementations
                 CountNormalProduct = g.Sum(r => r.Normal)
             }).FirstOrDefaultAsync();
 
-          
-
-            var totalSoldPerWarehouse = await Context.SalesManager
+            if(TotalNormalProductPerWarehouse == null)
+            {
+                throw new NotFoundStockException("No Available in Stock");
+            }
+            //Total Saled Product Based on Warehouse, Product
+            int totalSoldProductPerWarehouse = await Context.SalesManager
              .Where(m =>
                  m.WarehouseId == salemanagerDto.WarehouseId &&
                  m.SaleDetails.ProductId == salemanagerDto.ProductId &&
                  m.SaleDetails.Status == "Approved")
              .SumAsync(m => m.SaleDetails.Quantity);
+            
 
+            //Curent Quantity Which means Current Order Quantity
             var CurrentQuantity = await Context.SaleDetails.Where(CQ => CQ.Id == salemanagerDto.SaleDetailsId).
                 Select(s => s.Quantity).FirstOrDefaultAsync();
 
-            var AvailableProduct = TotalNormalPerWarehouse.CountNormalProduct - totalSoldPerWarehouse;
+            //Total Available Stock Based on this Warehouse, Product
+
+            var AvailableProduct = TotalNormalProductPerWarehouse.CountNormalProduct - totalSoldProductPerWarehouse;
+
+            
+            //Logic if Product is Available in Stock, Move to approve 
             if(AvailableProduct >= CurrentQuantity)
             {
-              var saleDetail = await Context.SaleDetails
+              var saleDetails = await Context.SaleDetails
              .FirstOrDefaultAsync(s => s.Id == salemanagerDto.SaleDetailsId);
 
-                if (saleDetail != null)
+                if (saleDetails != null)
                 {
-                    saleDetail.Status = "Approved";
+                    saleDetails.Status = "Approved";
+                    await Context.SaveChangesAsync();
+                    var Manager = new SaleManager
+                    {
+                        WarehouseId = salemanagerDto.WarehouseId,
+                        SaleDetailsId = salemanagerDto.SaleDetailsId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    Context.SalesManager.Add(Manager);
                     await Context.SaveChangesAsync();
                     return true;
                 }

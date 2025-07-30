@@ -5,10 +5,10 @@ namespace Inventory_Management_System.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
-    public class InventoryController : ControllerBase
+    public class InventoryReportController : ControllerBase
     {
         private readonly IInventoryReport Repository;
-        public InventoryController(IInventoryReport repository)
+        public InventoryReportController(IInventoryReport repository)
         {
             this.Repository = repository;
         }

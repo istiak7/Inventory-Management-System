@@ -8,19 +8,19 @@ namespace Inventory_Management_System.Controllers
     [ApiController]
     [Route("api/[Controller]")]
 
-    public class SaleController : ControllerBase
+    public class SaleProductController : ControllerBase
     {
         private readonly ISaleRepository repository;
-        public SaleController(ISaleRepository repository)
+        public SaleProductController(ISaleRepository repository)
         {
             this.repository = repository;
         }
 
-        [HttpPost("Sale/")]
+        [HttpPost("Sale-Product/")]
         public async Task<IActionResult> CreateSale([FromBody] CreateSaleRequestDto request)
         {
             await repository.SellProduct(request);
-            return Ok("Purchase Sucessfully!");
+            return Ok("Sale Sucessfully!");
         }
     }
 }

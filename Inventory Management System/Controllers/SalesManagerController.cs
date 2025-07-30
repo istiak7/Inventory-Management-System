@@ -1,7 +1,9 @@
 ﻿using Inventory_Management_System.Dtos.Products;
 using Inventory_Management_System.Dtos.SaleDto;
+using Inventory_Management_System.Repositories.Implementations;
 using Inventory_Management_System.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Controllers
 {
@@ -18,12 +20,25 @@ namespace Inventory_Management_System.Controllers
         [HttpPost("Sales-Manager/")]
         public async Task<IActionResult> CountNormalProductByWarehouse(SaleManagerDto salemanagerDto)
         {
-            bool result = await repository.CanApproveSale(salemanagerDto);
-            if(result == false)
+          
+            try
             {
-                return Ok("You Cannot Sale this Product From this Warehouse");
+                await repository.CanApproveSale(salemanagerDto);
+                return Ok("Successfully Saled this Product");
             }
-            return Ok("Successfully Saled this product");
+            catch (NotFoundStockException message)
+            {
+               
+                return NotFound( message.Message);
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest("Failed to Sale Product");
+            }
+            catch
+            {
+                return StatusCode(500, "UnExpected Error");
+            }
         }
     }
 }
