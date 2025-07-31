@@ -2,12 +2,14 @@
 using Inventory_Management_System.Dtos.StockInsertDto;
 using Inventory_Management_System.Repositories.Implementations;
 using Inventory_Management_System.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Inventory_Management_System.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize]
     public class StockManagerController : ControllerBase
     {
         private readonly IStockRepository repository;

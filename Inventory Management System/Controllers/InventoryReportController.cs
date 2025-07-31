@@ -1,10 +1,12 @@
 ﻿using Inventory_Management_System.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Inventory_Management_System.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
+    [Authorize]
     public class InventoryReportController : ControllerBase
     {
         private readonly IInventoryReport Repository;

@@ -1,15 +1,17 @@
 ﻿using Inventory_Management_System.Dtos;
 using Inventory_Management_System.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Inventory_Management_System.Controllers
 {
     [ApiController]
     [Route("api/[Controller]")]
-    public class WarehouseController : ControllerBase
+    [Authorize]
+    public class WarehousesController : ControllerBase
     {
         private readonly IWarehouseRepository WarehouseRepository;
-        public WarehouseController(IWarehouseRepository WarehouseRepository)
+        public WarehousesController(IWarehouseRepository WarehouseRepository)
         {
             this.WarehouseRepository = WarehouseRepository;
         }

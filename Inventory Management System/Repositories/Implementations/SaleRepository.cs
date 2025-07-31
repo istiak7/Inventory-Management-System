@@ -3,6 +3,7 @@ using Inventory_Management_System.Dtos.Purchase;
 using Inventory_Management_System.Dtos.Sale;
 using Inventory_Management_System.Models;
 using Inventory_Management_System.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Repositories.Implementations
 {
@@ -20,9 +21,19 @@ namespace Inventory_Management_System.Repositories.Implementations
                 CustomerId = request.CustomerID,
                 CreatedAt = DateTime.UtcNow
             };
-            Context.Sales.Add(sale);
-            await Context.SaveChangesAsync();
-
+            try
+            {
+                Context.Sales.Add(sale);
+                await Context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                throw new DbUpdateException("Invalid Customer Id");
+            }
+            catch (Exception)
+            {
+                throw new Exception("An Error Occurs");
+            }
             var SaleDetails = request.Products.Select(product => new SaleDetails
             {
                 SaleId = sale.Id,
@@ -32,9 +43,21 @@ namespace Inventory_Management_System.Repositories.Implementations
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow
             }).ToList();
-            Context.SaleDetails.AddRange(SaleDetails);
-            await Context.SaveChangesAsync();
-            return true;
+            try
+            {
+                Context.SaleDetails.AddRange(SaleDetails);
+                await Context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateException)
+            {
+                throw new DbUpdateException("Invalid Product Id or Data updation error");
+            }
+            catch (Exception)
+            {
+                throw new Exception("An Error Occurs");
+            }
+
         }
     }
 }

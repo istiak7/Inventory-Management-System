@@ -36,7 +36,7 @@ namespace Inventory_Management_System.Repositories.Implementations
             {
                 throw new NotFoundStockException("No Available in Stock");
             }
-            //Total Saled Product Based on Warehouse, Product
+            //Total Sold Product Based on Warehouse, Product
             int totalSoldProductPerWarehouse = await Context.SalesManager
              .Where(m =>
                  m.WarehouseId == salemanagerDto.WarehouseId &&

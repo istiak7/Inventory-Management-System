@@ -3,6 +3,7 @@ using Inventory_Management_System.Dtos.Products;
 using Inventory_Management_System.Models;
 using Inventory_Management_System.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace Inventory_Management_System.Repositories.Implementations
 {
@@ -50,11 +51,15 @@ namespace Inventory_Management_System.Repositories.Implementations
 
         public async Task<bool> AddProduct(CreateProductDto product)
         {
+            Debug.WriteLine("Debug pointer 1");
+
             var ExistingProduct = await Context.Products.FirstOrDefaultAsync(name => name.Name == product.Name);
             if (ExistingProduct != null)
             {
                 return false;
             }
+            Debug.WriteLine("Debug pointer 2");
+
             var NewProduct = new Product
             {
                 Name = product.Name,
@@ -64,9 +69,19 @@ namespace Inventory_Management_System.Repositories.Implementations
                 CategoryId = product.CategoryId,
                 CreatedAt = DateTime.UtcNow
             };
-            await Context.Products.AddAsync(NewProduct);
-            await Context.SaveChangesAsync();
-            return true;
+            try
+            {
+                await Context.Products.AddAsync(NewProduct);
+                await Context.SaveChangesAsync();
+                Debug.WriteLine("From try block");
+                return true;
+            }
+            catch (Exception)
+            {
+                Debug.WriteLine("Product doesn't added");
+                throw new InvalidOperationException("Failed to Add Product");
+            }
+            
         }
 
         public async Task<ViewProductDto> UpdateProduct(int id, CreateProductDto product)
@@ -84,17 +99,29 @@ namespace Inventory_Management_System.Repositories.Implementations
             ExistingProduct.CategoryId = product.CategoryId;
             ExistingProduct.UpdatedAt = DateTime.UtcNow;
 
-            Context.Products.Update(ExistingProduct);
-            await Context.SaveChangesAsync();
-
-            return new ViewProductDto
+            try
             {
-                Name = ExistingProduct.Name,
-                Description = ExistingProduct.Description,
-                Price = ExistingProduct.Price,
-                BrandId = ExistingProduct.BrandId,
-                CategoryId = ExistingProduct.CategoryId
-            };
+                Context.Products.Update(ExistingProduct);
+                await Context.SaveChangesAsync();
+                return new ViewProductDto
+                {
+                    Name = ExistingProduct.Name,
+                    Description = ExistingProduct.Description,
+                    Price = ExistingProduct.Price,
+                    BrandId = ExistingProduct.BrandId,
+                    CategoryId = ExistingProduct.CategoryId
+                };
+            }
+            
+            catch(DbUpdateException)
+            {
+                throw new DbUpdateException("Failed to Update data");
+            }
+            catch (Exception)
+            {
+                throw new Exception("An Error Occurs");
+            }
+          
         }
 
         public async Task<bool> DeleteProduct(int id)

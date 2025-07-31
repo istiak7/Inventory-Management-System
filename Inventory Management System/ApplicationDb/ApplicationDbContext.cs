@@ -19,6 +19,8 @@ namespace Inventory_Management_System.ApplicationDb
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<RecivedProductReport> ProductReport { get; set; }
         public DbSet<SaleManager> SalesManager { get; set; }
+        public DbSet<User> Users { get; set; }
+
 
     }
 }
