@@ -1,14 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Inventory_Management_System.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Database
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -18,9 +14,11 @@ namespace Inventory_Management_System.Database
 
         #region DbSets
 
-        public DbSet<Activity> Activities { get; set; }
-     //   public DbSet<Department> Departments { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<ProductCategories> ProductCategories { get; set; }
+        public DbSet<ProductSubCategories> ProductSubCategories { get; set; }
+        public DbSet<Product> Products { get; set; }
+
 
         #endregion
 

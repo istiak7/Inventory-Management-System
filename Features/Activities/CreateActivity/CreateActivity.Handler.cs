@@ -1,7 +1,7 @@
-using MediatR;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
+using MediatR;
 
 namespace Inventory_Management_System.Features.Activities.CreateActivity
 {
@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Activities.CreateActivity
                     Name = request.Title,
                     Description = request.Description
                 };
-                _appDbContext.Activities.Add(activity);
+                //   _appDbContext.Activities.Add(activity);
                 await _appDbContext.SaveChangesAsync(cancellationToken);
 
                 return new Result

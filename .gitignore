@@ -5,7 +5,7 @@
 
 # dotenv files
 .env
-
+.claude
 # User-specific files
 *.rsuser
 *.suo
@@ -481,3 +481,4 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 .vs/
+.claude
