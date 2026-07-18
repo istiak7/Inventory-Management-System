@@ -1,15 +1,12 @@
 using FluentValidation;
+using Inventory_Management_System.Database;
+using Inventory_Management_System.Middleware;
+using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.CorsExtension;
+using Inventory_Management_System.Shared.Extensions.DependencyExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using Inventory_Management_System.Database;
-using Inventory_Management_System.Entities;
-using Inventory_Management_System.Features.Users.Login;
-using Inventory_Management_System.Features.Users.Shared.Services;
-using Inventory_Management_System.Middleware;
-using Inventory_Management_System.Shared;
-using Inventory_Management_System.Shared.Extensions.DependencyExtensions;
-using Inventory_Management_System.Shared.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,7 +44,7 @@ Console.WriteLine($"[DEBUG] SecretKey Loaded: '{jwtSettings.SecretKey}'");
 builder.AddJWTAuthentication();
 builder.Services.AddServices();
 builder.Services.AddRepositories();
-
+builder.Services.AddCorsExtension(builder.Configuration);
 
 var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -64,6 +61,9 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "API");
     });
 }
+
+
+app.UseCors("CorsPolicy");
 
 // Map endpoints dynamically
 var endpoints = Assembly.GetExecutingAssembly().GetTypes()
