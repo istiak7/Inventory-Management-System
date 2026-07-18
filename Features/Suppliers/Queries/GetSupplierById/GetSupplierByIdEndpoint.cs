@@ -7,7 +7,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("/suppliers/{id:int}", async (int id, IMediator mediator) =>
+            app.MapGet("/get-suppliers/{id:int}", async (int id, IMediator mediator) =>
             {
                 var result = await mediator.Send(new GetSupplierByIdQuery(id));
                 return Results.Ok(result);
