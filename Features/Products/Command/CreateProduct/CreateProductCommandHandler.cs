@@ -1,4 +1,5 @@
 using Inventory_Management_System.Entities;
+using Inventory_Management_System.Features.Brands.Shared.Repository;
 using Inventory_Management_System.Features.Categories.Shared.Repository;
 using Inventory_Management_System.Features.Products.Shared.Repository;
 using Inventory_Management_System.Shared;
@@ -9,6 +10,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
     public class CreateProductCommandHandler(
         IProductRepository _productRepository,
         IProductSubCategoryRepository _subCategoryRepository,
+        IBrandRepository _brandRepository,
         ILogger<CreateProductCommandHandler> _logger
     ) : IRequestHandler<CreateProductCommand, Result>
     {
@@ -23,6 +25,18 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                     StatusCode = 404,
                     Status = "Not Found",
                     Message = $"Sub-category with id {request.ProductSubCategoryId} was not found."
+                };
+            }
+
+            var brand = await _brandRepository.GetByIdAsync(request.BrandId, cancellationToken);
+            if (brand is null)
+            {
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Not Found",
+                    Message = $"Brand with id {request.BrandId} was not found."
                 };
             }
 
@@ -49,6 +63,8 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                     ProductPrice = request.ProductPrice,
                     ProductSubCategoryId = request.ProductSubCategoryId,
                     ProductSubCategories = subCategory,
+                    BrandId = request.BrandId,
+                    Brand = brand,
                     CreatedAt = DateTime.UtcNow
                 };
 

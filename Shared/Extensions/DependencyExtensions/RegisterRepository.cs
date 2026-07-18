@@ -1,3 +1,4 @@
+using Inventory_Management_System.Features.Brands.Shared.Repository;
 using Inventory_Management_System.Features.Categories.Shared.Repository;
 using Inventory_Management_System.Features.Products.Shared.Repository;
 using Inventory_Management_System.Features.Suppliers.Shared.Repository;
@@ -13,6 +14,9 @@ namespace Inventory_Management_System.Shared.Extensions.DependencyExtensions
 
             // Supplier
             services.AddScoped<ISupplierRepository, SupplierRepository>();
+
+            // Brand
+            services.AddScoped<IBrandRepository, BrandRepository>();
 
             // Category & SubCategory
             services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();

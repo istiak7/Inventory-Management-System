@@ -7,7 +7,7 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("/sub-categories", async (CreateSubCategoryCommand command, IMediator mediator) =>
+            app.MapPost("/create-sub-categories", async (CreateSubCategoryCommand command, IMediator mediator) =>
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);

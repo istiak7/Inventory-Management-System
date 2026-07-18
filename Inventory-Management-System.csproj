@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\Services\" />
+    <Folder Include="Features\Categories\Queries\GetSubCategoryByCategoryId\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Migrations\" />
     <Folder Include="Shared\Services\" />

@@ -28,6 +28,53 @@ namespace Inventory_Management_System.Features.Products.Shared.Repository
                     p.ProductCode,
                     p.ProductPrice,
                     p.ProductSubCategoryId,
+                    p.BrandId,
+                    p.CreatedAt))
+                .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
+        }
+
+        public async Task<PagedResult<ProductResponse>> GetBySubCategoryIdPagedAsync(
+            int subCategoryId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => p.ProductSubCategoryId == subCategoryId)
+                .OrderBy(p => p.Id)
+                .Select(p => new ProductResponse(
+                    p.Id,
+                    p.ProductName,
+                    p.ProductDescription,
+                    p.ProductImageUrl,
+                    p.ProductCode,
+                    p.ProductPrice,
+                    p.ProductSubCategoryId,
+                    p.BrandId,
+                    p.CreatedAt))
+                .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
+        }
+
+        public async Task<PagedResult<ProductResponse>> GetByBrandIdPagedAsync(
+            int brandId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Products
+                .AsNoTracking()
+                .Where(p => p.BrandId == brandId)
+                .OrderBy(p => p.Id)
+                .Select(p => new ProductResponse(
+                    p.Id,
+                    p.ProductName,
+                    p.ProductDescription,
+                    p.ProductImageUrl,
+                    p.ProductCode,
+                    p.ProductPrice,
+                    p.ProductSubCategoryId,
+                    p.BrandId,
                     p.CreatedAt))
                 .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
         }

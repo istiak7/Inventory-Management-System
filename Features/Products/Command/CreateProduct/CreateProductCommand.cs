@@ -11,5 +11,6 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
         public string ProductCode { get; set; }
         public decimal ProductPrice { get; set; }
         public int ProductSubCategoryId { get; set; }
+        public int BrandId { get; set; }
     }
 }
