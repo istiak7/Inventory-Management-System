@@ -1,3 +1,4 @@
+using Inventory_Management_System.Features.Brands.Shared.Repository;
 using Inventory_Management_System.Features.Categories.Shared.Repository;
 using Inventory_Management_System.Features.Products.Shared.Repository;
 using Inventory_Management_System.Shared;
@@ -8,13 +9,13 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
     public class UpdateProductCommandHandler(
         IProductRepository _productRepository,
         IProductSubCategoryRepository _subCategoryRepository,
+        IBrandRepository _brandRepository,
         ILogger<UpdateProductCommandHandler> _logger
     ) : IRequestHandler<UpdateProductCommand, Result>
     {
         public async Task<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
         {
             var product = await _productRepository.GetByIdAsync(request.Id, cancellationToken);
-
             if (product is null)
             {
                 return new Result
@@ -27,7 +28,6 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
             }
 
             var subCategory = await _subCategoryRepository.GetByIdAsync(request.ProductSubCategoryId, cancellationToken);
-
             if (subCategory is null)
             {
                 return new Result
@@ -39,6 +39,18 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                 };
             }
 
+            var brand = await _brandRepository.GetByIdAsync(request.BrandId, cancellationToken);
+            if (brand is null)
+            {
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Not Found",
+                    Message = $"Brand with id {request.BrandId} was not found."
+                };
+            }
+
             try
             {
                 product.ProductName = request.ProductName;
@@ -47,6 +59,7 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                 product.ProductCode = request.ProductCode;
                 product.ProductPrice = request.ProductPrice;
                 product.ProductSubCategoryId = request.ProductSubCategoryId;
+                product.BrandId = request.BrandId;
                 product.UpDatedAt = DateTime.UtcNow;
 
                 await _productRepository.UpdateAsync(product, cancellationToken);

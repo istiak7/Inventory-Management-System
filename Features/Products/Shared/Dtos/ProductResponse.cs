@@ -8,5 +8,6 @@ namespace Inventory_Management_System.Features.Products.Shared.Dtos
         string ProductCode,
         decimal ProductPrice,
         int ProductSubCategoryId,
+        int BrandId,
         DateTime CreatedAt);
 }

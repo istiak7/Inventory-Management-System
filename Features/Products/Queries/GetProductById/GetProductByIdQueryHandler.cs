@@ -35,6 +35,7 @@ namespace Inventory_Management_System.Features.Products.Queries.GetProductById
                     product.ProductCode,
                     product.ProductPrice,
                     product.ProductSubCategoryId,
+                    product.BrandId,
                     product.CreatedAt);
 
                 return new Result
