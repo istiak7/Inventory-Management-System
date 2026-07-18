@@ -1,17 +1,17 @@
 using Inventory_Management_System.Shared;
 using MediatR;
 
-namespace Inventory_Management_System.Features.Users.Command.CreateUsers
+namespace Inventory_Management_System.Features.Products.Command.CreateProduct
 {
-    public class CreateUserEndpoint : IEndpoint
+    public class CreateProductEndpoint : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("/Registration", async (CreateUserCommand command, IMediator mediator) =>
+            app.MapPost("/create-products", async (CreateProductCommand command, IMediator mediator) =>
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Authentication");
+            }).WithTags("Product");
         }
     }
 }

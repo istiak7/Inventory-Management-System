@@ -1,5 +1,5 @@
-using MediatR;
 using Inventory_Management_System.Shared;
+using MediatR;
 
 namespace Inventory_Management_System.Features.Users.Login
 {
@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Users.Login
             {
                 var response = await mediator.Send(request);
                 return Results.Ok(response);
-            });
+            }).WithTags("Authentication");
         }
     }
 }
