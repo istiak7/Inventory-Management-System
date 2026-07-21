@@ -12,6 +12,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.UpdateSupplier
         public string PhoneNumber { get; set; }
         public string Email { get; set; }
         public string NID { get; set; }
-        public int OpeningBalance { get; set; }
+        public decimal OpeningBalance { get; set; }
     }
 }

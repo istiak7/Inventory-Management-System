@@ -40,7 +40,9 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(p => p.ProductName).IsRequired().HasMaxLength(100);
             builder.Property(p => p.ProductDescription).HasMaxLength(500);
             builder.Property(p => p.ProductImageUrl).HasMaxLength(200);
-            builder.Property(p => p.ProductCode).IsRequired().HasMaxLength(50);
+            builder.Property(p => p.SKU).IsRequired().HasMaxLength(50);
+            builder.HasIndex(p => p.SKU).IsUnique(); // SKU is the product business key
+            builder.Property(p => p.ProductPrice).HasPrecision(18, 2);
             // Configure the relationship with ProductSubCategories
             builder.HasOne(p => p.ProductSubCategories)
                    .WithMany(psc => psc.Products)

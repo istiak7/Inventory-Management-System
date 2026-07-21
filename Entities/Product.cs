@@ -7,7 +7,7 @@
         public required string ProductName { get; set; }
         public string ProductDescription { get; set; } = string.Empty;
         public string ProductImageUrl { get; set; } = string.Empty;
-        public required string ProductCode { get; set; }
+        public required string SKU { get; set; }
         public decimal ProductPrice { get; set; }
 
         public required ProductSubCategories ProductSubCategories { get; set; }

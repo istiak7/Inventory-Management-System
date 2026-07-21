@@ -40,7 +40,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                 };
             }
 
-            var existing = await _productRepository.GetAsync(p => p.ProductCode == request.ProductCode);
+            var existing = await _productRepository.GetAsync(p => p.SKU == request.ProductCode);
             if (existing is not null)
             {
                 return new Result
@@ -59,7 +59,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                     ProductName = request.ProductName,
                     ProductDescription = request.ProductDescription,
                     ProductImageUrl = request.ProductImageUrl,
-                    ProductCode = request.ProductCode,
+                    SKU = request.ProductCode,
                     ProductPrice = request.ProductPrice,
                     ProductSubCategoryId = request.ProductSubCategoryId,
                     ProductSubCategories = subCategory,

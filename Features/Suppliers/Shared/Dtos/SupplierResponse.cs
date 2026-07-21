@@ -8,6 +8,6 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         string PhoneNumber,
         string Email,
         string NID,
-        int OpeningBalance,
+        decimal OpeningBalance,
         DateTime CreatedAt);
 }

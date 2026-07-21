@@ -32,7 +32,7 @@ namespace Inventory_Management_System.Features.Products.Queries.GetProductById
                     product.ProductName,
                     product.ProductDescription,
                     product.ProductImageUrl,
-                    product.ProductCode,
+                    product.SKU,
                     product.ProductPrice,
                     product.ProductSubCategoryId,
                     product.BrandId,
