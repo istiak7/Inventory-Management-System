@@ -14,7 +14,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
 
         public async Task<Result> Handle(CreateSupplierCommand request, CancellationToken cancellationToken)
         {
-            var existingSupplier = await _supplierRepository.GetAsync(s => s.Name == request.Name && s.Email == request.Email);
+            var existingSupplier = await _supplierRepository.GetAsync(s => s.Name == request.Name && s.PhoneNumber == request.PhoneNumber);
 
             if (existingSupplier != null)
             {
