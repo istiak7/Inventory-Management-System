@@ -6,7 +6,7 @@
         public int BranchId { get; set; }
         public decimal Amount { get; set; }
         public DateTime PaymentDate { get; set; } = DateTime.Now;
-        public string PaymentMethod { get; set; } = "Cash";
+        public string PaymentMethod { get; set; } = "Cash"; // Cash, Bank Transfer, Cheque, Credit Card, Other
 
         //Navigation property
         public required Supplier Supplier { get; set; }

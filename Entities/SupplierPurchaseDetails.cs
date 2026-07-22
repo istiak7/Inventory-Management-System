@@ -6,8 +6,7 @@ namespace Inventory_Management_System.Entities
         public int ProductId { get; set; } //FK
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal DueAmount { get; set; }
+        public decimal TotalAmount { get; set; }   // extended line price = Quantity * UnitPrice
         public string IsApproved { get; set; } = "Pending"; // Approved, Rejected, Pending
 
         // Navigation property
