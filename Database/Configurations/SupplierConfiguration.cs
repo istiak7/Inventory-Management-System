@@ -30,6 +30,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.InvoiceNumber).HasMaxLength(100);
             builder.Property(s => s.Status).IsRequired().HasMaxLength(20);
             builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
+            builder.Property(s => s.PaidAmount).HasPrecision(18, 2);
             builder.Property(s => s.DueAmount).HasPrecision(18, 2);
 
             builder.HasOne(s => s.Supplier)
@@ -53,6 +54,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(d => d.UnitPrice).HasPrecision(18, 2);
             builder.Property(d => d.TotalAmount).HasPrecision(18, 2);
             builder.Property(d => d.IsApproved).IsRequired().HasMaxLength(20);
+            builder.Property(d => d.PurchaseId).IsRequired();
 
             builder.HasOne(d => d.SupplierPurchase)
                    .WithMany(s => s.SupplierPurchaseDetails)
@@ -61,7 +63,7 @@ namespace Inventory_Management_System.Database.Configurations
 
             builder.HasOne(d => d.Product)
                    .WithMany()
-                   .HasForeignKey(d => d.SKU)
+                   .HasForeignKey(d => d.ProductId)
                    .OnDelete(DeleteBehavior.Restrict);
         }
     }

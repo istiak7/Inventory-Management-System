@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Folder Include="Features\Categories\Queries\GetSubCategoryByCategoryId\" />
+    <Folder Include="Features\Purchases\Queries\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Migrations\" />
     <Folder Include="Shared\Services\" />

@@ -12,5 +12,6 @@
 
         public required ProductSubCategories ProductSubCategories { get; set; }
         public required Brand Brand { get; set; }
+        public ICollection<Stock> Stocks { get; set; } = [];
     }
 }

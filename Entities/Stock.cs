@@ -3,7 +3,7 @@ namespace Inventory_Management_System.Entities
     public class Stock : BaseEntity
     {
         public int BranchId { get; set; } //FK
-        public int SKU { get; set; } //FK
+        public int ProductId { get; set; } //FK
         public int CurrentStock { get; set; }
 
         // Navigation property

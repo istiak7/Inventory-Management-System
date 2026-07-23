@@ -22,6 +22,48 @@ namespace Inventory_Management_System.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.Branch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Branches");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Brand", b =>
                 {
                     b.Property<int>("Id")
@@ -59,6 +101,118 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("Brands");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.Department", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.Designation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Designations");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.InventoryTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SupplierPurchaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SupplierPurchaseId");
+
+                    b.ToTable("InventoryTransactions");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -76,11 +230,6 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ProductCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("ProductDescription")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -97,10 +246,16 @@ namespace Inventory_Management_System.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("ProductPrice")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<int>("ProductSubCategoryId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -110,6 +265,9 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("BrandId");
 
                     b.HasIndex("ProductSubCategoryId");
+
+                    b.HasIndex("SKU")
+                        .IsUnique();
 
                     b.ToTable("Products");
                 });
@@ -203,6 +361,42 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("ProductSubCategories");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.Stock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentStock")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("BranchId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("Stocks");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Supplier", b =>
                 {
                     b.Property<int>("Id")
@@ -242,8 +436,9 @@ namespace Inventory_Management_System.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("OpeningBalance")
-                        .HasColumnType("integer");
+                    b.Property<decimal>("OpeningBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -270,7 +465,11 @@ namespace Inventory_Management_System.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -283,7 +482,8 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("SupplierId")
                         .HasColumnType("integer");
@@ -293,9 +493,11 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("SupplierPayment");
+                    b.ToTable("SupplierPayments");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchase", b =>
@@ -306,40 +508,104 @@ namespace Inventory_Management_System.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("DueAmount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("Invoice")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<string>("InvoiceNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("PurchaseType")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("SupplierId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("SupplierPurchase");
+                    b.ToTable("SupplierPurchases");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchaseDetails", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IsApproved")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("PurchaseId");
+
+                    b.ToTable("SupplierPurchaseDetails");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchasePayment", b =>
@@ -350,8 +616,12 @@ namespace Inventory_Management_System.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("AllocationDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -374,7 +644,7 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasIndex("SupplierPurchaseId");
 
-                    b.ToTable("SupplierPurchasePayment");
+                    b.ToTable("SupplierPurchasePayments");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierTransaction", b =>
@@ -385,11 +655,20 @@ namespace Inventory_Management_System.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Credit")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("Debit")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
@@ -397,10 +676,10 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("SupplierId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SupplierPaymentId")
+                    b.Property<int?>("SupplierPaymentId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SupplierPurchaseId")
+                    b.Property<int?>("SupplierPurchaseId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("TransactionDate")
@@ -408,7 +687,8 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<string>("TransactionType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -421,7 +701,7 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasIndex("SupplierPurchaseId");
 
-                    b.ToTable("SupplierTransaction");
+                    b.ToTable("SupplierTransactions");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.User", b =>
@@ -467,7 +747,33 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.InventoryTransaction", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany("InventoryTransactions")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SupplierPurchase")
+                        .WithMany()
+                        .HasForeignKey("SupplierPurchaseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("SupplierPurchase");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Product", b =>
@@ -500,40 +806,94 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("ProductCategories");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.Stock", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany("Stocks")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
+                        .WithMany("Stocks")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPayment", b =>
                 {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
                         .WithMany("SupplierPayments")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchase", b =>
                 {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany("SupplierPurchases")
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
                         .WithMany("SupplierPurchases")
                         .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchaseDetails", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SupplierPurchase")
+                        .WithMany("SupplierPurchaseDetails")
+                        .HasForeignKey("PurchaseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Supplier");
+                    b.Navigation("Product");
+
+                    b.Navigation("SupplierPurchase");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchasePayment", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.SupplierPayment", "SupplierPayment")
-                        .WithMany("supplierPurchasePayments")
+                        .WithMany("SupplierPurchasePayments")
                         .HasForeignKey("SupplierPaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SupplierPurchase")
                         .WithMany("SupplierPurchasePayments")
                         .HasForeignKey("SupplierPurchaseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SupplierPayment");
@@ -546,20 +906,18 @@ namespace Inventory_Management_System.Migrations
                     b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
                         .WithMany("SupplierTransactions")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Inventory_Management_System.Entities.SupplierPayment", "SupplierPayment")
                         .WithMany()
                         .HasForeignKey("SupplierPaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SupplierPurchase")
                         .WithMany()
                         .HasForeignKey("SupplierPurchaseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Supplier");
 
@@ -568,9 +926,23 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("SupplierPurchase");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.Branch", b =>
+                {
+                    b.Navigation("InventoryTransactions");
+
+                    b.Navigation("Stocks");
+
+                    b.Navigation("SupplierPurchases");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Brand", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.Product", b =>
+                {
+                    b.Navigation("Stocks");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductCategories", b =>
@@ -594,11 +966,13 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPayment", b =>
                 {
-                    b.Navigation("supplierPurchasePayments");
+                    b.Navigation("SupplierPurchasePayments");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchase", b =>
                 {
+                    b.Navigation("SupplierPurchaseDetails");
+
                     b.Navigation("SupplierPurchasePayments");
                 });
 #pragma warning restore 612, 618

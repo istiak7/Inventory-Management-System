@@ -24,7 +24,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.CurrentStock).IsRequired();
 
             // A branch has exactly one stock row per product
-            builder.HasIndex(s => new { s.BranchId, s.SKU }).IsUnique();
+            builder.HasIndex(s => new { s.BranchId, s.ProductId }).IsUnique();
 
             builder.HasOne(s => s.Branch)
                    .WithMany(b => b.Stocks)
@@ -32,8 +32,8 @@ namespace Inventory_Management_System.Database.Configurations
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(s => s.Product)
-                   .WithMany()
-                   .HasForeignKey(s => s.SKU)
+                   .WithMany(p => p.Stocks)
+                   .HasForeignKey(s => s.ProductId)
                    .OnDelete(DeleteBehavior.Restrict);
         }
     }
