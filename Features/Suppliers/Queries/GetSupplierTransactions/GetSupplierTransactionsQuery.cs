@@ -6,6 +6,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
     public sealed record GetSupplierTransactionsQuery(
         int PageNumber = 1,
         int PageSize = 20,
-        int? SupplierId = null
+        int? SupplierId = null,
+        string? InvoiceNumber = null   // contains-search on the related invoice(s)
     ) : IRequest<Result>;
 }

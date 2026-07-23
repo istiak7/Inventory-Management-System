@@ -9,6 +9,9 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         string Reference,
         decimal Debit,
         decimal Credit,
-        decimal BalanceAfter
+        decimal BalanceAfter,
+        // Invoice(s) this row relates to: the purchase's own invoice, or — for a payment —
+        // the invoice(s) it was applied against. Empty for a payment with no allocation.
+        IReadOnlyList<string> Invoices
     );
 }

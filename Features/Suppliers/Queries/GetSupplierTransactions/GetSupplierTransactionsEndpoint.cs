@@ -11,9 +11,10 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                 IMediator mediator,
                 int pageNumber = 1,
                 int pageSize = 20,
-                int? supplierId = null) =>
+                int? supplierId = null,
+                string? invoiceNumber = null) =>
             {
-                var result = await mediator.Send(new GetSupplierTransactionsQuery(pageNumber, pageSize, supplierId));
+                var result = await mediator.Send(new GetSupplierTransactionsQuery(pageNumber, pageSize, supplierId, invoiceNumber));
                 return Results.Ok(result);
             }).WithTags("Supplier");
         }
