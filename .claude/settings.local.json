@@ -6,5 +6,8 @@
       "Bash(cd:*)",
       "Bash(dotnet build:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "code-review-graph"
+  ]
 }
