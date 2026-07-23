@@ -1,0 +1,18 @@
+using Inventory_Management_System.Features.Suppliers.Shared.Dtos;
+using Inventory_Management_System.Shared;
+using MediatR;
+
+namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierPayment
+{
+    public class CreateSupplierPaymentCommand : IRequest<Result>
+    {
+        public int SupplierId { get; set; }
+        public int BranchId { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime? PaymentDate { get; set; }
+        public string PaymentMethod { get; set; } = "Cash";
+
+        // Optional per-invoice allocation; empty => FIFO auto-allocation.
+        public List<PaymentAllocationRequest> Allocations { get; set; } = [];
+    }
+}

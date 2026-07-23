@@ -2,6 +2,7 @@
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Repository;
 using MediatR;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
 {
@@ -14,7 +15,8 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
 
         public async Task<Result> Handle(CreateSupplierCommand request, CancellationToken cancellationToken)
         {
-            var existingSupplier = await _supplierRepository.GetAsync(s => s.Name == request.Name && s.Email == request.Email);
+            var existingSupplier = await _supplierRepository.GetAsync(s => s.Name == request.Name && s.PhoneNumber == request.PhoneNumber
+                                            && s.IsActive == (int)EntityStatus.Active, cancellationToken: cancellationToken);
 
             if (existingSupplier != null)
             {
