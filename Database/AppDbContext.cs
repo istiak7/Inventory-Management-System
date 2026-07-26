@@ -85,6 +85,8 @@ namespace Inventory_Management_System.Database
         public DbSet<ProductCategories> ProductCategories { get; set; }
         public DbSet<ProductSubCategories> ProductSubCategories { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductVariant> ProductVariants { get; set; }
+        public DbSet<ProductSerial> ProductSerials { get; set; }
         public DbSet<Branch> Branches { get; set; }
         public DbSet<SupplierPurchase> SupplierPurchases { get; set; }
         public DbSet<SupplierPurchaseDetails> SupplierPurchaseDetails { get; set; }

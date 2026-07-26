@@ -1,5 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Suppliers.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -25,7 +26,8 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
             if (request.Amount <= 0)
                 return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount must be greater than 0." };
 
-            // Validate explicit allocations up front (before opening a transaction).
+            // Allocation is ALWAYS explicit — no auto FIFO. Any unallocated remainder stays as
+            // on-account credit (an advance), which is allowed.
             var hasAllocations = request.Allocations is { Count: > 0 };
             List<SupplierPurchase> targetedPurchases = [];
             if (hasAllocations)
@@ -50,9 +52,11 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     var purchase = targetedPurchases.FirstOrDefault(p => p.Id == alloc.PurchaseId);
                     if (purchase == null || purchase.SupplierId != request.SupplierId)
                         return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"Invoice {alloc.PurchaseId} not found for this supplier." };
-                    // Only approved-with-due invoices are payable (not Pending/Rejected/Paid).
-                    if (purchase.Status != "Due" && purchase.Status != "Partial")
-                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} is not open for payment." };
+                    // Any non-rejected purchase with an outstanding balance is payable.
+                    if (purchase.Status == PurchaseStatus.Rejected)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} is rejected and cannot be paid." };
+                    if (purchase.DueAmount <= 0)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} has no outstanding due." };
                     if (alloc.Amount > purchase.DueAmount)
                         return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Allocation for invoice {alloc.PurchaseId} exceeds its due amount." };
                 }
@@ -75,18 +79,13 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                 };
                 await _dbContext.SupplierPayments.AddAsync(payment, cancellationToken);
 
-                decimal allocatedAmount;
-
+                decimal allocatedAmount = 0;
                 if (hasAllocations)
                 {
-                    // Targeted: apply each allocation to the invoice the caller chose.
                     foreach (var alloc in request.Allocations)
                     {
                         var purchase = targetedPurchases.First(p => p.Id == alloc.PurchaseId);
-                        purchase.PaidAmount += alloc.Amount;
-                        purchase.DueAmount -= alloc.Amount;
-                        purchase.Status = purchase.DueAmount <= 0 ? "Paid" : "Partial";
-                        purchase.PurchaseType = purchase.DueAmount <= 0 ? "fillpayment" : "partial";
+                        purchase.ApplyPayment(alloc.Amount);   // keeps Paid/Due consistent, validates against due
 
                         await _dbContext.SupplierPurchasePayments.AddAsync(new SupplierPurchasePayment
                         {
@@ -98,41 +97,9 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     }
                     allocatedAmount = request.Allocations.Sum(a => a.Amount);
                 }
-                else
-                {
-                    // FIFO: apply the payment against the supplier's open invoices, oldest first.
-                    // Only approved-with-due invoices qualify (not Pending/Rejected/Paid).
-                    var outstanding = await _dbContext.SupplierPurchases
-                        .Where(p => p.SupplierId == request.SupplierId && p.DueAmount > 0
-                                    && (p.Status == "Due" || p.Status == "Partial"))
-                        .OrderBy(p => p.PurchaseDate)
-                        .ThenBy(p => p.Id)
-                        .ToListAsync(cancellationToken);
 
-                    decimal remaining = request.Amount;
-                    foreach (var purchase in outstanding)
-                    {
-                        if (remaining <= 0) break;
-
-                        var applied = Math.Min(remaining, purchase.DueAmount);
-                        purchase.PaidAmount += applied;
-                        purchase.DueAmount -= applied;
-                        purchase.Status = purchase.DueAmount <= 0 ? "Paid" : "Partial";
-                        purchase.PurchaseType = purchase.DueAmount <= 0 ? "fillpayment" : "partial";
-                        remaining -= applied;
-
-                        await _dbContext.SupplierPurchasePayments.AddAsync(new SupplierPurchasePayment
-                        {
-                            Amount = applied,
-                            AllocationDate = paymentDate,
-                            SupplierPurchase = purchase,
-                            SupplierPayment = payment,
-                        }, cancellationToken);
-                    }
-                    allocatedAmount = request.Amount - remaining;
-                }
-
-                // Ledger: the payment credits the supplier account (we now owe less).
+                // Ledger: the payment credits the supplier account (we now owe less), regardless of
+                // how much was allocated — the unallocated part is on-account credit.
                 var runningBalance = await GetCurrentSupplierBalanceAsync(request.SupplierId, cancellationToken);
                 runningBalance -= request.Amount;
 

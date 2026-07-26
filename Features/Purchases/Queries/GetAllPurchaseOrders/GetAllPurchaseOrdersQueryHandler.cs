@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
@@ -18,21 +19,23 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
             {
                 var query = _dbContext.SupplierPurchases.AsNoTracking();
 
-                if (!string.IsNullOrWhiteSpace(request.Status))
-                    query = query.Where(p => p.Status == request.Status);
+                if (!string.IsNullOrWhiteSpace(request.Status) &&
+                    Enum.TryParse<PurchaseStatus>(request.Status, true, out var statusFilter))
+                    query = query.Where(p => p.Status == statusFilter);
 
                 if (request.SupplierId is int supplierId)
                     query = query.Where(p => p.SupplierId == supplierId);
 
-                // Newest first — pending orders awaiting approval surface at the top.
-                var pagedResult = await query
+                // Materialize with enums intact, then map to string DTOs in memory.
+                var paged = await query
                     .OrderByDescending(p => p.Id)
-                    .Select(p => new PurchaseOrderListResponse(
+                    .Select(p => new
+                    {
                         p.Id,
                         p.SupplierId,
-                        p.Supplier.Name,
+                        SupplierName = p.Supplier.Name,
                         p.BranchId,
-                        p.Branch.Name,
+                        BranchName = p.Branch.Name,
                         p.InvoiceNumber,
                         p.PurchaseDate,
                         p.Status,
@@ -40,17 +43,40 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                         p.TotalAmount,
                         p.PaidAmount,
                         p.DueAmount,
-                        p.SupplierPurchaseDetails.Count,
-                        p.SupplierPurchaseDetails
-                            .Select(d => new PurchaseOrderLineResponse(
-                                d.ProductId,
-                                d.Product.ProductName,
-                                d.Quantity,
-                                d.UnitPrice,
-                                d.TotalAmount,
-                                d.IsApproved))
-                            .ToList()))
+                        ItemsCount = p.SupplierPurchaseDetails.Count,
+                        Lines = p.SupplierPurchaseDetails.Select(d => new
+                        {
+                            d.Id,
+                            d.ProductVariantId,
+                            Sku = d.ProductVariant.SKU,
+                            ProductName = d.ProductVariant.Product.ProductName,
+                            d.ProductVariant.IsSerialized,
+                            d.OrderedQuantity,
+                            d.ReceivedQuantity,
+                            d.UnitPrice,
+                            d.TotalAmount,
+                            d.WarrantyMonths,
+                            d.Status
+                        }).ToList()
+                    })
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
+
+                var items = paged.Items.Select(p => new PurchaseOrderListResponse(
+                    p.Id, p.SupplierId, p.SupplierName, p.BranchId, p.BranchName,
+                    p.InvoiceNumber, p.PurchaseDate, p.Status.ToString(), p.PurchaseType.ToString(),
+                    p.TotalAmount, p.PaidAmount, p.DueAmount, p.ItemsCount,
+                    p.Lines.Select(l => new PurchaseOrderLineResponse(
+                        l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized, l.OrderedQuantity, l.ReceivedQuantity,
+                        l.UnitPrice, l.TotalAmount, l.WarrantyMonths, l.Status.ToString())).ToList()))
+                    .ToList();
+
+                var pagedResult = new PagedResult<PurchaseOrderListResponse>
+                {
+                    Items = items,
+                    PageNumber = paged.PageNumber,
+                    PageSize = paged.PageSize,
+                    TotalCount = paged.TotalCount
+                };
 
                 return new Result
                 {
