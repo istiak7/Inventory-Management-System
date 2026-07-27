@@ -16,6 +16,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
         public async Task<Result> Handle(ReceiveGoodsCommand request, CancellationToken cancellationToken)
         {
             var purchase = await _dbContext.SupplierPurchases
+                .Include(p => p.Supplier)
                 .Include(p => p.Branch)
                 .Include(p => p.SupplierPurchaseDetails).ThenInclude(d => d.ProductVariant)
                 .FirstOrDefaultAsync(p => p.Id == request.PurchaseOrderId, cancellationToken);
@@ -145,11 +146,38 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 else if (nonRejected.Any(d => d.Status is LineStatus.Received or LineStatus.PartiallyReceived))
                     purchase.Status = PurchaseStatus.PartiallyReceived;
 
+                // Ledger (money): the purchase debits the supplier account only once the order is
+                // approved (every line fully received). Pending/rejected orders never touch the books.
+                // Runs at most once: an already-approved order is rejected at the top of this handler.
+                if (purchase.Status == PurchaseStatus.Approved)
+                {
+                    var runningBalance = await GetCurrentSupplierBalanceAsync(purchase.SupplierId, cancellationToken);
+                    runningBalance += purchase.TotalAmount;
+                    await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
+                    {
+                        SupplierId = purchase.SupplierId,
+                        TransactionType = "Purchase",
+                        TransactionDate = now,
+                        Debit = purchase.TotalAmount,
+                        Credit = 0,
+                        BalanceAfter = runningBalance,
+                        SupplierPurchase = purchase,
+                        Supplier = purchase.Supplier,
+                    }, cancellationToken);
+                }
+
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
                 var response = new ReceiveGoodsResponse(purchase.Id, purchase.Status.ToString(), serialsCreated, lineResults);
-                return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Goods received successfully", Data = response };
+                return new Result
+                {
+                    IsSuccess = true,
+                    StatusCode = 200,
+                    Status = "Success",
+                    Message = "Goods received successfully",
+                    Data = response
+                };
             }
             catch (Exception ex)
             {
@@ -184,6 +212,17 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
             cache[variant.Id] = stock;
             return stock;
+        }
+
+        /// <summary>Supplier's current overall balance = BalanceAfter of their latest transaction (0 if none).</summary>
+        private async Task<decimal> GetCurrentSupplierBalanceAsync(int supplierId, CancellationToken cancellationToken)
+        {
+            return await _dbContext.SupplierTransactions
+                .AsNoTracking()
+                .Where(t => t.SupplierId == supplierId)
+                .OrderByDescending(t => t.Id)
+                .Select(t => t.BalanceAfter)
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
         private static Result Error(int code, string message) =>

@@ -19,12 +19,6 @@ namespace Inventory_Management_System.Entities
         public required SupplierPurchase SupplierPurchase { get; set; }
         public required ProductVariant ProductVariant { get; set; }
         public ICollection<ProductSerial> ProductSerials { get; set; } = [];
-
-        /// <summary>
-        /// Book a received quantity against this lot. Receipts are incremental — this accumulates
-        /// onto <see cref="ReceivedQuantity"/> and recomputes <see cref="Status"/>. Over-receipt
-        /// (received &gt; ordered) is allowed by business rule and simply lands as Received.
-        /// </summary>
         public void ApplyReceipt(int quantity)
         {
             if (quantity <= 0)

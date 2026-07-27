@@ -36,7 +36,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
                 var response = new PurchaseOrderResponse(
                     purchase.Id, purchase.SupplierId, purchase.BranchId, purchase.PurchaseDate,
                     purchase.InvoiceNumber, purchase.Status.ToString(), purchase.PurchaseType.ToString(),
-                    purchase.TotalAmount, purchase.DueAmount, null);
+                    purchase.TotalAmount, purchase.DueAmount);
 
                 return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Purchase order rejected successfully", Data = response };
             }

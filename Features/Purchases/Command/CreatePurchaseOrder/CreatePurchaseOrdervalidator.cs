@@ -18,12 +18,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                 item.RuleFor(i => i.UnitPrice).GreaterThanOrEqualTo(0).WithMessage("UnitPrice must be greater than or equal to 0.");
                 item.RuleFor(i => i.WarrantyMonths).GreaterThanOrEqualTo(0).WithMessage("WarrantyMonths must be 0 or greater.");
             });
-
-            When(x => x.Payment != null, () =>
-            {
-                RuleFor(x => x.Payment!.Amount).GreaterThanOrEqualTo(0).WithMessage("Payment amount must be greater than or equal to 0.");
-                RuleFor(x => x.Payment!.PaymentMethod).NotEmpty().WithMessage("Payment method is required.");
-            });
         }
     }
 }

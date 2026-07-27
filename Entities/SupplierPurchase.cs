@@ -9,7 +9,7 @@ namespace Inventory_Management_System.Entities
         public DateTime PurchaseDate { get; set; } = DateTime.Now;
         public string? InvoiceNumber { get; set; }
         public PurchaseStatus Status { get; set; } = PurchaseStatus.Pending;  // receipt lifecycle, NOT payment state
-        public PurchaseType PurchaseType { get; set; } = PurchaseType.Cash;    // Cash = fully paid at creation; else Credit
+        public PurchaseType PurchaseType { get; set; } = PurchaseType.Credit;  // created as Credit; paid after approval
         public decimal TotalAmount { get; set; }   // invoice total = sum of the detail lines
         public decimal PaidAmount { get; set; }     // settled so far
         public decimal DueAmount { get; set; }      // outstanding = TotalAmount - PaidAmount

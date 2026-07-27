@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         public string? InvoiceNumber { get; set; }
         public List<PurchaseItemRequest> Items { get; set; } = [];
 
-        // Optional: null/omitted = full due, Amount == total = cash, otherwise partial.
-        public PaymentRequest? Payment { get; set; }
+        // No payment at creation: payments are recorded via the supplier-payment endpoint
+        // once the order has been approved (fully received).
     }
 }

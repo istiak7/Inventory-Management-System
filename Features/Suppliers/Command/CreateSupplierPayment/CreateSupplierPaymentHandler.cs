@@ -52,9 +52,10 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     var purchase = targetedPurchases.FirstOrDefault(p => p.Id == alloc.PurchaseId);
                     if (purchase == null || purchase.SupplierId != request.SupplierId)
                         return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"Invoice {alloc.PurchaseId} not found for this supplier." };
-                    // Any non-rejected purchase with an outstanding balance is payable.
-                    if (purchase.Status == PurchaseStatus.Rejected)
-                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} is rejected and cannot be paid." };
+                    // Only an approved (fully received) purchase is payable — pending, partially
+                    // received, or rejected orders must not generate payment records.
+                    if (purchase.Status != PurchaseStatus.Approved)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} is not approved yet and cannot be paid." };
                     if (purchase.DueAmount <= 0)
                         return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} has no outstanding due." };
                     if (alloc.Amount > purchase.DueAmount)
