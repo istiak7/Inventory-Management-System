@@ -33,6 +33,18 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
             if(remainingDue - request.Amount < 0)
                 return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount exceeds the remaining due amount." };
 
+
+            foreach(var payment in request.Allocations)
+            {
+               var remainingDueForPurchase = await _dbContext.SupplierPurchases
+                    .Where(p => p.Id == payment.PurchaseId && p.SupplierId == request.SupplierId && p.Status == PurchaseStatus.Approved)
+                    .Select(p => p.DueAmount)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (remainingDueForPurchase - payment.Amount < 0)
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Allocation amount for invoice {payment.PurchaseId} exceeds its remaining due amount." };
+
+            }
+
             // Allocation is ALWAYS explicit — no auto FIFO. Any unallocated remainder stays as
             // on-account credit (an advance), which is allowed.
             var hasAllocations = request.Allocations is { Count: > 0 };
