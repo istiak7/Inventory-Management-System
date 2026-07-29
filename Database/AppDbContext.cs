@@ -93,6 +93,12 @@ namespace Inventory_Management_System.Database
         public DbSet<SupplierPayment> SupplierPayments { get; set; }
         public DbSet<SupplierPurchasePayment> SupplierPurchasePayments { get; set; }
         public DbSet<SupplierTransaction> SupplierTransactions { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<CustomerSale> CustomerSales { get; set; }
+        public DbSet<SaleDetails> SaleDetails { get; set; }
+        public DbSet<CustomerPayment> CustomerPayments { get; set; }
+        public DbSet<SaleCustomerPayment> SaleCustomerPayments { get; set; }
+        public DbSet<CustomerTransaction> CustomerTransactions { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
         public DbSet<User> Users { get; set; }

@@ -5,7 +5,12 @@
       "Bash(rm -rf Controllers)",
       "Bash(cd:*)",
       "Bash(dotnet build:*)",
-      "Read(//c/Program Files/PostgreSQL/**)"
+      "Read(//c/Program Files/PostgreSQL/**)",
+      "PowerShell(dotnet build *)",
+      "PowerShell(dotnet ef migrations *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "code-review-graph"
+  ]
 }
