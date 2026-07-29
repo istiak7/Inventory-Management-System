@@ -17,6 +17,7 @@ namespace Inventory_Management_System.Entities
         public required Product Product { get; set; }
         public ICollection<Stock> Stocks { get; set; } = [];
         public ICollection<SupplierPurchaseDetails> SupplierPurchaseDetails { get; set; } = [];
+        public ICollection<SaleDetails> SaleDetails { get; set; } = [];
         public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = [];
         public ICollection<ProductSerial> ProductSerials { get; set; } = [];
     }

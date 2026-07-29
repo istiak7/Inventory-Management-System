@@ -9,6 +9,8 @@
 
         // Navigation property
         public ICollection<SupplierPurchase> SupplierPurchases { get; set; } = [];
+        public ICollection<CustomerSale> CustomerSales { get; set; } = [];
+        public ICollection<CustomerPayment> CustomerPayments { get; set; } = [];
         public ICollection<Stock> Stocks { get; set; } = [];
         public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = [];
     }
