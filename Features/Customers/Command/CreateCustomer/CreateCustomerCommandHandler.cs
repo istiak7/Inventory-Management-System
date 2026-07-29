@@ -1,4 +1,5 @@
 using Inventory_Management_System.Entities;
+using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Repository;
 using MediatR;
@@ -12,10 +13,11 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
     {
         public async Task<Result> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
         {
-            var phoneNumber = request.PhoneNumber.Trim();
+            // Normalize before comparing: the number is the customer's identity, and "01712-345678"
+            // typed here must collide with "+8801712345678" already on file rather than open a
+            // second record for the same person.
+            var phoneNumber = CustomerPhoneNumber.Normalize(request.PhoneNumber);
 
-            // Phone is the practical handle for a customer (email is optional), so it is what
-            // identifies a duplicate.
             var existingCustomer = await _customerRepository.GetAsync(
                 c => c.PhoneNumber == phoneNumber,
                 asNoTracking: true,

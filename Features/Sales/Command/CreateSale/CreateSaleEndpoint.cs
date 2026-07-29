@@ -13,6 +13,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 var command = new CreateSaleCommand
                 {
                     CustomerId = request.CustomerId,
+                    Customer = request.Customer,
                     BranchId = request.BranchId,
                     SaleDate = request.SaleDate,
                     InvoiceNumber = request.InvoiceNumber,

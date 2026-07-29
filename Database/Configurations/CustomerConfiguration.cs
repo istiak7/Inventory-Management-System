@@ -18,9 +18,13 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(c => c.NID).HasMaxLength(20);
             builder.Property(c => c.OpeningBalance).IsRequired().HasPrecision(18, 2);
 
-            // Lookup index only — deliberately NOT unique: shared household/business numbers are
-            // normal in retail, and walk-ins often reuse a counter number.
-            builder.HasIndex(c => c.PhoneNumber);
+            // The mobile number IS the customer's identity: the sales form looks a customer up by
+            // it and creates one only when nothing comes back. Unique at the database level, not
+            // just in the handler, so two tills ringing up the same new walk-in at the same moment
+            // cannot both win the "does this phone exist?" check and insert twice.
+            // Values are stored normalized (see CustomerPhoneNumber.Normalize) so the comparison
+            // is not defeated by dashes, spaces or a +880 prefix.
+            builder.HasIndex(c => c.PhoneNumber).IsUnique();
         }
     }
 

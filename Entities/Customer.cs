@@ -2,7 +2,9 @@ namespace Inventory_Management_System.Entities
 {
     // Sales-side counterpart of Supplier. Unlike Supplier, Email is NOT unique/required —
     // retail walk-in customers frequently have no email, and a unique index would make the
-    // common "no email" case unsaveable beyond the first row. Phone is the practical handle.
+    // common "no email" case unsaveable beyond the first row. Phone is the identity instead:
+    // it is unique, and always stored in the normalized form CustomerPhoneNumber.Normalize
+    // produces so lookups and duplicate checks agree on what "the same number" is.
     public class Customer : BaseEntity
     {
         public string Group { get; set; } = string.Empty;

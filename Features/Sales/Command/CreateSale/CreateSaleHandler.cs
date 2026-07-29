@@ -1,10 +1,12 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 {
@@ -20,10 +22,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
         {
             if (request.Items.Count == 0)
                 return Error(400, "At least one sale item is required.");
-
-            var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken);
-            if (customer == null)
-                return Error(404, "Customer not found.");
 
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
@@ -41,6 +39,14 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Inside the transaction on purpose: when the sales form supplies a new customer,
+                // registering them and ringing up the sale succeed or fail together. A sale that
+                // dies on insufficient stock must not leave a customer behind.
+                var resolved = await ResolveCustomerAsync(request, cancellationToken);
+                if (resolved.Error != null)
+                    return resolved.Error;
+                var customer = resolved.Customer!;   // non-null whenever Error is null
+
                 var saleDate = request.SaleDate ?? DateTime.UtcNow;
 
                 var invoiceNumber = string.IsNullOrWhiteSpace(request.InvoiceNumber)
@@ -49,7 +55,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 var sale = new CustomerSale
                 {
-                    CustomerId = request.CustomerId,
+                    CustomerId = customer.Id,
                     BranchId = request.BranchId,
                     SaleDate = saleDate,
                     InvoiceNumber = invoiceNumber,
@@ -234,10 +240,102 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                _logger.LogError(ex, "Error creating sale for customer {CustomerId}", request.CustomerId);
+                _logger.LogError(ex, "Error creating sale for customer {CustomerId} / phone {PhoneNumber}",
+                    request.CustomerId, request.Customer?.PhoneNumber);
                 return Error(500, "An error occurred while creating the sale.");
             }
         }
+
+        /// <summary>
+        /// Who this sale is billed to. Either the customer whose id the form sent, or — when the
+        /// form typed a mobile number that its lookup did not recognise — the customer that number
+        /// belongs to, registering them if they are genuinely new.
+        ///
+        /// This is a find-or-create rather than a create: the form's lookup and its save are two
+        /// round trips, and the same walk-in can be registered at another till in between. Losing
+        /// that race is normal, not exceptional, so both the pre-check and the unique-index
+        /// violation resolve the same way — bill the sale to whoever now owns the number.
+        /// </summary>
+        private async Task<(Customer? Customer, Result? Error)> ResolveCustomerAsync(
+            CreateSaleCommand request, CancellationToken cancellationToken)
+        {
+            if (request.CustomerId is > 0)
+            {
+                var existing = await _dbContext.Customers
+                    .FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken);
+
+                return existing == null
+                    ? (null, Error(404, "Customer not found."))
+                    : (existing, null);
+            }
+
+            if (request.Customer == null)
+                return (null, Error(400, "Either CustomerId or Customer details are required."));
+
+            var phoneNumber = CustomerPhoneNumber.Normalize(request.Customer.PhoneNumber);
+            if (phoneNumber.Length < CustomerPhoneNumber.MinimumDigits)
+                return (null, Error(400, $"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits."));
+
+            // The number is the identity, so an existing owner wins outright — the details typed at
+            // the till never overwrite a record that is already on file.
+            var byPhone = await _dbContext.Customers
+                .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
+            if (byPhone != null)
+                return (byPhone, null);
+
+            var customer = new Customer
+            {
+                Group = request.Customer.Group,
+                Name = request.Customer.Name.Trim(),
+                Description = request.Customer.Description,
+                PhoneNumber = phoneNumber,
+                Email = request.Customer.Email,
+                Address = request.Customer.Address,
+                NID = request.Customer.NID,
+                OpeningBalance = 0,   // met at the counter — they start owing nothing
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            await _dbContext.Customers.AddAsync(customer, cancellationToken);
+
+            // Postgres aborts the entire transaction on a constraint violation — every later
+            // command fails with 25P02 until it is unwound. A savepoint scopes the damage to just
+            // this insert, so losing the race below is still recoverable and the sale can go on.
+            var transaction = _dbContext.Database.CurrentTransaction;
+            const string savepoint = "before_customer_insert";
+            if (transaction != null)
+                await transaction.CreateSavepointAsync(savepoint, cancellationToken);
+
+            try
+            {
+                // Flushed now so customer.Id exists for the sale, its ledger row and any payment.
+                // Still inside the caller's transaction, so a later failure rolls this back too.
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return (customer, null);
+            }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                // Someone registered this number between the check above and this insert. The
+                // unique index did its job; adopt their row instead of failing the sale.
+                if (transaction != null)
+                    await transaction.RollbackToSavepointAsync(savepoint, cancellationToken);
+
+                // The insert is undone but EF still has it pending — drop it, or the sale's own
+                // SaveChanges would replay it and hit the same constraint.
+                _dbContext.Entry(customer).State = EntityState.Detached;
+
+                var winner = await _dbContext.Customers
+                    .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
+
+                return winner != null
+                    ? (winner, null)
+                    : (null, Error(500, "Could not register the customer for this sale."));
+            }
+        }
+
+        /// <summary>Postgres reports a unique-index breach as SQLSTATE 23505.</summary>
+        private static bool IsUniqueViolation(DbUpdateException ex) =>
+            ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
         /// <summary>
         /// Next invoice number for the sale's year, as INV-{year}-0001. Ordering by Id (not by the

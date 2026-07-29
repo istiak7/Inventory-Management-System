@@ -1,4 +1,5 @@
 using FluentValidation;
+using Inventory_Management_System.Features.Customers.Shared;
 
 namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
 {
@@ -7,7 +8,14 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
         public CreateCustomerValidator()
         {
             RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.");
-            RuleFor(x => x.PhoneNumber).NotEmpty().WithMessage("Phone number is required.");
+
+            // Checked against the normalized form, because that is what gets stored and what the
+            // unique index sees — "(017) 12" looks long enough until the punctuation comes off.
+            RuleFor(x => x.PhoneNumber)
+                .NotEmpty().WithMessage("Phone number is required.")
+                .Must(CustomerPhoneNumber.IsValid)
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber))
+                .WithMessage($"Phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits.");
 
             // Unlike suppliers, email is optional — a walk-in customer often has none. Validate the
             // format only when something was actually supplied.

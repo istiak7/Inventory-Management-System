@@ -1,4 +1,5 @@
 using FluentValidation;
+using Inventory_Management_System.Features.Customers.Shared;
 
 namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 {
@@ -6,7 +7,28 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
     {
         public CreateSaleValidator()
         {
-            RuleFor(x => x.CustomerId).GreaterThan(0).WithMessage("CustomerId is required.");
+            // A sale needs exactly one way of naming its customer. Both at once is ambiguous —
+            // it would leave the server guessing whether to bill the id or the phone number.
+            RuleFor(x => x)
+                .Must(x => (x.CustomerId is > 0) ^ (x.Customer != null))
+                .WithMessage("Provide exactly one of CustomerId or Customer details.");
+
+            When(x => x.Customer != null, () =>
+            {
+                RuleFor(x => x.Customer!.Name)
+                    .NotEmpty().WithMessage("Customer name is required.");
+
+                RuleFor(x => x.Customer!.PhoneNumber)
+                    .NotEmpty().WithMessage("Customer phone number is required.")
+                    .Must(CustomerPhoneNumber.IsValid)
+                    .When(x => !string.IsNullOrWhiteSpace(x.Customer!.PhoneNumber))
+                    .WithMessage($"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits.");
+
+                RuleFor(x => x.Customer!.Email)
+                    .EmailAddress().WithMessage("A valid customer email is required.")
+                    .When(x => !string.IsNullOrWhiteSpace(x.Customer!.Email));
+            });
+
             RuleFor(x => x.BranchId).GreaterThan(0).WithMessage("BranchId is required.");
 
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one sale item is required.");
