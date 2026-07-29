@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -20,22 +21,22 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
             if (purchase == null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Purchase order not found." };
 
-            if (purchase.Status != "Pending")
+            if (purchase.Status != PurchaseStatus.Pending)
                 return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Only a pending purchase order can be rejected." };
 
             try
             {
                 // Reject is purely a status change — no ledger entry, no payment, no stock impact.
-                purchase.Status = "Rejected";
+                purchase.Status = PurchaseStatus.Rejected;
                 foreach (var detail in purchase.SupplierPurchaseDetails)
-                    detail.IsApproved = "Rejected";
+                    detail.Reject();
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
                 var response = new PurchaseOrderResponse(
                     purchase.Id, purchase.SupplierId, purchase.BranchId, purchase.PurchaseDate,
-                    purchase.InvoiceNumber, purchase.Status, purchase.PurchaseType,
-                    purchase.TotalAmount, purchase.DueAmount, null);
+                    purchase.InvoiceNumber, purchase.Status.ToString(), purchase.PurchaseType.ToString(),
+                    purchase.TotalAmount, purchase.DueAmount);
 
                 return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Purchase order rejected successfully", Data = response };
             }

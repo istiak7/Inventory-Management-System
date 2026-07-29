@@ -12,71 +12,36 @@ namespace Inventory_Management_System.Features.Products.Shared.Repository
     {
         private readonly AppDbContext _context = context;
 
-        public async Task<PagedResult<ProductResponse>> GetAllPagedAsync(
-            int pageNumber,
-            int pageSize,
-            CancellationToken cancellationToken = default)
-        {
-            return await _context.Products
-                .AsNoTracking()
-                .OrderBy(p => p.Id)
-                .Select(p => new ProductResponse(
-                    p.Id,
-                    p.ProductName,
-                    p.ProductDescription,
-                    p.ProductImageUrl,
-                    p.SKU,
-                    p.ProductPrice,
-                    p.ProductSubCategoryId,
-                    p.BrandId,
-                    p.CreatedAt))
-                .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
-        }
+        public Task<PagedResult<ProductResponse>> GetAllPagedAsync(
+            int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            => Project(_context.Products).ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
 
-        public async Task<PagedResult<ProductResponse>> GetBySubCategoryIdPagedAsync(
-            int subCategoryId,
-            int pageNumber,
-            int pageSize,
-            CancellationToken cancellationToken = default)
-        {
-            return await _context.Products
-                .AsNoTracking()
-                .Where(p => p.ProductSubCategoryId == subCategoryId)
-                .OrderBy(p => p.Id)
-                .Select(p => new ProductResponse(
-                    p.Id,
-                    p.ProductName,
-                    p.ProductDescription,
-                    p.ProductImageUrl,
-                    p.SKU,
-                    p.ProductPrice,
-                    p.ProductSubCategoryId,
-                    p.BrandId,
-                    p.CreatedAt))
+        public Task<PagedResult<ProductResponse>> GetBySubCategoryIdPagedAsync(
+            int subCategoryId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            => Project(_context.Products.Where(p => p.ProductSubCategoryId == subCategoryId))
                 .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
-        }
 
-        public async Task<PagedResult<ProductResponse>> GetByBrandIdPagedAsync(
-            int brandId,
-            int pageNumber,
-            int pageSize,
-            CancellationToken cancellationToken = default)
-        {
-            return await _context.Products
+        public Task<PagedResult<ProductResponse>> GetByBrandIdPagedAsync(
+            int brandId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            => Project(_context.Products.Where(p => p.BrandId == brandId))
+                .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
+
+        // Shared projection: catalog fields + the primary (lowest-Id) variant's summary.
+        private static IQueryable<ProductResponse> Project(IQueryable<Product> source) =>
+            source
                 .AsNoTracking()
-                .Where(p => p.BrandId == brandId)
                 .OrderBy(p => p.Id)
                 .Select(p => new ProductResponse(
                     p.Id,
                     p.ProductName,
                     p.ProductDescription,
                     p.ProductImageUrl,
-                    p.SKU,
-                    p.ProductPrice,
                     p.ProductSubCategoryId,
                     p.BrandId,
-                    p.CreatedAt))
-                .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
-        }
+                    p.CreatedAt,
+                    p.ProductVariants.OrderBy(v => v.Id).Select(v => v.Id).FirstOrDefault(),
+                    p.ProductVariants.OrderBy(v => v.Id).Select(v => v.SKU).FirstOrDefault() ?? string.Empty,
+                    p.ProductVariants.OrderBy(v => v.Id).Select(v => v.SellingPrice).FirstOrDefault(),
+                    p.ProductVariants.OrderBy(v => v.Id).Select(v => v.IsSerialized).FirstOrDefault()));
     }
 }

@@ -1,4 +1,4 @@
-﻿using Inventory_Management_System.Entities;
+using Inventory_Management_System.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -32,6 +32,7 @@ namespace Inventory_Management_System.Database.Configurations
         }
     }
 
+    // Product is catalog-only now: no SKU / price here (those moved to ProductVariant).
     public class ProductConfigurations : IEntityTypeConfiguration<Product>
     {
         public void Configure(EntityTypeBuilder<Product> builder)
@@ -40,14 +41,32 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(p => p.ProductName).IsRequired().HasMaxLength(100);
             builder.Property(p => p.ProductDescription).HasMaxLength(500);
             builder.Property(p => p.ProductImageUrl).HasMaxLength(200);
-            builder.Property(p => p.SKU).IsRequired().HasMaxLength(50);
-            builder.HasIndex(p => p.SKU).IsUnique(); // SKU is the product business key
-            builder.Property(p => p.ProductPrice).HasPrecision(18, 2);
-            // Configure the relationship with ProductSubCategories
+
             builder.HasOne(p => p.ProductSubCategories)
                    .WithMany(psc => psc.Products)
                    .HasForeignKey(p => p.ProductSubCategoryId)
-                   .OnDelete(DeleteBehavior.Cascade); // Optional: specify delete behavior
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+
+    // The stockable/sellable unit. SKU is the globally-unique business key; AttributesJson is
+    // Postgres jsonb with a GIN index for attribute queries (e.g. RAM size, color).
+    public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVariant>
+    {
+        public void Configure(EntityTypeBuilder<ProductVariant> builder)
+        {
+            builder.HasKey(v => v.Id);
+            builder.Property(v => v.SKU).IsRequired().HasMaxLength(50);
+            builder.HasIndex(v => v.SKU).IsUnique();
+            builder.Property(v => v.Barcode).HasMaxLength(50);
+            builder.Property(v => v.SellingPrice).HasPrecision(18, 2);
+            builder.Property(v => v.AttributesJson).HasColumnType("jsonb");
+            builder.HasIndex(v => v.AttributesJson).HasMethod("gin");
+
+            builder.HasOne(v => v.Product)
+                   .WithMany(p => p.ProductVariants)
+                   .HasForeignKey(v => v.ProductId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -173,6 +173,9 @@ namespace Inventory_Management_System.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BalanceAfter")
+                        .HasColumnType("integer");
+
                     b.Property<int>("BranchId")
                         .HasColumnType("integer");
 
@@ -182,13 +185,16 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("ProductVariantId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Quantity")
+                    b.Property<int>("QuantityIn")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SupplierPurchaseId")
+                    b.Property<int>("QuantityOut")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SupplierPurchaseDetailsId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("TransactionDate")
@@ -206,9 +212,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasIndex("BranchId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductVariantId");
 
-                    b.HasIndex("SupplierPurchaseId");
+                    b.HasIndex("SupplierPurchaseDetailsId");
 
                     b.ToTable("InventoryTransactions");
                 });
@@ -245,17 +251,8 @@ namespace Inventory_Management_System.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<decimal>("ProductPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
-
                     b.Property<int>("ProductSubCategoryId")
                         .HasColumnType("integer");
-
-                    b.Property<string>("SKU")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -265,9 +262,6 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("BrandId");
 
                     b.HasIndex("ProductSubCategoryId");
-
-                    b.HasIndex("SKU")
-                        .IsUnique();
 
                     b.ToTable("Products");
                 });
@@ -312,6 +306,62 @@ namespace Inventory_Management_System.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProductCategories");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.ProductSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ReceivedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("SupplierPurchaseDetailsId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("WarrantyMonths")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("SerialNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierPurchaseDetailsId");
+
+                    b.ToTable("ProductSerials");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductSubCategories", b =>
@@ -361,6 +411,61 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("ProductSubCategories");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.ProductVariant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttributesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Barcode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsSerialized")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("SellingPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttributesJson");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("AttributesJson"), "gin");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SKU")
+                        .IsUnique();
+
+                    b.ToTable("ProductVariants");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Stock", b =>
                 {
                     b.Property<int>("Id")
@@ -381,7 +486,7 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("ProductVariantId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("UpDatedAt")
@@ -389,9 +494,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductVariantId");
 
-                    b.HasIndex("BranchId", "ProductId")
+                    b.HasIndex("BranchId", "ProductVariantId")
                         .IsUnique();
 
                     b.ToTable("Stocks");
@@ -534,7 +639,8 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<string>("PurchaseType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -574,19 +680,22 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
-                    b.Property<string>("IsApproved")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("OrderedQuantity")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("ProductVariantId")
                         .HasColumnType("integer");
 
                     b.Property<int>("PurchaseId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Quantity")
+                    b.Property<int?>("ReceivedQuantity")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
@@ -599,9 +708,12 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("WarrantyMonths")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductVariantId");
 
                     b.HasIndex("PurchaseId");
 
@@ -758,22 +870,22 @@ namespace Inventory_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
+                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
+                        .WithMany("InventoryTransactions")
+                        .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SupplierPurchase")
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchaseDetails", "SupplierPurchaseDetails")
                         .WithMany()
-                        .HasForeignKey("SupplierPurchaseId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("SupplierPurchaseDetailsId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Branch");
 
-                    b.Navigation("Product");
+                    b.Navigation("ProductVariant");
 
-                    b.Navigation("SupplierPurchase");
+                    b.Navigation("SupplierPurchaseDetails");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Product", b =>
@@ -795,6 +907,33 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("ProductSubCategories");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.ProductSerial", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
+                        .WithMany("ProductSerials")
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchaseDetails", "SupplierPurchaseDetails")
+                        .WithMany("ProductSerials")
+                        .HasForeignKey("SupplierPurchaseDetailsId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("SupplierPurchaseDetails");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductSubCategories", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.ProductCategories", "ProductCategories")
@@ -806,6 +945,17 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("ProductCategories");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.ProductVariant", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
+                        .WithMany("ProductVariants")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Stock", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
@@ -814,15 +964,15 @@ namespace Inventory_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
+                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
                         .WithMany("Stocks")
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Branch");
 
-                    b.Navigation("Product");
+                    b.Navigation("ProductVariant");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPayment", b =>
@@ -865,9 +1015,9 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchaseDetails", b =>
                 {
-                    b.HasOne("Inventory_Management_System.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
+                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
+                        .WithMany("SupplierPurchaseDetails")
+                        .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -877,7 +1027,7 @@ namespace Inventory_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Product");
+                    b.Navigation("ProductVariant");
 
                     b.Navigation("SupplierPurchase");
                 });
@@ -942,7 +1092,7 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Product", b =>
                 {
-                    b.Navigation("Stocks");
+                    b.Navigation("ProductVariants");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductCategories", b =>
@@ -953,6 +1103,17 @@ namespace Inventory_Management_System.Migrations
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductSubCategories", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.ProductVariant", b =>
+                {
+                    b.Navigation("InventoryTransactions");
+
+                    b.Navigation("ProductSerials");
+
+                    b.Navigation("Stocks");
+
+                    b.Navigation("SupplierPurchaseDetails");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Supplier", b =>
@@ -974,6 +1135,11 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("SupplierPurchaseDetails");
 
                     b.Navigation("SupplierPurchasePayments");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchaseDetails", b =>
+                {
+                    b.Navigation("ProductSerials");
                 });
 #pragma warning restore 612, 618
         }

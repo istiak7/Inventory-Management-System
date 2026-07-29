@@ -56,8 +56,6 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                 product.ProductName = request.ProductName;
                 product.ProductDescription = request.ProductDescription;
                 product.ProductImageUrl = request.ProductImageUrl;
-                product.SKU = request.ProductCode;
-                product.ProductPrice = request.ProductPrice;
                 product.ProductSubCategoryId = request.ProductSubCategoryId;
                 product.BrandId = request.BrandId;
                 product.UpDatedAt = DateTime.UtcNow;

@@ -28,7 +28,8 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.SupplierId).IsRequired();
             builder.Property(s => s.BranchId).IsRequired();
             builder.Property(s => s.InvoiceNumber).HasMaxLength(100);
-            builder.Property(s => s.Status).IsRequired().HasMaxLength(20);
+            builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
+            builder.Property(s => s.PurchaseType).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
             builder.Property(s => s.PaidAmount).HasPrecision(18, 2);
             builder.Property(s => s.DueAmount).HasPrecision(18, 2);
@@ -50,10 +51,11 @@ namespace Inventory_Management_System.Database.Configurations
         public void Configure(EntityTypeBuilder<SupplierPurchaseDetails> builder)
         {
             builder.HasKey(d => d.Id); // Id is the primary key
-            builder.Property(d => d.Quantity).IsRequired();
+            builder.Property(d => d.OrderedQuantity).IsRequired();
             builder.Property(d => d.UnitPrice).HasPrecision(18, 2);
             builder.Property(d => d.TotalAmount).HasPrecision(18, 2);
-            builder.Property(d => d.IsApproved).IsRequired().HasMaxLength(20);
+            builder.Property(d => d.WarrantyMonths).IsRequired();
+            builder.Property(d => d.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(d => d.PurchaseId).IsRequired();
 
             builder.HasOne(d => d.SupplierPurchase)
@@ -61,9 +63,9 @@ namespace Inventory_Management_System.Database.Configurations
                    .HasForeignKey(d => d.PurchaseId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne(d => d.Product)
-                   .WithMany()
-                   .HasForeignKey(d => d.ProductId)
+            builder.HasOne(d => d.ProductVariant)
+                   .WithMany(v => v.SupplierPurchaseDetails)
+                   .HasForeignKey(d => d.ProductVariantId)
                    .OnDelete(DeleteBehavior.Restrict);
         }
     }

@@ -21,6 +21,21 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                 if (request.SupplierId is int supplierId)
                     query = query.Where(t => t.SupplierId == supplierId);
 
+                if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
+                {
+                    var term = $"%{request.InvoiceNumber.Trim()}%";
+                    // Match a purchase by its own invoice, or a payment by any invoice it settled.
+                    query = query.Where(t =>
+                        (t.SupplierPurchase != null &&
+                         t.SupplierPurchase.InvoiceNumber != null &&
+                         EF.Functions.ILike(t.SupplierPurchase.InvoiceNumber, term))
+                        ||
+                        (t.SupplierPayment != null &&
+                         t.SupplierPayment.SupplierPurchasePayments.Any(pp =>
+                            pp.SupplierPurchase.InvoiceNumber != null &&
+                            EF.Functions.ILike(pp.SupplierPurchase.InvoiceNumber, term))));
+                }
+
                 var pagedResult = await query
                     .OrderByDescending(t => t.Id)
                     .Select(t => new SupplierLedgerEntryResponse(
@@ -37,7 +52,17 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                                 : ("TXN-" + t.Id),
                         t.Debit,
                         t.Credit,
-                        t.BalanceAfter))
+                        t.BalanceAfter,
+                        // Invoice(s) tied to this row: the purchase's own invoice, or the invoice(s)
+                        // a payment was applied against (from the allocation junction).
+                        t.SupplierPurchaseId != null
+                            ? new List<string> { t.SupplierPurchase!.InvoiceNumber ?? ("PUR-" + t.SupplierPurchaseId) }
+                            : t.SupplierPaymentId != null
+                                ? t.SupplierPayment!.SupplierPurchasePayments
+                                    .OrderBy(pp => pp.Id)
+                                    .Select(pp => pp.SupplierPurchase.InvoiceNumber ?? ("PUR-" + pp.SupplierPurchaseId))
+                                    .ToList()
+                                : new List<string>()))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result

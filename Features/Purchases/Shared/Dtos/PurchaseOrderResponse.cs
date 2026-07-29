@@ -9,7 +9,6 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         string Status,
         string PurchaseType,
         decimal TotalAmount,
-        decimal TotalDueAmount,
-        PaymentResponse? Payment
+        decimal TotalDueAmount
     );
 }

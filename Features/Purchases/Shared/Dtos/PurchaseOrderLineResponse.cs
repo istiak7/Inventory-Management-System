@@ -1,11 +1,16 @@
 namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
 {
     public sealed record PurchaseOrderLineResponse(
-        int ProductId,
+        int Id,   // SupplierPurchaseDetails id (the lot) — used when receiving goods
+        int ProductVariantId,
+        string SKU,
         string ProductName,
-        int Quantity,
+        bool IsSerialized,
+        int OrderedQuantity,
+        int? ReceivedQuantity,
         decimal UnitPrice,
         decimal TotalAmount,
-        string IsApproved
+        int WarrantyMonths,
+        string Status
     );
 }

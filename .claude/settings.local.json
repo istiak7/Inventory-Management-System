@@ -4,7 +4,8 @@
       "Bash(rm -f Inventory-Management-System.http)",
       "Bash(rm -rf Controllers)",
       "Bash(cd:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Read(//c/Program Files/PostgreSQL/**)"
     ]
   },
   "enabledMcpjsonServers": [

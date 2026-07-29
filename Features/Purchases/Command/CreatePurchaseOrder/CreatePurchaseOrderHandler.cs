@@ -1,5 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -15,35 +16,16 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
         public async Task<Result> Handle(CreatePurchaseOrderCommand request, CancellationToken cancellationToken)
         {
             if (request.Items.Count == 0)
-                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "At least one purchase item is required." };
-
-            foreach (var item in request.Items)
-            {
-                if (item.Quantity <= 0)
+                return new Result
                 {
-                    return new Result
-                    {
-                        IsSuccess = false,
-                        StatusCode = 400,
-                        Status = "Error",
-                        Message = "Quantity must be positive."
-                    };
-                }
-                if (item.UnitPrice < 0)
-                {
-                    return new Result
-                    {
-                        IsSuccess = false,
-                        StatusCode = 400,
-                        Status = "Error",
-                        Message = "Unit price cannot be negative."
-                    };
-                }
-            }
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "At least one purchase item is required."
+                };
 
             var supplier = await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken);
             if (supplier == null)
-            {
                 return new Result
                 {
                     IsSuccess = false,
@@ -51,10 +33,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Status = "Error",
                     Message = "Supplier not found."
                 };
-            }
+
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
-            {
                 return new Result
                 {
                     IsSuccess = false,
@@ -62,9 +43,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Status = "Error",
                     Message = "Branch not found."
                 };
-            }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
 
@@ -74,62 +53,60 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     BranchId = request.BranchId,
                     PurchaseDate = request.PurchaseDate ?? DateTime.Now,
                     InvoiceNumber = request.InvoiceNumber,
-                    Status = "Pending",
+                    Status = PurchaseStatus.Pending,
+                    PurchaseType = PurchaseType.Credit,
                     Supplier = supplier,
                     Branch = branch,
                 };
 
-                // Build the line items — TotalAmount is the sum of every line total.
+
                 decimal totalAmount = 0;
                 foreach (var item in request.Items)
                 {
-                    var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == item.ProductId, cancellationToken);
-                    if (product == null)
-                    {
+                    var variant = await _dbContext.ProductVariants.FirstOrDefaultAsync(v => v.Id == item.ProductVariantId, cancellationToken);
+                    if (variant == null)
                         return new Result
                         {
                             IsSuccess = false,
                             StatusCode = 404,
                             Status = "Error",
-                            Message = $"Product with id {item.ProductId} not found."
+                            Message = $"Product variant with id {item.ProductVariantId} not found."
                         };
-                    }
+
                     var lineTotal = item.Quantity * item.UnitPrice;
                     totalAmount += lineTotal;
 
                     purchase.SupplierPurchaseDetails.Add(new SupplierPurchaseDetails
                     {
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity,
+                        ProductVariantId = item.ProductVariantId,
+                        OrderedQuantity = item.Quantity,
+                        ReceivedQuantity = null,          // unknown until goods receipt
                         UnitPrice = item.UnitPrice,
                         TotalAmount = lineTotal,
-                        IsApproved = "Pending",
+                        WarrantyMonths = item.WarrantyMonths,
+                        Status = LineStatus.Pending,
                         SupplierPurchase = purchase,
-                        Product = product,
+                        ProductVariant = variant,
                     });
                 }
 
-                // Header holds the money: nothing is paid until approval, so due == total.
                 purchase.TotalAmount = totalAmount;
                 purchase.PaidAmount = 0;
                 purchase.DueAmount = totalAmount;
 
-
-                var intendedAmount = request.Payment?.Amount ?? 0;
-                purchase.PurchaseType = intendedAmount <= 0 ? "due"
-                                      : intendedAmount >= totalAmount ? "fillpayment"
-                                      : "partial";
-
                 await _dbContext.SupplierPurchases.AddAsync(purchase, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
 
                 var response = new PurchaseOrderResponse(
-                    purchase.Id, purchase.SupplierId, purchase.BranchId, purchase.PurchaseDate,
-                    purchase.InvoiceNumber, purchase.Status, purchase.PurchaseType,
-                    purchase.TotalAmount, purchase.DueAmount,
-                    null
-                );
+                    purchase.Id,
+                    purchase.SupplierId,
+                    purchase.BranchId,
+                    purchase.PurchaseDate,
+                    purchase.InvoiceNumber,
+                    purchase.Status.ToString(),
+                    purchase.PurchaseType.ToString(),
+                    purchase.TotalAmount,
+                    purchase.DueAmount);
 
                 return new Result
                 {
@@ -142,7 +119,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync(cancellationToken);
                 _logger.LogError(ex, "Error creating purchase order");
                 return new Result
                 {
