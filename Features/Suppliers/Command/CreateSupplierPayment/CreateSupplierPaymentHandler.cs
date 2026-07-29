@@ -17,21 +17,43 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
         {
             var supplier = await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken);
             if (supplier == null)
-                return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Supplier not found." };
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 404, Status = "Error", 
+                    Message = "Supplier not found."
+                };
 
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
-                return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Branch not found." };
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Error",
+                    Message = "Branch not found."
+                };
 
             if (request.Amount <= 0)
-                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount must be greater than 0." };
+                return new Result 
+                { IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Payment amount must be greater than 0."
+                };
 
 
             var remainingDue = await _dbContext.SupplierPurchases
                 .Where(p => p.SupplierId == request.SupplierId && p.Status == PurchaseStatus.Approved)
                 .SumAsync(p => p.DueAmount, cancellationToken);
             if(remainingDue - request.Amount < 0)
-                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount exceeds the remaining due amount." };
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error", 
+                    Message = "Payment amount exceeds the remaining due amount."
+                };
 
 
             foreach(var payment in request.Allocations)
@@ -40,8 +62,15 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     .Where(p => p.Id == payment.PurchaseId && p.SupplierId == request.SupplierId && p.Status == PurchaseStatus.Approved)
                     .Select(p => p.DueAmount)
                     .FirstOrDefaultAsync(cancellationToken);
+
                 if (remainingDueForPurchase - payment.Amount < 0)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Allocation amount for invoice {payment.PurchaseId} exceeds its remaining due amount." };
+                    return new Result 
+                    { 
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Allocation amount for invoice {payment.PurchaseId} exceeds its remaining due amount." 
+                    };
 
             }
 
@@ -52,14 +81,32 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
             if (hasAllocations)
             {
                 if (request.Allocations.Any(a => a.Amount <= 0))
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Each allocation amount must be greater than 0." };
+                    return new Result 
+                    { 
+                        IsSuccess = false,
+                        StatusCode = 400, 
+                        Status = "Error",
+                        Message = "Each allocation amount must be greater than 0."
+                    };
 
                 if (request.Allocations.GroupBy(a => a.PurchaseId).Any(g => g.Count() > 1))
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Duplicate invoice in allocations." };
+                    return new Result 
+                    {
+                        IsSuccess = false, 
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = "Duplicate invoice in allocations."
+                    };
 
                 var allocationTotal = request.Allocations.Sum(a => a.Amount);
                 if (allocationTotal > request.Amount)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Allocations exceed the payment amount." };
+                    return new Result 
+                    { 
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = "Allocations exceed the payment amount." 
+                    };
 
                 var ids = request.Allocations.Select(a => a.PurchaseId).ToList();
                 targetedPurchases = await _dbContext.SupplierPurchases
@@ -70,15 +117,39 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                 {
                     var purchase = targetedPurchases.FirstOrDefault(p => p.Id == alloc.PurchaseId);
                     if (purchase == null || purchase.SupplierId != request.SupplierId)
-                        return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"Invoice {alloc.PurchaseId} not found for this supplier." };
+                        return new Result 
+                        { 
+                            IsSuccess = false,
+                            StatusCode = 404,
+                            Status = "Error",
+                            Message = $"Invoice {alloc.PurchaseId} not found for this supplier." 
+                        };
                     // Only an approved (fully received) purchase is payable — pending, partially
                     // received, or rejected orders must not generate payment records.
                     if (purchase.Status != PurchaseStatus.Approved)
-                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} is not approved yet and cannot be paid." };
+                        return new Result 
+                        { 
+                            IsSuccess = false, 
+                            StatusCode = 400,
+                            Status = "Error", 
+                            Message = $"Invoice {alloc.PurchaseId} is not approved yet and cannot be paid." 
+                        };
                     if (purchase.DueAmount <= 0)
-                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {alloc.PurchaseId} has no outstanding due." };
+                        return new Result 
+                        { 
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Invoice {alloc.PurchaseId} has no outstanding due." 
+                        };
                     if (alloc.Amount > purchase.DueAmount)
-                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Allocation for invoice {alloc.PurchaseId} exceeds its due amount." };
+                        return new Result 
+                        { 
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Allocation for invoice {alloc.PurchaseId} exceeds its due amount." 
+                        };
                 }
             }
 
@@ -142,20 +213,29 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     payment.Id, payment.SupplierId, payment.Amount, payment.PaymentDate,
                     payment.PaymentMethod, allocatedAmount, runningBalance);
 
-                return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = "Payment recorded successfully", Data = response };
+                return new Result 
+                { 
+                    IsSuccess = true,
+                    StatusCode = 201,
+                    Status = "Success",
+                    Message = "Payment recorded successfully",
+                    Data = response 
+                };
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 _logger.LogError(ex, "Error recording supplier payment");
-                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while recording the payment." };
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 500,
+                    Status = "Error",
+                    Message = "An error occurred while recording the payment."
+                };
             }
         }
 
-        /// <summary>
-        /// The supplier's current overall balance = the BalanceAfter of their most recent transaction
-        /// (0 if none). This is the starting point onto which this payment's credit is applied.
-        /// </summary>
         private async Task<decimal> GetCurrentSupplierBalanceAsync(int supplierId, CancellationToken cancellationToken)
         {
             return await _dbContext.SupplierTransactions
