@@ -39,7 +39,12 @@ builder.Services.AddTransient(
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-Console.WriteLine($"[DEBUG] SecretKey Loaded: '{jwtSettings.SecretKey}'");
+
+// Fail fast on a missing/short signing key instead of printing it: the previous debug line
+// wrote the raw secret to stdout, so it landed in every console and log sink.
+if (string.IsNullOrWhiteSpace(jwtSettings?.SecretKey) || jwtSettings.SecretKey.Length < 32)
+    throw new InvalidOperationException(
+        "JwtSettings:SecretKey is missing or shorter than 32 characters. Configure it via user-secrets or an environment variable.");
 
 builder.AddJWTAuthentication();
 builder.Services.AddServices();
