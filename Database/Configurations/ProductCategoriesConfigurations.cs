@@ -62,6 +62,20 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(v => v.SellingPrice).HasPrecision(18, 2);
             builder.Property(v => v.AttributesJson).HasColumnType("jsonb");
             builder.HasIndex(v => v.AttributesJson).HasMethod("gin");
+            // SearchText is written by AppDbContext.SaveChanges; SearchVector is derived from it
+            // by a database trigger (see AddSearchVectorToProductVariant). Marking the vector
+            // store-generated keeps EF from sending a NULL for it on every INSERT/UPDATE and
+            // makes EF read the trigger's value back into the tracked entity.
+            builder.Property(v => v.SearchText)
+                .HasColumnType("text")
+                .IsRequired(false);
+
+            builder.Property(v => v.SearchVector)
+                .HasColumnType("tsvector")
+                .ValueGeneratedOnAddOrUpdate();
+
+            builder.HasIndex(v => v.SearchVector)
+                .HasMethod("GIN");
 
             builder.HasOne(v => v.Product)
                    .WithMany(p => p.ProductVariants)
