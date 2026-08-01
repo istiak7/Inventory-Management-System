@@ -14,10 +14,12 @@ namespace Inventory_Management_System.Entities
         public SerialStatus Status { get; set; } = SerialStatus.InStock;
         public int WarrantyMonths { get; set; }              // copied from the lot at receipt
         public DateTime ReceivedDate { get; set; } = DateTime.Now;
+        public DateTime? SoldDate { get; set; } = null;
 
         // Navigation property
         public required ProductVariant ProductVariant { get; set; }
         public required SupplierPurchaseDetails SupplierPurchaseDetails { get; set; }
         public required Branch Branch { get; set; }
+        public SaleDetails? SaleDetails { get; set; } // null if not yet sold
     }
 }

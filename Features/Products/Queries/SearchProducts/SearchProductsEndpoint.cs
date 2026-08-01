@@ -11,6 +11,7 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 IMediator mediator,
                 string? term = null,
                 int? productId = null,
+                int? branchId = null,
                 bool? isSerialized = null,
                 decimal? minPrice = null,
                 decimal? maxPrice = null,
@@ -18,12 +19,13 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 int pageSize = 20) =>
             {
                 var result = await mediator.Send(new SearchProductsQuery(
-                    term, productId, isSerialized, minPrice, maxPrice, pageNumber, pageSize));
+                    term, productId, branchId, isSerialized, minPrice, maxPrice, pageNumber, pageSize));
 
                 return Results.Ok(result);
             })
             .WithTags("Product")
-            .WithSummary("Full-text search over product variants (name, SKU, barcode, attributes).");
+            .WithSummary("Full-text search over product variants (name, SKU, barcode, attributes). " +
+                         "Pass branchId to scope results to variants stocked in that branch.");
         }
     }
 }

@@ -26,6 +26,10 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 .GreaterThan(0).When(x => x.ProductId.HasValue)
                 .WithMessage("A valid product id is required.");
 
+            RuleFor(x => x.BranchId)
+                .GreaterThan(0).When(x => x.BranchId.HasValue)
+                .WithMessage("A valid branch id is required.");
+
             RuleFor(x => x.MinPrice)
                 .GreaterThanOrEqualTo(0).When(x => x.MinPrice.HasValue)
                 .WithMessage("Minimum price must be 0 or greater.");
