@@ -51,7 +51,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                             d.DiscountPerItem,
                             d.TotalAmount,
                             d.WarrantyMonths,
-                            d.Status
+                            d.Status,
+                            SerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null
                         }).ToList(),
                         // Amount comes from the allocation, not the payment: one payment can be
                         // split across several sales, and this invoice only shows its own share.
@@ -85,7 +86,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                     sale.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.DiscountPerItem, l.TotalAmount,
-                        l.WarrantyMonths, l.Status.ToString())).ToList(),
+                        l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList(),
                     sale.Payments.Select(p => new SalePaymentResponse(
                         p.CustomerPaymentId, p.Amount, p.PaymentDate, p.PaymentMethod)).ToList());
 

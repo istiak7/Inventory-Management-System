@@ -47,6 +47,11 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 item.RuleFor(i => i.WarrantyMonths).GreaterThanOrEqualTo(0)
                     .When(i => i.WarrantyMonths.HasValue)
                     .WithMessage("WarrantyMonths must be 0 or greater.");
+                // Whether a serial is actually required depends on ProductVariant.IsSerialized,
+                // which only the handler knows — this just bounds the length to the column.
+                item.RuleFor(i => i.SerialNumber).MaximumLength(100)
+                    .When(i => i.SerialNumber != null)
+                    .WithMessage("SerialNumber must be 100 characters or fewer.");
             });
 
             When(x => x.Payment != null, () =>

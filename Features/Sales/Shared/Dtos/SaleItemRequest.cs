@@ -9,5 +9,9 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         public int Quantity { get; set; }
         public decimal? DiscountPerItem { get; set; }   // per-unit discount off the selling price
         public int? WarrantyMonths { get; set; }        // warranty sold with this line
+
+        // Required when the variant is serialized (ProductVariant.IsSerialized); identifies the
+        // exact physical unit being sold. Ignored for non-serialized variants.
+        public string? SerialNumber { get; set; }
     }
 }

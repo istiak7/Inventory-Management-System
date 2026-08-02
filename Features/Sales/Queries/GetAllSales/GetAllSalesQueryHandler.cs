@@ -72,7 +72,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                             d.DiscountPerItem,
                             d.TotalAmount,
                             d.WarrantyMonths,
-                            d.Status
+                            d.Status,
+                            SerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null
                         }).ToList()
                     })
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
@@ -86,7 +87,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                     s.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.DiscountPerItem, l.TotalAmount,
-                        l.WarrantyMonths, l.Status.ToString())).ToList()))
+                        l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList()))
                     .ToList();
 
                 var pagedResult = new PagedResult<SaleListResponse>

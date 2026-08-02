@@ -16,5 +16,6 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal? DiscountPerItem,
         decimal TotalAmount,
         int? WarrantyMonths,
-        string Status);
+        string Status,
+        string? SerialNumber);
 }

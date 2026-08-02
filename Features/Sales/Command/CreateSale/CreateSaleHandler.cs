@@ -70,6 +70,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 var variantCache = new Dictionary<int, ProductVariant>();
                 var stockCache = new Dictionary<int, Stock>();
                 var itemResponses = new List<SaleItemResponse>();
+                // Guards the same physical unit from being sold on two lines of the same request —
+                // the per-row DB check alone can't see a serial this same loop already claimed.
+                var claimedSerialIds = new HashSet<int>();
 
                 decimal subTotal = 0;
                 foreach (var item in request.Items)
@@ -101,6 +104,28 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     if (stock.CurrentStock < item.Quantity)
                         return Error(400, $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): {stock.CurrentStock} on hand, {item.Quantity} requested.");
 
+                    // Serialized variants sell one physical unit per line — the serial IS the unit,
+                    // so a quantity stepper would let the client claim units it never named.
+                    ProductSerial? serial = null;
+                    if (variant.IsSerialized)
+                    {
+                        if (item.Quantity != 1)
+                            return Error(400, $"'{variant.Product.ProductName}' is serialized: each line sells exactly 1 unit. Add another line for additional units.");
+
+                        var serialNumber = item.SerialNumber?.Trim();
+                        if (string.IsNullOrEmpty(serialNumber))
+                            return Error(400, $"A serial number is required for '{variant.Product.ProductName}' (SKU {variant.SKU}).");
+
+                        serial = await _dbContext.ProductSerials.FirstOrDefaultAsync(s =>
+                            s.SerialNumber == serialNumber &&
+                            s.ProductVariantId == variant.Id &&
+                            s.BranchId == request.BranchId &&
+                            s.Status == SerialStatus.InStock, cancellationToken);
+
+                        if (serial == null || !claimedSerialIds.Add(serial.Id))
+                            return Error(400, $"Serial number '{serialNumber}' is not available in stock for '{variant.Product.ProductName}' at this branch.");
+                    }
+
                     // Price comes from the catalog, never from the client (price-manipulation guard).
                     var unitPrice = variant.SellingPrice;
                     var discountPerItem = item.DiscountPerItem ?? 0;
@@ -128,6 +153,14 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         ProductVariant = variant,
                     }, cancellationToken);
 
+                    // The unit is leaving the branch as this sale is written, so its lifecycle
+                    // closes here — never recomputed or left InStock for a sale that just sold it.
+                    if (serial != null)
+                    {
+                        serial.Status = SerialStatus.Sold;
+                        serial.SoldDate = saleDate;
+                    }
+
                     sale.SaleDetails.Add(new SaleDetails
                     {
                         ProductVariantId = variant.Id,
@@ -136,13 +169,15 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         DiscountPerItem = item.DiscountPerItem,
                         TotalAmount = lineTotal,
                         WarrantyMonths = item.WarrantyMonths,
+                        ProductSerialId = serial?.Id,
                         Status = SaleLineStatus.Completed,
                         CustomerSale = sale,
                         ProductVariant = variant,
+                        ProductSerial = serial,
                     });
 
                     itemResponses.Add(new SaleItemResponse(
-                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, item.WarrantyMonths));
+                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, item.WarrantyMonths, serial?.SerialNumber));
                 }
 
                 if (request.DiscountAmount > subTotal)
