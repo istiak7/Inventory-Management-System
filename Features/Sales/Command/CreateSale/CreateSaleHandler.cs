@@ -128,6 +128,13 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                     // Price comes from the catalog, never from the client (price-manipulation guard).
                     var unitPrice = variant.SellingPrice;
+
+                    // Warranty is resolved the same way for a serialized unit: ProductSerial.WarrantyMonths
+                    // was copied from its purchase lot at receipt, so it IS the term this physical unit
+                    // carries and the client cannot talk it up. Pooled non-serialized stock has no single
+                    // lot to read from, so there the line's own value stands.
+                    var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
+
                     var discountPerItem = item.DiscountPerItem ?? 0;
                     if (discountPerItem > unitPrice)
                         return Error(400, $"DiscountPerItem {discountPerItem} exceeds the unit price {unitPrice} for '{variant.Product.ProductName}'.");
@@ -144,6 +151,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     {
                         BranchId = request.BranchId,
                         ProductVariantId = variant.Id,
+                        // Cost lineage. A serialized unit knows the lot it arrived in, so the
+                        // SaleOut row can name it and its cost (lot.UnitPrice) is recoverable —
+                        // that is what makes exact COGS/profit reportable per line. A
+                        // non-serialized sale draws from pooled stock with no single lot, so it
+                        // stays null rather than guessing one.
+                        SupplierPurchaseDetailsId = serial?.SupplierPurchaseDetailsId,
                         TransactionType = InventoryTxnType.SaleOut,
                         QuantityIn = 0,
                         QuantityOut = item.Quantity,
@@ -168,7 +181,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         UnitPrice = unitPrice,
                         DiscountPerItem = item.DiscountPerItem,
                         TotalAmount = lineTotal,
-                        WarrantyMonths = item.WarrantyMonths,
+                        WarrantyMonths = warrantyMonths,
                         ProductSerialId = serial?.Id,
                         Status = SaleLineStatus.Completed,
                         CustomerSale = sale,
@@ -177,7 +190,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     });
 
                     itemResponses.Add(new SaleItemResponse(
-                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, item.WarrantyMonths, serial?.SerialNumber));
+                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, warrantyMonths, serial?.SerialNumber));
                 }
 
                 if (request.DiscountAmount > subTotal)
@@ -244,6 +257,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     }, cancellationToken);
 
                     // Ledger (money): the payment debits the customer account (they owe us less).
+                    // SaleId is carried as well as CustomerPaymentId: at the counter a payment is
+                    // raised against exactly one invoice, so naming it here lets a customer ledger
+                    // show what each payment settled without joining back through SaleCustomerPayments.
                     runningBalance -= paidAmount;
                     await _dbContext.CustomerTransactions.AddAsync(new CustomerTransaction
                     {
@@ -253,6 +269,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         Debit = paidAmount,
                         Credit = 0,
                         BalanceAfter = runningBalance,
+                        CustomerSale = sale,
                         CustomerPayment = payment,
                         Customer = customer,
                     }, cancellationToken);
@@ -271,6 +288,26 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 );
 
                 return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = "Sale created successfully", Data = response };
+            }
+            // The serial and the invoice number are both guarded by unique indexes, because the
+            // pre-checks above cannot see a sale another till is committing right now. Losing that
+            // race lands here, so name what actually collided — a bare "something went wrong" sends
+            // the counter hunting for a fault that is not theirs.
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                var constraint = (ex.InnerException as PostgresException)?.ConstraintName;
+                _logger.LogWarning(ex, "Sale creation lost a uniqueness race on {Constraint}", constraint);
+
+                return constraint switch
+                {
+                    "IX_SaleDetails_ProductSerialId" => Error(409,
+                        "One of those serial numbers was sold on another sale a moment ago. Re-scan the unit and try again."),
+                    "IX_CustomerSales_InvoiceNumber" => Error(409,
+                        "That invoice number was taken by another sale a moment ago. Leave it blank to have one generated."),
+                    _ => Error(409,
+                        "This sale clashed with another one saved at the same moment. Nothing was recorded — please try again."),
+                };
             }
             catch (Exception ex)
             {
