@@ -230,6 +230,8 @@ namespace Inventory_Management_System.Database
         public DbSet<CustomerTransaction> CustomerTransactions { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
+        public DbSet<StockTransfer> StockTransfers { get; set; }
+        public DbSet<StockTransferDetails> StockTransferDetails { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Designation> Designations { get; set; }
