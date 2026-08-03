@@ -20,21 +20,43 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
     {
         public async Task<Result> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
         {
+            #region Basic validation
+
             if (request.Items.Count == 0)
-                return Error(400, "At least one sale item is required.");
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "At least one item is required to create a sale."
+                };
 
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
-                return Error(404, "Branch not found.");
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Error",
+                    Message = "Branch not found." 
+                };
 
-            // Client-supplied invoice numbers must not collide with an existing one.
+            // Client invoice numbers must not same with an existing one.
             if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
             {
                 var taken = await _dbContext.CustomerSales
                     .AnyAsync(s => s.InvoiceNumber == request.InvoiceNumber, cancellationToken);
                 if (taken)
-                    return Error(400, $"Invoice number '{request.InvoiceNumber}' already exists.");
+                    return new Result 
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Invoice number '{request.InvoiceNumber}' already exists."
+                    };
             }
+
+            #endregion
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
@@ -83,7 +105,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                             .Include(v => v.Product)
                             .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId, cancellationToken);
                         if (loaded == null)
-                            return Error(404, $"Product variant with id {item.ProductVariantId} not found.");
+                            return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"Product variant with id {item.ProductVariantId} not found." };
 
                         variant = loaded;
                         variantCache[item.ProductVariantId] = variant;
@@ -95,14 +117,14 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         var loaded = await _dbContext.Stocks
                             .FirstOrDefaultAsync(s => s.BranchId == request.BranchId && s.ProductVariantId == variant.Id, cancellationToken);
                         if (loaded == null)
-                            return Error(400, $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): none on hand at this branch.");
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): none on hand at this branch." };
 
                         stock = loaded;
                         stockCache[variant.Id] = stock;
                     }
 
                     if (stock.CurrentStock < item.Quantity)
-                        return Error(400, $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): {stock.CurrentStock} on hand, {item.Quantity} requested.");
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): {stock.CurrentStock} on hand, {item.Quantity} requested." };
 
                     // Serialized variants sell one physical unit per line — the serial IS the unit,
                     // so a quantity stepper would let the client claim units it never named.
@@ -110,11 +132,11 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     if (variant.IsSerialized)
                     {
                         if (item.Quantity != 1)
-                            return Error(400, $"'{variant.Product.ProductName}' is serialized: each line sells exactly 1 unit. Add another line for additional units.");
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"'{variant.Product.ProductName}' is serialized: each line sells exactly 1 unit. Add another line for additional units." };
 
                         var serialNumber = item.SerialNumber?.Trim();
                         if (string.IsNullOrEmpty(serialNumber))
-                            return Error(400, $"A serial number is required for '{variant.Product.ProductName}' (SKU {variant.SKU}).");
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A serial number is required for '{variant.Product.ProductName}' (SKU {variant.SKU})." };
 
                         serial = await _dbContext.ProductSerials.FirstOrDefaultAsync(s =>
                             s.SerialNumber == serialNumber &&
@@ -123,7 +145,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                             s.Status == SerialStatus.InStock, cancellationToken);
 
                         if (serial == null || !claimedSerialIds.Add(serial.Id))
-                            return Error(400, $"Serial number '{serialNumber}' is not available in stock for '{variant.Product.ProductName}' at this branch.");
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial number '{serialNumber}' is not available in stock for '{variant.Product.ProductName}' at this branch." };
                     }
 
                     // Price comes from the catalog, never from the client (price-manipulation guard).
@@ -137,7 +159,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                     var discountPerItem = item.DiscountPerItem ?? 0;
                     if (discountPerItem > unitPrice)
-                        return Error(400, $"DiscountPerItem {discountPerItem} exceeds the unit price {unitPrice} for '{variant.Product.ProductName}'.");
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"DiscountPerItem {discountPerItem} exceeds the unit price {unitPrice} for '{variant.Product.ProductName}'." };
 
                     var lineTotal = (unitPrice - discountPerItem) * item.Quantity;
                     subTotal += lineTotal;
@@ -194,16 +216,16 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 }
 
                 if (request.DiscountAmount > subTotal)
-                    return Error(400, $"DiscountAmount {request.DiscountAmount} exceeds the subtotal {subTotal}.");
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"DiscountAmount {request.DiscountAmount} exceeds the subtotal {subTotal}." };
 
                 var totalAmount = subTotal - request.DiscountAmount + request.TaxAmount;
 
                 // Payment mode inferred from Amount vs total (no silent clamping).
                 var paidAmount = request.Payment?.Amount ?? 0;
                 if (paidAmount < 0)
-                    return Error(400, "Payment amount cannot be negative.");
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount cannot be negative." };
                 if (paidAmount > totalAmount)
-                    return Error(400, "Payment exceeds the total. Pay the full amount or a smaller one.");
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment exceeds the total. Pay the full amount or a smaller one." };
 
                 sale.SubTotal = subTotal;
                 sale.DiscountAmount = request.DiscountAmount;
@@ -301,12 +323,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 return constraint switch
                 {
-                    "IX_SaleDetails_ProductSerialId" => Error(409,
-                        "One of those serial numbers was sold on another sale a moment ago. Re-scan the unit and try again."),
-                    "IX_CustomerSales_InvoiceNumber" => Error(409,
-                        "That invoice number was taken by another sale a moment ago. Leave it blank to have one generated."),
-                    _ => Error(409,
-                        "This sale clashed with another one saved at the same moment. Nothing was recorded — please try again."),
+                    "IX_SaleDetails_ProductSerialId" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "One of those serial numbers was sold on another sale a moment ago. Re-scan the unit and try again." },
+                    "IX_CustomerSales_InvoiceNumber" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "That invoice number was taken by another sale a moment ago. Leave it blank to have one generated." },
+                    _ => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "This sale clashed with another one saved at the same moment. Nothing was recorded — please try again." },
                 };
             }
             catch (Exception ex)
@@ -314,7 +333,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 await transaction.RollbackAsync(cancellationToken);
                 _logger.LogError(ex, "Error creating sale for customer {CustomerId} / phone {PhoneNumber}",
                     request.CustomerId, request.Customer?.PhoneNumber);
-                return Error(500, "An error occurred while creating the sale.");
+                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while creating the sale." };
             }
         }
 
@@ -337,16 +356,16 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     .FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken);
 
                 return existing == null
-                    ? (null, Error(404, "Customer not found."))
+                    ? (null, new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Customer not found." })
                     : (existing, null);
             }
 
             if (request.Customer == null)
-                return (null, Error(400, "Either CustomerId or Customer details are required."));
+                return (null, new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Either CustomerId or Customer details are required." });
 
             var phoneNumber = CustomerPhoneNumber.Normalize(request.Customer.PhoneNumber);
             if (phoneNumber.Length < CustomerPhoneNumber.MinimumDigits)
-                return (null, Error(400, $"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits."));
+                return (null, new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits." });
 
             // The number is the identity, so an existing owner wins outright — the details typed at
             // the till never overwrite a record that is already on file.
@@ -401,7 +420,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 return winner != null
                     ? (winner, null)
-                    : (null, Error(500, "Could not register the customer for this sale."));
+                    : (null, new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "Could not register the customer for this sale." });
             }
         }
 
@@ -443,8 +462,5 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 .Select(t => t.BalanceAfter)
                 .FirstOrDefaultAsync(cancellationToken);
         }
-
-        private static Result Error(int code, string message) =>
-            new() { IsSuccess = false, StatusCode = code, Status = "Error", Message = message };
     }
 }
