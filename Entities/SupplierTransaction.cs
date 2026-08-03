@@ -1,6 +1,6 @@
 ﻿namespace Inventory_Management_System.Entities
 {
-    public class SupplierTransaction : BaseEntity
+    public class SupplierTransaction : BaseEntity, Common.ILedgerEntry
     {
         public int SupplierId { get; set; }
         public string TransactionType { get; set; } = "Purchase";

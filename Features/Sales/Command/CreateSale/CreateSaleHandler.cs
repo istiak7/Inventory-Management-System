@@ -4,6 +4,7 @@ using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -86,9 +87,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     Branch = branch,
                 };
 
-                // Same variant may appear on several lines — cache both the variant and its stock
-                // row so quantities accumulate against ONE snapshot instead of each line re-reading
-                // the pre-sale on-hand and passing a check it should have failed.
                 var variantCache = new Dictionary<int, ProductVariant>();
                 var stockCache = new Dictionary<int, Stock>();
                 var itemResponses = new List<SaleItemResponse>();
@@ -151,10 +149,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     // Price comes from the catalog, never from the client (price-manipulation guard).
                     var unitPrice = variant.SellingPrice;
 
-                    // Warranty is resolved the same way for a serialized unit: ProductSerial.WarrantyMonths
-                    // was copied from its purchase lot at receipt, so it IS the term this physical unit
-                    // carries and the client cannot talk it up. Pooled non-serialized stock has no single
-                    // lot to read from, so there the line's own value stands.
+                  
                     var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
 
                     var discountPerItem = item.DiscountPerItem ?? 0;
@@ -238,7 +233,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 await _dbContext.CustomerSales.AddAsync(sale, cancellationToken);
 
                 // Ledger (money): the sale credits the customer account (they owe us more).
-                var runningBalance = await GetCurrentCustomerBalanceAsync(sale.CustomerId, cancellationToken);
+                var runningBalance = await _dbContext.CustomerTransactions
+                    .Where(t => t.CustomerId == sale.CustomerId)
+                    .GetLatestBalanceAsync(cancellationToken);
                 runningBalance += totalAmount;
                 await _dbContext.CustomerTransactions.AddAsync(new CustomerTransaction
                 {
@@ -337,16 +334,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             }
         }
 
-        /// <summary>
-        /// Who this sale is billed to. Either the customer whose id the form sent, or — when the
-        /// form typed a mobile number that its lookup did not recognise — the customer that number
-        /// belongs to, registering them if they are genuinely new.
-        ///
-        /// This is a find-or-create rather than a create: the form's lookup and its save are two
-        /// round trips, and the same walk-in can be registered at another till in between. Losing
-        /// that race is normal, not exceptional, so both the pre-check and the unique-index
-        /// violation resolve the same way — bill the sale to whoever now owns the number.
-        /// </summary>
         private async Task<(Customer? Customer, Result? Error)> ResolveCustomerAsync(
             CreateSaleCommand request, CancellationToken cancellationToken)
         {
@@ -367,7 +354,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             if (phoneNumber.Length < CustomerPhoneNumber.MinimumDigits)
                 return (null, new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits." });
 
-            // The number is the identity, so an existing owner wins outright — the details typed at
+            // The number is the identity, so an existing customer
             // the till never overwrite a record that is already on file.
             var byPhone = await _dbContext.Customers
                 .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
@@ -383,15 +370,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 Email = request.Customer.Email,
                 Address = request.Customer.Address,
                 NID = request.Customer.NID,
-                OpeningBalance = 0,   // met at the counter — they start owing nothing
+                OpeningBalance = 0,
                 CreatedAt = DateTime.UtcNow,
             };
 
             await _dbContext.Customers.AddAsync(customer, cancellationToken);
 
-            // Postgres aborts the entire transaction on a constraint violation — every later
-            // command fails with 25P02 until it is unwound. A savepoint scopes the damage to just
-            // this insert, so losing the race below is still recoverable and the sale can go on.
             var transaction = _dbContext.Database.CurrentTransaction;
             const string savepoint = "before_customer_insert";
             if (transaction != null)
@@ -399,21 +383,17 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
             try
             {
-                // Flushed now so customer.Id exists for the sale, its ledger row and any payment.
-                // Still inside the caller's transaction, so a later failure rolls this back too.
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 return (customer, null);
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
-                // Someone registered this number between the check above and this insert. The
-                // unique index did its job; adopt their row instead of failing the sale.
                 if (transaction != null)
                     await transaction.RollbackToSavepointAsync(savepoint, cancellationToken);
 
                 // The insert is undone but EF still has it pending — drop it, or the sale's own
                 // SaveChanges would replay it and hit the same constraint.
-                _dbContext.Entry(customer).State = EntityState.Detached;
+                _dbContext.Entry(customer).State = EntityState.Detached; // ef core memory tracking: forget the failed insert
 
                 var winner = await _dbContext.Customers
                     .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
@@ -424,16 +404,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             }
         }
 
-        /// <summary>Postgres reports a unique-index breach as SQLSTATE 23505.</summary>
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        /// <summary>
-        /// Next invoice number for the sale's year, as INV-{year}-0001. Ordering by Id (not by the
-        /// string) keeps this correct past 9999, where zero-padded text would sort "10000" before
-        /// "9999". Two concurrent sales can still race to the same number; the unique index on
-        /// InvoiceNumber is the real guard and turns that into a rollback rather than a duplicate.
-        /// </summary>
         private async Task<string> GenerateInvoiceNumberAsync(DateTime saleDate, CancellationToken cancellationToken)
         {
             var prefix = $"INV-{saleDate.Year}-";
@@ -450,17 +423,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 next = lastSequence + 1;
 
             return prefix + next.ToString("D4");
-        }
-
-        /// <summary>Customer's current receivable = BalanceAfter of their latest transaction (0 if none).</summary>
-        private async Task<decimal> GetCurrentCustomerBalanceAsync(int customerId, CancellationToken cancellationToken)
-        {
-            return await _dbContext.CustomerTransactions
-                .AsNoTracking()
-                .Where(t => t.CustomerId == customerId)
-                .OrderByDescending(t => t.Id)
-                .Select(t => t.BalanceAfter)
-                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

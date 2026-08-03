@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -213,7 +214,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 // Runs at most once: an already-approved order is rejected at the top of this handler.
                 if (purchase.Status == PurchaseStatus.Approved)
                 {
-                    var runningBalance = await GetCurrentSupplierBalanceAsync(purchase.SupplierId, cancellationToken);
+                    var runningBalance = await _dbContext.SupplierTransactions
+                        .Where(t => t.SupplierId == purchase.SupplierId)
+                        .GetLatestBalanceAsync(cancellationToken);
                     runningBalance += purchase.TotalAmount;
                     await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
                     {
@@ -281,16 +284,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
             cache[variant.Id] = stock;
             return stock;
-        }
-
-        private async Task<decimal> GetCurrentSupplierBalanceAsync(int supplierId, CancellationToken cancellationToken)
-        {
-            return await _dbContext.SupplierTransactions
-                .AsNoTracking()
-                .Where(t => t.SupplierId == supplierId)
-                .OrderByDescending(t => t.Id)
-                .Select(t => t.BalanceAfter)
-                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }
