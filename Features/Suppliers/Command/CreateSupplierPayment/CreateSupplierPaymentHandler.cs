@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Suppliers.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -191,7 +192,9 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
 
                 // Ledger: the payment credits the supplier account (we now owe less), regardless of
                 // how much was allocated — the unallocated part is on-account credit.
-                var runningBalance = await GetCurrentSupplierBalanceAsync(request.SupplierId, cancellationToken);
+                var runningBalance = await _dbContext.SupplierTransactions
+                    .Where(t => t.SupplierId == request.SupplierId)
+                    .GetLatestBalanceAsync(cancellationToken);
                 runningBalance -= request.Amount;
 
                 await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
@@ -234,16 +237,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Message = "An error occurred while recording the payment."
                 };
             }
-        }
-
-        private async Task<decimal> GetCurrentSupplierBalanceAsync(int supplierId, CancellationToken cancellationToken)
-        {
-            return await _dbContext.SupplierTransactions
-                .AsNoTracking()
-                .Where(t => t.SupplierId == supplierId)
-                .OrderByDescending(t => t.Id)
-                .Select(t => t.BalanceAfter)
-                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

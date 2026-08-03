@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,13 +23,31 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 .FirstOrDefaultAsync(p => p.Id == request.PurchaseOrderId, cancellationToken);
 
             if (purchase == null)
-                return Error(404, "Purchase order not found.");
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Error",
+                    Message = "Purchase order not found."
+                };
             if (purchase.Status == PurchaseStatus.Rejected)
-                return Error(400, "A rejected purchase order cannot be received.");
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "A rejected purchase order cannot be received."
+                };
             if (purchase.Status == PurchaseStatus.Approved)
-                return Error(400, "This purchase order is already fully received.");
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "This purchase order is already fully received."
+                };
 
-            // ---- Validate every line up front (no partial side effects before this passes) ----
+
             var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials)>();
             var allSerials = new List<string>();
 
@@ -36,9 +55,29 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             {
                 var detail = purchase.SupplierPurchaseDetails.FirstOrDefault(d => d.Id == line.SupplierPurchaseDetailsId);
                 if (detail == null)
-                    return Error(400, $"Line {line.SupplierPurchaseDetailsId} does not belong to this purchase order.");
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Line {line.SupplierPurchaseDetailsId} does not belong to this purchase order."
+                    };
                 if (detail.Status == LineStatus.Rejected)
-                    return Error(400, $"Line {line.SupplierPurchaseDetailsId} is rejected and cannot be received.");
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Line {line.SupplierPurchaseDetailsId} is rejected and cannot be received."
+                    };
+                if (detail.Status == LineStatus.Received)
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Line {line.SupplierPurchaseDetailsId} is already received."
+                    };
 
                 if (detail.ProductVariant.IsSerialized)
                 {
@@ -48,7 +87,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         .ToList();
 
                     if (serials.Count == 0)
-                        return Error(400, $"Serial numbers are required for serialized line {line.SupplierPurchaseDetailsId}.");
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Serial numbers are required for serialized line {line.SupplierPurchaseDetailsId}."
+                        };
 
                     allSerials.AddRange(serials);
                     plan.Add((detail, serials.Count, serials));
@@ -57,7 +102,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 {
                     var qty = line.ReceivedQuantity ?? 0;
                     if (qty <= 0)
-                        return Error(400, $"A received quantity greater than 0 is required for line {line.SupplierPurchaseDetailsId}.");
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"A received quantity greater than 0 is required for line {line.SupplierPurchaseDetailsId}."
+                        };
 
                     plan.Add((detail, qty, []));
                 }
@@ -66,7 +117,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             // Serial uniqueness: within this request...
             var dupInRequest = allSerials.GroupBy(s => s).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
             if (dupInRequest.Count > 0)
-                return Error(400, $"Duplicate serial numbers in this receipt: {string.Join(", ", dupInRequest)}.");
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = $"Duplicate serial numbers in this receipt: {string.Join(", ", dupInRequest)}."
+                };
 
             // ...and globally against everything already stored.
             if (allSerials.Count > 0)
@@ -76,7 +133,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     .Select(s => s.SerialNumber)
                     .ToListAsync(cancellationToken);
                 if (existing.Count > 0)
-                    return Error(400, $"These serial numbers already exist: {string.Join(", ", existing)}.");
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"These serial numbers already exist: {string.Join(", ", existing)}."
+                    };
             }
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -151,7 +214,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 // Runs at most once: an already-approved order is rejected at the top of this handler.
                 if (purchase.Status == PurchaseStatus.Approved)
                 {
-                    var runningBalance = await GetCurrentSupplierBalanceAsync(purchase.SupplierId, cancellationToken);
+                    var runningBalance = await _dbContext.SupplierTransactions
+                        .Where(t => t.SupplierId == purchase.SupplierId)
+                        .GetLatestBalanceAsync(cancellationToken);
                     runningBalance += purchase.TotalAmount;
                     await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
                     {
@@ -165,6 +230,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         Supplier = purchase.Supplier,
                     }, cancellationToken);
                 }
+
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -183,7 +249,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             {
                 await transaction.RollbackAsync(cancellationToken);
                 _logger.LogError(ex, "Error receiving goods for purchase order {Id}", request.PurchaseOrderId);
-                return Error(500, "An error occurred while receiving goods.");
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 500,
+                    Status = "Error",
+                    Message = "An error occurred while receiving goods."
+                };
             }
         }
 
@@ -213,19 +285,5 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             cache[variant.Id] = stock;
             return stock;
         }
-
-        /// <summary>Supplier's current overall balance = BalanceAfter of their latest transaction (0 if none).</summary>
-        private async Task<decimal> GetCurrentSupplierBalanceAsync(int supplierId, CancellationToken cancellationToken)
-        {
-            return await _dbContext.SupplierTransactions
-                .AsNoTracking()
-                .Where(t => t.SupplierId == supplierId)
-                .OrderByDescending(t => t.Id)
-                .Select(t => t.BalanceAfter)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-
-        private static Result Error(int code, string message) =>
-            new() { IsSuccess = false, StatusCode = code, Status = "Error", Message = message };
     }
 }

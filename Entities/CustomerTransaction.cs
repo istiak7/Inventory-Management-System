@@ -6,7 +6,7 @@ namespace Inventory_Management_System.Entities
     //   Payment -> Debit  = amount, balance goes DOWN (they owe less)
     // Note this is the opposite Debit/Credit convention from SupplierTransaction, where the
     // balance tracks what WE owe. Each ledger reads from its own counterparty's perspective.
-    public class CustomerTransaction : BaseEntity
+    public class CustomerTransaction : BaseEntity, Common.ILedgerEntry
     {
         public int CustomerId { get; set; } //FK
         public string TransactionType { get; set; } = "Sale";   // "Sale" | "Payment"

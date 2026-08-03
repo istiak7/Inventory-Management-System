@@ -33,6 +33,13 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 if (request.ProductId is int productId)
                     query = query.Where(v => v.ProductId == productId);
 
+                // Branch scope (e.g. sales): only variants with a stock record in that branch.
+                // Zero-stock variants are intentionally kept so the caller can show availability
+                // instead of items vanishing from search; AvailableStock carries the quantity.
+                var branchId = request.BranchId;
+                if (branchId is not null)
+                    query = query.Where(v => v.Stocks.Any(s => s.BranchId == branchId));
+
                 if (request.IsSerialized is bool isSerialized)
                     query = query.Where(v => v.IsSerialized == isSerialized);
 
@@ -51,7 +58,12 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                         .OrderBy(v => v.ProductId).ThenBy(v => v.Id)
                         .Select(v => new SearchProductsResponse(
                             v.Id, v.ProductId, v.Product.ProductName, v.SKU, v.Barcode,
-                            v.SellingPrice, v.IsSerialized, v.AttributesJson, 0f));
+                            v.SellingPrice, v.IsSerialized, v.AttributesJson, 0f,
+                            branchId == null
+                                ? null
+                                : v.Stocks.Where(s => s.BranchId == branchId)
+                                          .Select(s => (int?)s.CurrentStock)
+                                          .FirstOrDefault() ?? 0));
                 }
                 else
                 {
@@ -71,7 +83,12 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                         .Select(v => new SearchProductsResponse(
                             v.Id, v.ProductId, v.Product.ProductName, v.SKU, v.Barcode,
                             v.SellingPrice, v.IsSerialized, v.AttributesJson,
-                            v.SearchVector.Rank(EF.Functions.WebSearchToTsQuery(SearchConfig, term))));
+                            v.SearchVector.Rank(EF.Functions.WebSearchToTsQuery(SearchConfig, term)),
+                            branchId == null
+                                ? null
+                                : v.Stocks.Where(s => s.BranchId == branchId)
+                                          .Select(s => (int?)s.CurrentStock)
+                                          .FirstOrDefault() ?? 0));
                 }
 
                 var pagedResult = await projected.ToPagedResultAsync(pageNumber, pageSize, cancellationToken);

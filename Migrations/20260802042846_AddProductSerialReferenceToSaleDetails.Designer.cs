@@ -3,6 +3,7 @@ using System;
 using Inventory_Management_System.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NpgsqlTypes;
@@ -12,9 +13,11 @@ using NpgsqlTypes;
 namespace Inventory_Management_System.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802042846_AddProductSerialReferenceToSaleDetails")]
+    partial class AddProductSerialReferenceToSaleDetails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -587,9 +590,6 @@ namespace Inventory_Management_System.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<int?>("StockTransferDetailsId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("SupplierPurchaseDetailsId")
                         .HasColumnType("integer");
 
@@ -607,8 +607,6 @@ namespace Inventory_Management_System.Migrations
 
                     b.HasIndex("SerialNumber")
                         .IsUnique();
-
-                    b.HasIndex("StockTransferDetailsId");
 
                     b.HasIndex("SupplierPurchaseDetailsId");
 
@@ -863,105 +861,6 @@ namespace Inventory_Management_System.Migrations
                         .IsUnique();
 
                     b.ToTable("Stocks");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Entities.StockTransfer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DestinationBranchId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("IsActive")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("Reference")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime?>("RejectedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("SourceBranchId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime?>("SubmittedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("UpDatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DestinationBranchId");
-
-                    b.HasIndex("Reference")
-                        .IsUnique();
-
-                    b.HasIndex("SourceBranchId");
-
-                    b.ToTable("StockTransfers");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Entities.StockTransferDetails", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("IsActive")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ProductVariantId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RequestedSerialNumbersJson")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("jsonb")
-                        .HasDefaultValue("[]");
-
-                    b.Property<int>("StockTransferId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpDatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductVariantId");
-
-                    b.HasIndex("StockTransferId");
-
-                    b.ToTable("StockTransferDetails");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Supplier", b =>
@@ -1446,11 +1345,6 @@ namespace Inventory_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Inventory_Management_System.Entities.StockTransferDetails", "StockTransferDetails")
-                        .WithMany()
-                        .HasForeignKey("StockTransferDetailsId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Inventory_Management_System.Entities.SupplierPurchaseDetails", "SupplierPurchaseDetails")
                         .WithMany("ProductSerials")
                         .HasForeignKey("SupplierPurchaseDetailsId")
@@ -1460,8 +1354,6 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Branch");
 
                     b.Navigation("ProductVariant");
-
-                    b.Navigation("StockTransferDetails");
 
                     b.Navigation("SupplierPurchaseDetails");
                 });
@@ -1549,44 +1441,6 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Branch");
 
                     b.Navigation("ProductVariant");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Entities.StockTransfer", b =>
-                {
-                    b.HasOne("Inventory_Management_System.Entities.Branch", "DestinationBranch")
-                        .WithMany()
-                        .HasForeignKey("DestinationBranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Inventory_Management_System.Entities.Branch", "SourceBranch")
-                        .WithMany()
-                        .HasForeignKey("SourceBranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("DestinationBranch");
-
-                    b.Navigation("SourceBranch");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Entities.StockTransferDetails", b =>
-                {
-                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
-                        .WithMany()
-                        .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Inventory_Management_System.Entities.StockTransfer", "StockTransfer")
-                        .WithMany("StockTransferDetails")
-                        .HasForeignKey("StockTransferId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductVariant");
-
-                    b.Navigation("StockTransfer");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPayment", b =>
@@ -1760,11 +1614,6 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Stocks");
 
                     b.Navigation("SupplierPurchaseDetails");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Entities.StockTransfer", b =>
-                {
-                    b.Navigation("StockTransferDetails");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Supplier", b =>

@@ -9,15 +9,19 @@ namespace Inventory_Management_System.Entities
     {
         public int ProductVariantId { get; set; } //FK
         public int SupplierPurchaseDetailsId { get; set; } //FK -> the lot (cost + supplier lineage)
-        public int BranchId { get; set; } //FK
+        public int BranchId { get; set; } //FK -- current holder; moved to the destination branch when a transfer is approved
+        public int? StockTransferDetailsId { get; set; } //FK -> most recent transfer line that moved this unit, if any
         public required string SerialNumber { get; set; }    // globally unique across the whole table (unique index)
         public SerialStatus Status { get; set; } = SerialStatus.InStock;
         public int WarrantyMonths { get; set; }              // copied from the lot at receipt
         public DateTime ReceivedDate { get; set; } = DateTime.Now;
+        public DateTime? SoldDate { get; set; } = null;
 
         // Navigation property
         public required ProductVariant ProductVariant { get; set; }
         public required SupplierPurchaseDetails SupplierPurchaseDetails { get; set; }
         public required Branch Branch { get; set; }
+        public StockTransferDetails? StockTransferDetails { get; set; }
+        public SaleDetails? SaleDetails { get; set; } // null if not yet sold
     }
 }

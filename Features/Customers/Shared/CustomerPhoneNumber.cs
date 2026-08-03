@@ -9,7 +9,7 @@ namespace Inventory_Management_System.Features.Customers.Shared
     public static class CustomerPhoneNumber
     {
         /// <summary>Shortest input we accept as a phone number at all.</summary>
-        public const int MinimumDigits = 6;
+        public const int MinimumDigits = 11;
 
         /// <summary>
         /// Reduces a typed number to the form stored in <c>Customers.PhoneNumber</c>:

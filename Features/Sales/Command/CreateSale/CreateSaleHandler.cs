@@ -4,6 +4,7 @@ using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -20,21 +21,43 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
     {
         public async Task<Result> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
         {
+            #region Basic validation
+
             if (request.Items.Count == 0)
-                return Error(400, "At least one sale item is required.");
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "At least one item is required to create a sale."
+                };
 
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
-                return Error(404, "Branch not found.");
+                return new Result 
+                { 
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Error",
+                    Message = "Branch not found." 
+                };
 
-            // Client-supplied invoice numbers must not collide with an existing one.
+            // Client invoice numbers must not same with an existing one.
             if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
             {
                 var taken = await _dbContext.CustomerSales
                     .AnyAsync(s => s.InvoiceNumber == request.InvoiceNumber, cancellationToken);
                 if (taken)
-                    return Error(400, $"Invoice number '{request.InvoiceNumber}' already exists.");
+                    return new Result 
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Invoice number '{request.InvoiceNumber}' already exists."
+                    };
             }
+
+            #endregion
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
@@ -64,12 +87,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     Branch = branch,
                 };
 
-                // Same variant may appear on several lines — cache both the variant and its stock
-                // row so quantities accumulate against ONE snapshot instead of each line re-reading
-                // the pre-sale on-hand and passing a check it should have failed.
                 var variantCache = new Dictionary<int, ProductVariant>();
                 var stockCache = new Dictionary<int, Stock>();
                 var itemResponses = new List<SaleItemResponse>();
+                // Guards the same physical unit from being sold on two lines of the same request —
+                // the per-row DB check alone can't see a serial this same loop already claimed.
+                var claimedSerialIds = new HashSet<int>();
 
                 decimal subTotal = 0;
                 foreach (var item in request.Items)
@@ -80,7 +103,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                             .Include(v => v.Product)
                             .FirstOrDefaultAsync(v => v.Id == item.ProductVariantId, cancellationToken);
                         if (loaded == null)
-                            return Error(404, $"Product variant with id {item.ProductVariantId} not found.");
+                            return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"Product variant with id {item.ProductVariantId} not found." };
 
                         variant = loaded;
                         variantCache[item.ProductVariantId] = variant;
@@ -92,20 +115,46 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         var loaded = await _dbContext.Stocks
                             .FirstOrDefaultAsync(s => s.BranchId == request.BranchId && s.ProductVariantId == variant.Id, cancellationToken);
                         if (loaded == null)
-                            return Error(400, $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): none on hand at this branch.");
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): none on hand at this branch." };
 
                         stock = loaded;
                         stockCache[variant.Id] = stock;
                     }
 
                     if (stock.CurrentStock < item.Quantity)
-                        return Error(400, $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): {stock.CurrentStock} on hand, {item.Quantity} requested.");
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}): {stock.CurrentStock} on hand, {item.Quantity} requested." };
+
+                    // Serialized variants sell one physical unit per line — the serial IS the unit,
+                    // so a quantity stepper would let the client claim units it never named.
+                    ProductSerial? serial = null;
+                    if (variant.IsSerialized)
+                    {
+                        if (item.Quantity != 1)
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"'{variant.Product.ProductName}' is serialized: each line sells exactly 1 unit. Add another line for additional units." };
+
+                        var serialNumber = item.SerialNumber?.Trim();
+                        if (string.IsNullOrEmpty(serialNumber))
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A serial number is required for '{variant.Product.ProductName}' (SKU {variant.SKU})." };
+
+                        serial = await _dbContext.ProductSerials.FirstOrDefaultAsync(s =>
+                            s.SerialNumber == serialNumber &&
+                            s.ProductVariantId == variant.Id &&
+                            s.BranchId == request.BranchId &&
+                            s.Status == SerialStatus.InStock, cancellationToken);
+
+                        if (serial == null || !claimedSerialIds.Add(serial.Id))
+                            return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial number '{serialNumber}' is not available in stock for '{variant.Product.ProductName}' at this branch." };
+                    }
 
                     // Price comes from the catalog, never from the client (price-manipulation guard).
                     var unitPrice = variant.SellingPrice;
+
+                  
+                    var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
+
                     var discountPerItem = item.DiscountPerItem ?? 0;
                     if (discountPerItem > unitPrice)
-                        return Error(400, $"DiscountPerItem {discountPerItem} exceeds the unit price {unitPrice} for '{variant.Product.ProductName}'.");
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"DiscountPerItem {discountPerItem} exceeds the unit price {unitPrice} for '{variant.Product.ProductName}'." };
 
                     var lineTotal = (unitPrice - discountPerItem) * item.Quantity;
                     subTotal += lineTotal;
@@ -119,6 +168,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     {
                         BranchId = request.BranchId,
                         ProductVariantId = variant.Id,
+                        // Cost lineage. A serialized unit knows the lot it arrived in, so the
+                        // SaleOut row can name it and its cost (lot.UnitPrice) is recoverable —
+                        // that is what makes exact COGS/profit reportable per line. A
+                        // non-serialized sale draws from pooled stock with no single lot, so it
+                        // stays null rather than guessing one.
+                        SupplierPurchaseDetailsId = serial?.SupplierPurchaseDetailsId,
                         TransactionType = InventoryTxnType.SaleOut,
                         QuantityIn = 0,
                         QuantityOut = item.Quantity,
@@ -128,6 +183,14 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         ProductVariant = variant,
                     }, cancellationToken);
 
+                    // The unit is leaving the branch as this sale is written, so its lifecycle
+                    // closes here — never recomputed or left InStock for a sale that just sold it.
+                    if (serial != null)
+                    {
+                        serial.Status = SerialStatus.Sold;
+                        serial.SoldDate = saleDate;
+                    }
+
                     sale.SaleDetails.Add(new SaleDetails
                     {
                         ProductVariantId = variant.Id,
@@ -135,27 +198,29 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         UnitPrice = unitPrice,
                         DiscountPerItem = item.DiscountPerItem,
                         TotalAmount = lineTotal,
-                        WarrantyMonths = item.WarrantyMonths,
+                        WarrantyMonths = warrantyMonths,
+                        ProductSerialId = serial?.Id,
                         Status = SaleLineStatus.Completed,
                         CustomerSale = sale,
                         ProductVariant = variant,
+                        ProductSerial = serial,
                     });
 
                     itemResponses.Add(new SaleItemResponse(
-                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, item.WarrantyMonths));
+                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, warrantyMonths, serial?.SerialNumber));
                 }
 
                 if (request.DiscountAmount > subTotal)
-                    return Error(400, $"DiscountAmount {request.DiscountAmount} exceeds the subtotal {subTotal}.");
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"DiscountAmount {request.DiscountAmount} exceeds the subtotal {subTotal}." };
 
                 var totalAmount = subTotal - request.DiscountAmount + request.TaxAmount;
 
                 // Payment mode inferred from Amount vs total (no silent clamping).
                 var paidAmount = request.Payment?.Amount ?? 0;
                 if (paidAmount < 0)
-                    return Error(400, "Payment amount cannot be negative.");
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount cannot be negative." };
                 if (paidAmount > totalAmount)
-                    return Error(400, "Payment exceeds the total. Pay the full amount or a smaller one.");
+                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment exceeds the total. Pay the full amount or a smaller one." };
 
                 sale.SubTotal = subTotal;
                 sale.DiscountAmount = request.DiscountAmount;
@@ -168,7 +233,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 await _dbContext.CustomerSales.AddAsync(sale, cancellationToken);
 
                 // Ledger (money): the sale credits the customer account (they owe us more).
-                var runningBalance = await GetCurrentCustomerBalanceAsync(sale.CustomerId, cancellationToken);
+                var runningBalance = await _dbContext.CustomerTransactions
+                    .Where(t => t.CustomerId == sale.CustomerId)
+                    .GetLatestBalanceAsync(cancellationToken);
                 runningBalance += totalAmount;
                 await _dbContext.CustomerTransactions.AddAsync(new CustomerTransaction
                 {
@@ -209,6 +276,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     }, cancellationToken);
 
                     // Ledger (money): the payment debits the customer account (they owe us less).
+                    // SaleId is carried as well as CustomerPaymentId: at the counter a payment is
+                    // raised against exactly one invoice, so naming it here lets a customer ledger
+                    // show what each payment settled without joining back through SaleCustomerPayments.
                     runningBalance -= paidAmount;
                     await _dbContext.CustomerTransactions.AddAsync(new CustomerTransaction
                     {
@@ -218,6 +288,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         Debit = paidAmount,
                         Credit = 0,
                         BalanceAfter = runningBalance,
+                        CustomerSale = sale,
                         CustomerPayment = payment,
                         Customer = customer,
                     }, cancellationToken);
@@ -237,25 +308,32 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = "Sale created successfully", Data = response };
             }
+            // The serial and the invoice number are both guarded by unique indexes, because the
+            // pre-checks above cannot see a sale another till is committing right now. Losing that
+            // race lands here, so name what actually collided — a bare "something went wrong" sends
+            // the counter hunting for a fault that is not theirs.
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                var constraint = (ex.InnerException as PostgresException)?.ConstraintName;
+                _logger.LogWarning(ex, "Sale creation lost a uniqueness race on {Constraint}", constraint);
+
+                return constraint switch
+                {
+                    "IX_SaleDetails_ProductSerialId" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "One of those serial numbers was sold on another sale a moment ago. Re-scan the unit and try again." },
+                    "IX_CustomerSales_InvoiceNumber" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "That invoice number was taken by another sale a moment ago. Leave it blank to have one generated." },
+                    _ => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "This sale clashed with another one saved at the same moment. Nothing was recorded — please try again." },
+                };
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 _logger.LogError(ex, "Error creating sale for customer {CustomerId} / phone {PhoneNumber}",
                     request.CustomerId, request.Customer?.PhoneNumber);
-                return Error(500, "An error occurred while creating the sale.");
+                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while creating the sale." };
             }
         }
 
-        /// <summary>
-        /// Who this sale is billed to. Either the customer whose id the form sent, or — when the
-        /// form typed a mobile number that its lookup did not recognise — the customer that number
-        /// belongs to, registering them if they are genuinely new.
-        ///
-        /// This is a find-or-create rather than a create: the form's lookup and its save are two
-        /// round trips, and the same walk-in can be registered at another till in between. Losing
-        /// that race is normal, not exceptional, so both the pre-check and the unique-index
-        /// violation resolve the same way — bill the sale to whoever now owns the number.
-        /// </summary>
         private async Task<(Customer? Customer, Result? Error)> ResolveCustomerAsync(
             CreateSaleCommand request, CancellationToken cancellationToken)
         {
@@ -265,18 +343,18 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     .FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken);
 
                 return existing == null
-                    ? (null, Error(404, "Customer not found."))
+                    ? (null, new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Customer not found." })
                     : (existing, null);
             }
 
             if (request.Customer == null)
-                return (null, Error(400, "Either CustomerId or Customer details are required."));
+                return (null, new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Either CustomerId or Customer details are required." });
 
             var phoneNumber = CustomerPhoneNumber.Normalize(request.Customer.PhoneNumber);
             if (phoneNumber.Length < CustomerPhoneNumber.MinimumDigits)
-                return (null, Error(400, $"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits."));
+                return (null, new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Customer phone number must contain at least {CustomerPhoneNumber.MinimumDigits} digits." });
 
-            // The number is the identity, so an existing owner wins outright — the details typed at
+            // The number is the identity, so an existing customer
             // the till never overwrite a record that is already on file.
             var byPhone = await _dbContext.Customers
                 .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
@@ -292,15 +370,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 Email = request.Customer.Email,
                 Address = request.Customer.Address,
                 NID = request.Customer.NID,
-                OpeningBalance = 0,   // met at the counter — they start owing nothing
+                OpeningBalance = 0,
                 CreatedAt = DateTime.UtcNow,
             };
 
             await _dbContext.Customers.AddAsync(customer, cancellationToken);
 
-            // Postgres aborts the entire transaction on a constraint violation — every later
-            // command fails with 25P02 until it is unwound. A savepoint scopes the damage to just
-            // this insert, so losing the race below is still recoverable and the sale can go on.
             var transaction = _dbContext.Database.CurrentTransaction;
             const string savepoint = "before_customer_insert";
             if (transaction != null)
@@ -308,41 +383,30 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
             try
             {
-                // Flushed now so customer.Id exists for the sale, its ledger row and any payment.
-                // Still inside the caller's transaction, so a later failure rolls this back too.
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 return (customer, null);
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
-                // Someone registered this number between the check above and this insert. The
-                // unique index did its job; adopt their row instead of failing the sale.
                 if (transaction != null)
                     await transaction.RollbackToSavepointAsync(savepoint, cancellationToken);
 
                 // The insert is undone but EF still has it pending — drop it, or the sale's own
                 // SaveChanges would replay it and hit the same constraint.
-                _dbContext.Entry(customer).State = EntityState.Detached;
+                _dbContext.Entry(customer).State = EntityState.Detached; // ef core memory tracking: forget the failed insert
 
                 var winner = await _dbContext.Customers
                     .FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
 
                 return winner != null
                     ? (winner, null)
-                    : (null, Error(500, "Could not register the customer for this sale."));
+                    : (null, new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "Could not register the customer for this sale." });
             }
         }
 
-        /// <summary>Postgres reports a unique-index breach as SQLSTATE 23505.</summary>
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        /// <summary>
-        /// Next invoice number for the sale's year, as INV-{year}-0001. Ordering by Id (not by the
-        /// string) keeps this correct past 9999, where zero-padded text would sort "10000" before
-        /// "9999". Two concurrent sales can still race to the same number; the unique index on
-        /// InvoiceNumber is the real guard and turns that into a rollback rather than a duplicate.
-        /// </summary>
         private async Task<string> GenerateInvoiceNumberAsync(DateTime saleDate, CancellationToken cancellationToken)
         {
             var prefix = $"INV-{saleDate.Year}-";
@@ -360,19 +424,5 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
             return prefix + next.ToString("D4");
         }
-
-        /// <summary>Customer's current receivable = BalanceAfter of their latest transaction (0 if none).</summary>
-        private async Task<decimal> GetCurrentCustomerBalanceAsync(int customerId, CancellationToken cancellationToken)
-        {
-            return await _dbContext.CustomerTransactions
-                .AsNoTracking()
-                .Where(t => t.CustomerId == customerId)
-                .OrderByDescending(t => t.Id)
-                .Select(t => t.BalanceAfter)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-
-        private static Result Error(int code, string message) =>
-            new() { IsSuccess = false, StatusCode = code, Status = "Error", Message = message };
     }
 }

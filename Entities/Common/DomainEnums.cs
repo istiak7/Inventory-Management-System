@@ -65,4 +65,18 @@ namespace Inventory_Management_System.Entities.Common
         Adjustment,
         DamageOut
     }
+
+    /// <summary>
+    /// Lifecycle of a branch-to-branch stock transfer. Mirrors <see cref="PurchaseStatus"/>'s
+    /// request/decision shape: Draft/Pending are both "not yet decided" and can be Approved or
+    /// Rejected; stock only actually moves at Approved (there is no separate receive step today —
+    /// approval IS the transfer, same "no pending delivery stage" style as <see cref="SaleStatus"/>).
+    /// </summary>
+    public enum TransferStatus
+    {
+        Draft,
+        Pending,
+        Approved,
+        Rejected
+    }
 }

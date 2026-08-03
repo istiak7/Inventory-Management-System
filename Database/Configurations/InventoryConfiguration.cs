@@ -78,6 +78,11 @@ namespace Inventory_Management_System.Database.Configurations
                    .WithMany()
                    .HasForeignKey(s => s.BranchId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(s => s.StockTransferDetails)
+                   .WithMany()
+                   .HasForeignKey(s => s.StockTransferDetailsId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

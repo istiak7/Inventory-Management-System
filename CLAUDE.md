@@ -72,7 +72,7 @@ var pagedResult = await _dbContext.Suppliers
     .Select(s => new SupplierResponse(...))
     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 ```
-Default: `pageNumber = 1`, `pageSize = 20`.
+Default: `pageNumber = 1`, `pageSize = 10`.
 
 ### Response DTOs
 Use `sealed record` for query responses.
@@ -83,3 +83,6 @@ Use `sealed record` for query responses.
 
 ### Endpoint Tags
 Group related endpoints with `.WithTags("FeatureName")` for Swagger grouping.
+
+### Use Result Pattern
+Use the `Result` pattern for consistent error handling across all API endpoints.
