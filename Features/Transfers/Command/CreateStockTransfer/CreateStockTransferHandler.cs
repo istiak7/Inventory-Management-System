@@ -71,8 +71,17 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                         if (serials.Count == 0)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial numbers are required for '{variant.Product.ProductName}' (SKU {variant.SKU})." };
 
-                        var dupes = serials.Where(s => !claimedSerials.Add(s)).ToList();
-                        if (dupes.Count > 0)
+                        //var dupes = serials.Where(s => !claimedSerials.Add(s)).ToList();
+                        var dupes = new List<string>();
+                        foreach (var s in serials)
+                        {
+                            bool isNewSerial = claimedSerials.Add(s);
+                            if(!isNewSerial)
+                            {
+                                dupes.Add(s);
+                            }
+                        }
+                            if (dupes.Count > 0)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Duplicate serial numbers in this transfer: {string.Join(", ", dupes)}." };
 
                         // Best-effort only — the authoritative claim happens at approval, since

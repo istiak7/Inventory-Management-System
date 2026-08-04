@@ -8,5 +8,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
     {
         public int PurchaseOrderId { get; set; }
         public List<ReceiveLineRequest> Lines { get; set; } = [];
+        public ReceiveGoodsPaymentRequest? Payment { get; set; }
     }
 }

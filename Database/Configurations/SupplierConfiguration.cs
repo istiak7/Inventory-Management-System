@@ -43,6 +43,8 @@ namespace Inventory_Management_System.Database.Configurations
                    .WithMany(b => b.SupplierPurchases)
                    .HasForeignKey(s => s.BranchId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(s => s.InvoiceNumber).IsUnique(); // InvoiceNumber should be unique
         }
     }
 
