@@ -7,7 +7,9 @@
       "Bash(dotnet build:*)",
       "Read(//c/Program Files/PostgreSQL/**)",
       "PowerShell(dotnet build *)",
-      "PowerShell(dotnet ef migrations *)"
+      "PowerShell(dotnet ef migrations *)",
+      "Read(//d/Inventory-Management-System/Frontend/inventory-management-frontend/**)",
+      "Bash(npx tsc *)"
     ]
   },
   "enabledMcpjsonServers": [

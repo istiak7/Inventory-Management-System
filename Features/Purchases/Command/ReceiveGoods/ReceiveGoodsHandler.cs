@@ -47,6 +47,16 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     Message = "This purchase order is already fully received."
                 };
 
+            var paymentAmount = request.Payment?.Amount ?? 0;
+            if (paymentAmount > purchase.TotalAmount)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Payment exceeds the order total. Pay the full amount or a smaller one."
+                };
+
 
             var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials)>();
             var allSerials = new List<string>();
@@ -209,6 +219,23 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 else if (nonRejected.Any(d => d.Status is LineStatus.Received or LineStatus.PartiallyReceived))
                     purchase.Status = PurchaseStatus.PartiallyReceived;
 
+                // A payment only makes sense once the order is actually Approved (that's when the
+                // debit below is posted) — a partial receipt must not accept money against goods
+                // that haven't fully arrived yet.
+                if (paymentAmount > 0 && purchase.Status != PurchaseStatus.Approved)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = "Payment can only be recorded once every line on this order has been received."
+                    };
+                }
+
+                SupplierPayment? payment = null;
+
                 // Ledger (money): the purchase debits the supplier account only once the order is
                 // approved (every line fully received). Pending/rejected orders never touch the books.
                 // Runs at most once: an already-approved order is rejected at the top of this handler.
@@ -229,13 +256,59 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         SupplierPurchase = purchase,
                         Supplier = purchase.Supplier,
                     }, cancellationToken);
+
+                    // Payment settled at receipt (full due / partial / full payment), posted in the
+                    // same transaction as the debit above so Paid/Due and the ledger move together.
+                    if (paymentAmount > 0)
+                    {
+                        purchase.ApplyPayment(paymentAmount);   // keeps Paid/Due consistent
+                        purchase.PurchaseType = paymentAmount >= purchase.TotalAmount ? PurchaseType.Cash : PurchaseType.Credit;
+
+                        var paymentDate = request.Payment?.PaymentDate ?? now;
+                        payment = new SupplierPayment
+                        {
+                            SupplierId = purchase.SupplierId,
+                            BranchId = purchase.BranchId,
+                            Amount = paymentAmount,
+                            PaymentDate = paymentDate,
+                            PaymentMethod = request.Payment?.PaymentMethod ?? "Cash",
+                            Supplier = purchase.Supplier,
+                            Branch = purchase.Branch,
+                        };
+                        await _dbContext.SupplierPayments.AddAsync(payment, cancellationToken);
+
+                        await _dbContext.SupplierPurchasePayments.AddAsync(new SupplierPurchasePayment
+                        {
+                            Amount = paymentAmount,
+                            AllocationDate = paymentDate,
+                            SupplierPurchase = purchase,
+                            SupplierPayment = payment,
+                        }, cancellationToken);
+
+                        runningBalance -= paymentAmount;
+                        await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
+                        {
+                            SupplierId = purchase.SupplierId,
+                            TransactionType = "Payment",
+                            TransactionDate = paymentDate,
+                            Debit = 0,
+                            Credit = paymentAmount,
+                            BalanceAfter = runningBalance,
+                            SupplierPurchase = purchase,
+                            SupplierPayment = payment,
+                            Supplier = purchase.Supplier,
+                        }, cancellationToken);
+                    }
                 }
 
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                var response = new ReceiveGoodsResponse(purchase.Id, purchase.Status.ToString(), serialsCreated, lineResults);
+                var response = new ReceiveGoodsResponse(
+                    purchase.Id, purchase.Status.ToString(), serialsCreated,
+                    purchase.PaidAmount, purchase.DueAmount, lineResults,
+                    payment == null ? null : new ReceiveGoodsPaymentResponse(payment.Id, payment.Amount, payment.PaymentDate, payment.PaymentMethod));
                 return new Result
                 {
                     IsSuccess = true,
