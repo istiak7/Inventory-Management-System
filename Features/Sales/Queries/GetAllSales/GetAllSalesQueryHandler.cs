@@ -1,5 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
@@ -32,9 +33,16 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                 if (!string.IsNullOrWhiteSpace(request.Search))
                 {
                     var term = $"%{request.Search.Trim()}%";
+                    // Phone is how a walk-in identifies themselves, and it is stored normalized —
+                    // a typed "+880 17…" would never ILIKE-match the stored "017…", so compare the
+                    // normalized digits instead of the raw text.
+                    var phone = CustomerPhoneNumber.Normalize(request.Search);
+                    var phoneTerm = phone.Length > 0 ? $"%{phone}%" : null;
+
                     query = query.Where(s =>
                         EF.Functions.ILike(s.InvoiceNumber, term) ||
-                        EF.Functions.ILike(s.Customer.Name, term));
+                        EF.Functions.ILike(s.Customer.Name, term) ||
+                        (phoneTerm != null && EF.Functions.ILike(s.Customer.PhoneNumber, phoneTerm)));
                 }
 
                 // Materialize with enums intact, then map to string DTOs in memory — EF cannot

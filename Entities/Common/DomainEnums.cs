@@ -54,6 +54,33 @@ namespace Inventory_Management_System.Entities.Common
         RmaReturned,
         Defective
     }
+    /// <summary>
+    /// Lifecycle of an after-sales warranty claim. Open is intake at the counter; InRepair is a
+    /// technician holding the unit; Resolved and Rejected are the two ways the shop is done with
+    /// it; Delivered is the customer physically collecting it. Delivered is deliberately reachable
+    /// from BOTH Resolved and Rejected — a unit the shop refused to fix still has to go home.
+    /// </summary>
+    public enum WarrantyClaimStatus
+    {
+        Open,
+        InRepair,
+        Resolved,
+        Rejected,
+        Delivered
+    }
+
+    /// <summary>
+    /// HOW a claim ended, kept separate from <see cref="WarrantyClaimStatus"/> so "Resolved by
+    /// replacing the unit" is one state instead of two competing ones. NotRepairable is what the
+    /// reject path records.
+    /// </summary>
+    public enum WarrantyResolutionType
+    {
+        Repaired,
+        Replaced,
+        NotRepairable
+    }
+
     public enum InventoryTxnType
     {
         PurchaseIn,
