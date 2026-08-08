@@ -1,5 +1,6 @@
 # Inventory Management System - Architecture Guide
-
+## Important Notes
+- I am not good at English, so your response should be simple and clear and human readable and explainable.
 ## Stack
 - .NET 10 Minimal API
 - EF Core + PostgreSQL (Npgsql)
