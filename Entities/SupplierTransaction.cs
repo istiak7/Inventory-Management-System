@@ -16,5 +16,37 @@
         public required Supplier Supplier { get; set; }
         public SupplierPurchase? SupplierPurchase { get; set; }
         public SupplierPayment? SupplierPayment { get; set; }
+
+
+        public static SupplierTransaction ForPurchase(SupplierPurchase purchase, Supplier supplier, decimal runningBalance)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "Purchase",
+                TransactionDate = purchase.PurchaseDate,
+                Debit = purchase.TotalAmount,
+                Credit = 0m,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPurchase = purchase
+            };
+        }
+
+        public static SupplierTransaction ForPayment(SupplierPayment payment, Supplier supplier, decimal runningBalance, SupplierPurchase? purchase = null)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "Payment",
+                TransactionDate = payment.PaymentDate,
+                Debit = 0m,
+                Credit = payment.Amount,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPayment = payment,
+                SupplierPurchase = purchase
+            };
+        }
     }
 }

@@ -245,18 +245,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         .Where(t => t.SupplierId == purchase.SupplierId)
                         .GetLatestBalanceAsync(cancellationToken);
                     runningBalance += purchase.TotalAmount;
-                    await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
-                    {
-                        SupplierId = purchase.SupplierId,
-                        TransactionType = "Purchase",
-                        TransactionDate = now,
-                        Debit = purchase.TotalAmount,
-                        Credit = 0,
-                        BalanceAfter = runningBalance,
-                        SupplierPurchase = purchase,
-                        Supplier = purchase.Supplier,
-                    }, cancellationToken);
 
+                    var purchaseTxn = SupplierTransaction.ForPurchase(purchase, purchase.Supplier, runningBalance);
+                    await _dbContext.SupplierTransactions.AddAsync(purchaseTxn, cancellationToken);
                     // Payment settled at receipt (full due / partial / full payment), posted in the
                     // same transaction as the debit above so Paid/Due and the ledger move together.
                     if (paymentAmount > 0)
@@ -286,18 +277,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         }, cancellationToken);
 
                         runningBalance -= paymentAmount;
-                        await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
-                        {
-                            SupplierId = purchase.SupplierId,
-                            TransactionType = "Payment",
-                            TransactionDate = paymentDate,
-                            Debit = 0,
-                            Credit = paymentAmount,
-                            BalanceAfter = runningBalance,
-                            SupplierPurchase = purchase,
-                            SupplierPayment = payment,
-                            Supplier = purchase.Supplier,
-                        }, cancellationToken);
+
+                        var paymentTxn = SupplierTransaction.ForPayment(payment, purchase.Supplier, runningBalance, purchase);
+                        await _dbContext.SupplierTransactions.AddAsync(paymentTxn, cancellationToken);
                     }
                 }
 

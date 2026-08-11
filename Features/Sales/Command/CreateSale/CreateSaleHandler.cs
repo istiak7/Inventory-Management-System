@@ -24,8 +24,8 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             #region Basic validation
 
             if (request.Items.Count == 0)
-                return new Result 
-                { 
+                return new Result
+                {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
@@ -34,12 +34,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
-                return new Result 
-                { 
+                return new Result
+                {
                     IsSuccess = false,
                     StatusCode = 404,
                     Status = "Error",
-                    Message = "Branch not found." 
+                    Message = "Branch not found."
                 };
 
             // Client invoice numbers must not same with an existing one.
@@ -48,7 +48,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 var taken = await _dbContext.CustomerSales
                     .AnyAsync(s => s.InvoiceNumber == request.InvoiceNumber, cancellationToken);
                 if (taken)
-                    return new Result 
+                    return new Result
                     {
                         IsSuccess = false,
                         StatusCode = 400,
@@ -149,7 +149,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     // Price comes from the catalog, never from the client (price-manipulation guard).
                     var unitPrice = variant.SellingPrice;
 
-                  
+
                     var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
 
                     var discountPerItem = item.DiscountPerItem ?? 0;
@@ -237,17 +237,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     .Where(t => t.CustomerId == sale.CustomerId)
                     .GetLatestBalanceAsync(cancellationToken);
                 runningBalance += totalAmount;
-                await _dbContext.CustomerTransactions.AddAsync(new CustomerTransaction
-                {
-                    CustomerId = sale.CustomerId,
-                    TransactionType = "Sale",
-                    TransactionDate = sale.SaleDate,
-                    Debit = 0,
-                    Credit = totalAmount,
-                    BalanceAfter = runningBalance,
-                    CustomerSale = sale,
-                    Customer = customer,
-                }, cancellationToken);
+
+                var customerTransaction = CustomerTransaction.ForSale(sale, customer, runningBalance);
+                await _dbContext.CustomerTransactions.AddAsync(customerTransaction, cancellationToken);
 
                 CustomerPayment? payment = null;
                 if (paidAmount > 0)
@@ -280,18 +272,8 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     // raised against exactly one invoice, so naming it here lets a customer ledger
                     // show what each payment settled without joining back through SaleCustomerPayments.
                     runningBalance -= paidAmount;
-                    await _dbContext.CustomerTransactions.AddAsync(new CustomerTransaction
-                    {
-                        CustomerId = sale.CustomerId,
-                        TransactionType = "Payment",
-                        TransactionDate = payment.PaymentDate,
-                        Debit = paidAmount,
-                        Credit = 0,
-                        BalanceAfter = runningBalance,
-                        CustomerSale = sale,
-                        CustomerPayment = payment,
-                        Customer = customer,
-                    }, cancellationToken);
+                    customerTransaction = CustomerTransaction.ForPayment(payment, customer, runningBalance, sale);
+                    await _dbContext.CustomerTransactions.AddAsync(customerTransaction, cancellationToken);
                 }
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
