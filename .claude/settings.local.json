@@ -9,7 +9,21 @@
       "PowerShell(dotnet build *)",
       "PowerShell(dotnet ef migrations *)",
       "Read(//d/Inventory-Management-System/Frontend/inventory-management-frontend/**)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "PowerShell(gh auth *)",
+      "PowerShell(git fetch *)",
+      "PowerShell($c = New-Object System.Net.Sockets.TcpClient; try { $c.Connect\\('localhost', 5432\\); Write-Output \"postgres:5432 OPEN\" } catch { Write-Output \"postgres:5432 CLOSED\" } finally { $c.Close\\(\\) })",
+      "PowerShell($r = Invoke-RestMethod -Uri 'http://localhost:5142/get-supplier-accounts' -Method Get; $r.data | Select-Object -First 4 | Format-List)",
+      "PowerShell($r = Invoke-RestMethod -Uri 'http://localhost:5142/get-supplier-accounts' -Method Get; Write-Output \"count=$\\($r.data.Count\\)\"; $r.data | Where-Object { $_.totalPurchases -ne 0 -or $_.totalPayments -ne 0 } | Format-Table supplierId, supplierName, totalPurchases, totalPayments, balance, lastTransactionDate -AutoSize)",
+      "PowerShell(Write-Output \"=== transactions ===\"; \\(Invoke-RestMethod -Uri 'http://localhost:5142/get-supplier-transactions?pageSize=5' -Method Get\\).data | ConvertTo-Json -Depth 4; Write-Output \"=== payment history s1 ===\"; \\(Invoke-RestMethod -Uri 'http://localhost:5142/get-supplier-payment-history?supplierId=1&pageSize=5' -Method Get\\) | ConvertTo-Json -Depth 4)",
+      "PowerShell(Write-Output \"=== branches ===\"; \\(Invoke-RestMethod -Uri 'http://localhost:5142/get-all-branches' -Method Get\\).data.items | Format-Table id, name -AutoSize; Write-Output \"=== purchase orders ===\"; \\(Invoke-RestMethod -Uri 'http://localhost:5142/get-all-purchase-orders?pageSize=10' -Method Get\\).data | ConvertTo-Json -Depth 3 -Compress)",
+      "PowerShell(Write-Output \"=== product variants ===\"; \\(Invoke-RestMethod -Uri 'http://localhost:5142/get-all-product-variants?pageSize=5' -Method Get\\).data.items | Format-Table id, sku, productName -AutoSize)",
+      "PowerShell(ConvertTo-Json *)",
+      "PowerShell(foreach \\($id in 1,2\\) { Write-Output \"=== PO $id ===\"; \\(Invoke-RestMethod -Uri \"http://localhost:5142/get-purchase-order/$id\" -Method Get\\).data.lines | Format-Table id, productVariantId, orderedQuantity, unitPrice, status -AutoSize })",
+      "PowerShell(\\(Invoke-RestMethod -Uri 'http://localhost:5142/get-supplier-payment-history?supplierId=1&pageSize=10' -Method Get\\).data.items | Format-Table id, paymentId, invoiceNumber, amount, paymentAmount, balanceBefore, balanceAfter, invoiceTotalAmount, invoiceDueBefore, invoiceDueAfter -AutoSize)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri 'http://localhost:3000/src/config/company.config.ts' -UseBasicParsing -TimeoutSec 8; \"status=$\\($r.StatusCode\\)\"; \\($r.Content -split \"`n\" | Select-Object -First 6\\) -join \"`n\" } catch { \"failed: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(node 'C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-User-Documents-Projects-Inventory-Management-System\\\\98e48bf2-034f-4890-aa5c-047d13c892ad\\\\scratchpad\\\\aiw\\\\test.mjs')",
+      "PowerShell(npm run *)"
     ]
   },
   "enabledMcpjsonServers": [

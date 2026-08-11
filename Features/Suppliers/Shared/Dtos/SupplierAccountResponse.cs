@@ -7,6 +7,12 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         decimal TotalPurchases,
         decimal TotalPayments,
         decimal Balance,
-        DateTime? LastTransactionDate
+        DateTime? LastTransactionDate,
+        // Contact details, carried so an account statement / receipt can be printed
+        // without a second round-trip to the supplier list.
+        string PhoneNumber,
+        string Email,
+        string Address,
+        decimal OpeningBalance
     );
 }
