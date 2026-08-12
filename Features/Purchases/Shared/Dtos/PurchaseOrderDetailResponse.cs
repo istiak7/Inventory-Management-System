@@ -22,6 +22,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         int BranchId,
         string BranchName,
         string? InvoiceNumber,
+        string? Remarks,
         DateTime PurchaseDate,
         string Status,
         string PurchaseType,

@@ -76,6 +76,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     InvoiceNumber = invoiceNumber,
                     Status = PurchaseStatus.Pending,
                     PurchaseType = PurchaseType.Credit,
+                    Remarks = request.Remarks,
                     Supplier = supplier,
                     Branch = branch,
                 };
@@ -124,6 +125,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     purchase.BranchId,
                     purchase.PurchaseDate,
                     purchase.InvoiceNumber,
+                    purchase.Remarks,
                     purchase.Status.ToString(),
                     purchase.PurchaseType.ToString(),
                     purchase.TotalAmount,

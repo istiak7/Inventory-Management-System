@@ -45,6 +45,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
                         pp.Amount,
                         pp.AllocationDate,
                         pp.SupplierPayment.PaymentMethod,
+                        pp.SupplierPayment.Remarks,
                         pp.SupplierPayment.PaymentDate,
                         pp.SupplierPayment.SupplierId,
                         pp.SupplierPayment.Supplier.Name,

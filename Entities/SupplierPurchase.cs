@@ -13,6 +13,7 @@ namespace Inventory_Management_System.Entities
         public decimal TotalAmount { get; set; }   
         public decimal PaidAmount { get; set; }  
         public decimal DueAmount { get; set; }      // outstanding = TotalAmount - PaidAmount
+        public string ? Remarks { get; set; } = string.Empty;
 
         // Navigation property
         public required Supplier Supplier { get; set; }

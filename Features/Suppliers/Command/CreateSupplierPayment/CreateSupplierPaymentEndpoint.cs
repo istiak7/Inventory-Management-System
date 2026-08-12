@@ -17,6 +17,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Amount = request.Amount,
                     PaymentDate = request.PaymentDate,
                     PaymentMethod = request.PaymentMethod,
+                    Remarks = request.Remarks,
                     Allocations = request.Allocations ?? [],
                 };
                 var result = await mediator.Send(command);

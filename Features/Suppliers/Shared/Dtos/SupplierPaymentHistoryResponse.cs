@@ -13,6 +13,7 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         decimal Amount,
         DateTime AllocationDate,
         string PaymentMethod,
+        string? Remarks,
         DateTime PaymentDate,
         int SupplierId,
         string SupplierName,

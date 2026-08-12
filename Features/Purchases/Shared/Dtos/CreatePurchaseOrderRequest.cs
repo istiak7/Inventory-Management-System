@@ -6,6 +6,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         public int BranchId { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public string? InvoiceNumber { get; set; }
+        public string? Remarks { get; set; }
         public List<PurchaseItemRequest> Items { get; set; } = [];
 
         // No payment at creation: payments are recorded via the supplier-payment endpoint

@@ -62,7 +62,14 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                                     .OrderBy(pp => pp.Id)
                                     .Select(pp => pp.SupplierPurchase.InvoiceNumber ?? ("PUR-" + pp.SupplierPurchaseId))
                                     .ToList()
-                                : new List<string>()))
+                                : new List<string>(),
+                        // Remarks: the purchase order's own remarks for a Purchase row, or the
+                        // payment's remarks for a Payment row.
+                        t.SupplierPurchaseId != null
+                            ? t.SupplierPurchase!.Remarks
+                            : t.SupplierPaymentId != null
+                                ? t.SupplierPayment!.Remarks
+                                : null))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result

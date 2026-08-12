@@ -5,6 +5,7 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         int Id,
         decimal Amount,
         DateTime PaymentDate,
-        string PaymentMethod
+        string PaymentMethod,
+        string? Remarks
     );
 }
