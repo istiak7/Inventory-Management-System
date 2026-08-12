@@ -16,6 +16,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     BranchId = request.BranchId,
                     PurchaseDate = request.PurchaseDate,
                     InvoiceNumber = request.InvoiceNumber,
+                    Remarks = request.Remarks,
                     Items = request.Items
                 };
                 var result = await mediator.Send(command);

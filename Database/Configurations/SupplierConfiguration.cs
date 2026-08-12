@@ -30,6 +30,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.InvoiceNumber).HasMaxLength(100);
             builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.PurchaseType).IsRequired().HasConversion<string>().HasMaxLength(20);
+            builder.Property(s => s.Remarks).HasMaxLength(500);
             builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
             builder.Property(s => s.PaidAmount).HasPrecision(18, 2);
             builder.Property(s => s.DueAmount).HasPrecision(18, 2);
@@ -79,6 +80,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasKey(p => p.Id); // Id is the primary key
             builder.Property(p => p.PaymentMethod).IsRequired().HasMaxLength(50);
             builder.Property(p => p.Amount).HasPrecision(18, 2);
+            builder.Property(p => p.Remarks).HasMaxLength(500);
 
             builder.HasOne(p => p.Supplier)
                    .WithMany(s => s.SupplierPayments)

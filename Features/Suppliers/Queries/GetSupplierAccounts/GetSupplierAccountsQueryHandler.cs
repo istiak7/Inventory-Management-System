@@ -42,7 +42,13 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
                         s.SupplierTransactions
                             .OrderByDescending(t => t.Id)
                             .Select(t => (DateTime?)t.TransactionDate)
-                            .FirstOrDefault()))
+                            .FirstOrDefault(),
+                        s.PhoneNumber,
+                        s.Email,
+                        // Supplier has no dedicated address column; Description is what the
+                        // create/update forms use for it.
+                        s.Description,
+                        s.OpeningBalance))
                     .ToListAsync(cancellationToken);
 
                 return new Result

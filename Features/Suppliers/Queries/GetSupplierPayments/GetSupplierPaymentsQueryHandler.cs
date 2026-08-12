@@ -23,7 +23,8 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
                         p.Id,
                         p.Amount,
                         p.PaymentDate,
-                        p.PaymentMethod))
+                        p.PaymentMethod,
+                        p.Remarks))
                     .ToListAsync(cancellationToken);
 
                 return new Result

@@ -25,6 +25,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetPurchaseOrde
                         p.BranchId,
                         p.Branch.Name,
                         p.InvoiceNumber,
+                        p.Remarks,
                         p.PurchaseDate,
                         p.Status.ToString(),
                         p.PurchaseType.ToString(),

@@ -5,6 +5,7 @@ using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseOrder
 {
@@ -44,17 +45,38 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Message = "Branch not found."
                 };
 
+            // Client-supplied invoice numbers must not clash with an existing one.
+            if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
+            {
+                var taken = await _dbContext.SupplierPurchases
+                    .AnyAsync(p => p.InvoiceNumber == request.InvoiceNumber, cancellationToken);
+                if (taken)
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Invoice number '{request.InvoiceNumber}' already exists."
+                    };
+            }
+
             try
             {
+                var purchaseDate = request.PurchaseDate ?? DateTime.Now;
+
+                var invoiceNumber = string.IsNullOrWhiteSpace(request.InvoiceNumber)
+                    ? await GenerateInvoiceNumberAsync(purchaseDate, cancellationToken)
+                    : request.InvoiceNumber.Trim();
 
                 var purchase = new SupplierPurchase
                 {
                     SupplierId = request.SupplierId,
                     BranchId = request.BranchId,
-                    PurchaseDate = request.PurchaseDate ?? DateTime.Now,
-                    InvoiceNumber = request.InvoiceNumber,
+                    PurchaseDate = purchaseDate,
+                    InvoiceNumber = invoiceNumber,
                     Status = PurchaseStatus.Pending,
                     PurchaseType = PurchaseType.Credit,
+                    Remarks = request.Remarks,
                     Supplier = supplier,
                     Branch = branch,
                 };
@@ -103,6 +125,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     purchase.BranchId,
                     purchase.PurchaseDate,
                     purchase.InvoiceNumber,
+                    purchase.Remarks,
                     purchase.Status.ToString(),
                     purchase.PurchaseType.ToString(),
                     purchase.TotalAmount,
@@ -117,6 +140,19 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Data = response
                 };
             }
+            catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+            {
+                var constraint = (ex.InnerException as PostgresException)?.ConstraintName;
+                _logger.LogWarning(ex, "Purchase order creation lost a uniqueness race on {Constraint}", constraint);
+
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 409,
+                    Status = "Error",
+                    Message = "That invoice number was taken by another purchase order a moment ago. Leave it blank to have one generated."
+                };
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating purchase order");
@@ -128,6 +164,27 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Message = "An error occurred while creating the purchase order."
                 };
             }
+        }
+
+        private static bool IsUniqueViolation(DbUpdateException ex) =>
+            ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
+
+        private async Task<string> GenerateInvoiceNumberAsync(DateTime purchaseDate, CancellationToken cancellationToken)
+        {
+            var prefix = $"PO-{purchaseDate.Year}-";
+
+            var latest = await _dbContext.SupplierPurchases
+                .AsNoTracking()
+                .Where(p => p.InvoiceNumber.StartsWith(prefix))
+                .OrderByDescending(p => p.Id)
+                .Select(p => p.InvoiceNumber)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var next = 1;
+            if (latest != null && int.TryParse(latest[prefix.Length..], out var lastSequence))
+                next = lastSequence + 1;
+
+            return prefix + next.ToString("D4");
         }
     }
 }

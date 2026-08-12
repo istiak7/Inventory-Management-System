@@ -168,6 +168,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Amount = request.Amount,
                     PaymentDate = paymentDate,
                     PaymentMethod = request.PaymentMethod,
+                    Remarks = request.Remarks,
                     Supplier = supplier,
                     Branch = branch,
                 };
@@ -219,7 +220,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
 
                 var response = new SupplierPaymentResponse(
                     payment.Id, payment.SupplierId, payment.Amount, payment.PaymentDate,
-                    payment.PaymentMethod, allocatedAmount, runningBalance);
+                    payment.PaymentMethod, payment.Remarks, allocatedAmount, runningBalance);
 
                 return new Result
                 {

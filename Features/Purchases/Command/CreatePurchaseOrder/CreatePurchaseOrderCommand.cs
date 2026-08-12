@@ -10,6 +10,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
         public int BranchId { get; set; }
         public DateTime? PurchaseDate { get; set; }
         public string? InvoiceNumber { get; set; }
+        public string? Remarks { get; set; } = null;
         public List<PurchaseItemRequest> Items { get; set; } = [];
     }
 }
