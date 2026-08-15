@@ -54,7 +54,7 @@ Middleware/
 ```
 
 ## Conventions
-
+- use kebab-case for endpoint URLs
 ### Result Wrapper
 All handlers return `Result` from `Inventory_Management_System.Shared`:
 ```csharp
@@ -65,15 +65,10 @@ return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Mess
 Endpoints are auto-discovered via reflection in `Program.cs`. Any class implementing `IEndpoint` is picked up automatically — no manual registration needed.
 
 ### Pagination (EF Core)
-Use `AppDbContext` directly in query handlers (not `IBaseRepository`) to get `IQueryable<T>` for pagination:
+- Use pagination extension methods for queries:
 ```csharp
-var pagedResult = await _dbContext.Suppliers
-    .AsNoTracking()
-    .OrderBy(s => s.Id)
-    .Select(s => new SupplierResponse(...))
-    .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
+    Default: `pageNumber = 1`, `pageSize = 10`.
 ```
-Default: `pageNumber = 1`, `pageSize = 10`.
 
 ### Response DTOs
 Use `sealed record` for query responses.
@@ -87,3 +82,6 @@ Group related endpoints with `.WithTags("FeatureName")` for Swagger grouping.
 
 ### Use Result Pattern
 Use the `Result` pattern for consistent error handling across all API endpoints.
+
+### Complexity 
+- Always keep the code simple and avoid unnecessary complexity also human readable.but optimized for performance and maintainability.
