@@ -146,9 +146,13 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial number '{serialNumber}' is not available in stock for '{variant.Product.ProductName}' at this branch." };
                     }
 
-                    // Price comes from the catalog, never from the client (price-manipulation guard).
-                    var unitPrice = variant.SellingPrice;
-
+                    // The catalog price is only the DEFAULT. The seller may agree a different price
+                    // at the counter, so an explicit UnitPrice on the line wins; omitting it falls
+                    // back to ProductVariant.SellingPrice. Either way the value is written to this
+                    // sale line only — the variant's own SellingPrice is never touched here.
+                    // Rounded to the 2 decimals the column stores, so the line total that is
+                    // calculated below always matches the UnitPrice that is saved.
+                    var unitPrice = decimal.Round(item.UnitPrice ?? variant.SellingPrice, 2, MidpointRounding.AwayFromZero);
 
                     var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
 

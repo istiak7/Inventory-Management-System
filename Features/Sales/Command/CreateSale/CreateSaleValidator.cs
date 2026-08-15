@@ -36,11 +36,15 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0).WithMessage("DiscountAmount must be 0 or greater.");
             RuleFor(x => x.TaxAmount).GreaterThanOrEqualTo(0).WithMessage("TaxAmount must be 0 or greater.");
 
-            // No UnitPrice rule on purpose — price is resolved server-side, never accepted here.
             RuleForEach(x => x.Items).ChildRules(item =>
             {
                 item.RuleFor(i => i.ProductVariantId).GreaterThan(0).WithMessage("ProductVariantId is required.");
                 item.RuleFor(i => i.Quantity).GreaterThan(0).WithMessage("Quantity must be greater than 0.");
+                // UnitPrice is optional: null means "use the variant's catalog price". When the
+                // seller does type a price, it only has to be a sane amount.
+                item.RuleFor(i => i.UnitPrice).GreaterThanOrEqualTo(0)
+                    .When(i => i.UnitPrice.HasValue)
+                    .WithMessage("UnitPrice must be 0 or greater.");
                 item.RuleFor(i => i.DiscountPerItem).GreaterThanOrEqualTo(0)
                     .When(i => i.DiscountPerItem.HasValue)
                     .WithMessage("DiscountPerItem must be 0 or greater.");

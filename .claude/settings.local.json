@@ -9,7 +9,8 @@
       "PowerShell(dotnet build *)",
       "PowerShell(dotnet ef migrations *)",
       "Read(//d/Inventory-Management-System/Frontend/inventory-management-frontend/**)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)"
     ]
   },
   "enabledMcpjsonServers": [
