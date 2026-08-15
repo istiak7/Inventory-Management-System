@@ -58,6 +58,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         s.BranchId,
                         BranchName = s.Branch.Name,
                         s.InvoiceNumber,
+                        s.Remarks,
                         s.SaleDate,
                         s.Status,
                         s.SaleType,
@@ -88,7 +89,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
 
                 var items = paged.Items.Select(s => new SaleListResponse(
                     s.Id, s.CustomerId, s.CustomerName, s.CustomerPhoneNumber,
-                    s.BranchId, s.BranchName, s.InvoiceNumber, s.SaleDate,
+                    s.BranchId, s.BranchName, s.InvoiceNumber, s.Remarks, s.SaleDate,
                     s.Status.ToString(), s.SaleType.ToString(),
                     s.SubTotal, s.DiscountAmount, s.TaxAmount, s.TotalAmount,
                     s.PaidAmount, s.DueAmount, s.ItemsCount,

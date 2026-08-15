@@ -39,6 +39,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasIndex(s => s.InvoiceNumber).IsUnique(); // one invoice number, one sale
             builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.SaleType).IsRequired().HasConversion<string>().HasMaxLength(20);
+            builder.Property(s => s.Remarks).HasMaxLength(500);   // same length as SupplierPurchase.Remarks
             builder.Property(s => s.SubTotal).HasPrecision(18, 2);
             builder.Property(s => s.DiscountAmount).HasPrecision(18, 2);
             builder.Property(s => s.TaxAmount).HasPrecision(18, 2);

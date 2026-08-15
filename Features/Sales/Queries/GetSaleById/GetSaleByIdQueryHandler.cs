@@ -30,6 +30,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                         s.BranchId,
                         BranchName = s.Branch.Name,
                         s.InvoiceNumber,
+                        s.Remarks,
                         s.SaleDate,
                         s.Status,
                         s.SaleType,
@@ -79,7 +80,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
 
                 var response = new SaleDetailResponse(
                     sale.Id, sale.CustomerId, sale.CustomerName, sale.CustomerPhoneNumber, sale.CustomerAddress,
-                    sale.BranchId, sale.BranchName, sale.InvoiceNumber, sale.SaleDate,
+                    sale.BranchId, sale.BranchName, sale.InvoiceNumber, sale.Remarks, sale.SaleDate,
                     sale.Status.ToString(), sale.SaleType.ToString(),
                     sale.SubTotal, sale.DiscountAmount, sale.TaxAmount, sale.TotalAmount,
                     sale.PaidAmount, sale.DueAmount, sale.Lines.Count,

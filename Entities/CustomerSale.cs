@@ -20,6 +20,10 @@ namespace Inventory_Management_System.Entities
         public decimal PaidAmount { get; set; }       // settled so far
         public decimal DueAmount { get; set; }        // outstanding = TotalAmount - PaidAmount
 
+        // Free-text note about this sale, written at the counter and printed on the invoice.
+        // Same field as SupplierPurchase.Remarks on the purchase side.
+        public string? Remarks { get; set; }
+
         // Navigation property
         public required Customer Customer { get; set; }
         public required Branch Branch { get; set; }

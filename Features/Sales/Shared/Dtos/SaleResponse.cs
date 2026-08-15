@@ -7,6 +7,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         int BranchId,
         DateTime SaleDate,
         string InvoiceNumber,
+        string? Remarks,
         string Status,
         string SaleType,
         decimal SubTotal,

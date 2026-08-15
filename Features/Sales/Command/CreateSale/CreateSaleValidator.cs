@@ -33,6 +33,11 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one sale item is required.");
 
+            // Bounded to the column so an over-long note fails as a clean 400 instead of a DB error.
+            RuleFor(x => x.Remarks).MaximumLength(500)
+                .When(x => x.Remarks != null)
+                .WithMessage("Remarks must be 500 characters or fewer.");
+
             RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0).WithMessage("DiscountAmount must be 0 or greater.");
             RuleFor(x => x.TaxAmount).GreaterThanOrEqualTo(0).WithMessage("TaxAmount must be 0 or greater.");
 

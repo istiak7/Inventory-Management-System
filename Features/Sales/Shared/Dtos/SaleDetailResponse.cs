@@ -13,6 +13,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         int BranchId,
         string BranchName,
         string InvoiceNumber,
+        string? Remarks,
         DateTime SaleDate,
         string Status,
         string SaleType,

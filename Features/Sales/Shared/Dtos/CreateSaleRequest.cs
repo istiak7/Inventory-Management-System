@@ -14,6 +14,9 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         // Optional: server auto-generates INV-{year}-0001 style when omitted.
         public string? InvoiceNumber { get; set; }
 
+        // Optional free-text note about this sale; printed on the invoice.
+        public string? Remarks { get; set; }
+
         public List<SaleItemRequest> Items { get; set; } = [];
 
         public decimal DiscountAmount { get; set; }   // header-level discount

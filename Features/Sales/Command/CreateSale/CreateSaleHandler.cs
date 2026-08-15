@@ -82,6 +82,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     BranchId = request.BranchId,
                     SaleDate = saleDate,
                     InvoiceNumber = invoiceNumber,
+                    // Blank and whitespace-only notes are stored as null, so readers only ever
+                    // have to check for null before printing the remark.
+                    Remarks = string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim(),
                     Status = SaleStatus.Completed,   // POS: nothing to approve, nothing to deliver
                     Customer = customer,
                     Branch = branch,
@@ -285,7 +288,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 var response = new SaleResponse(
                     sale.Id, sale.CustomerId, sale.BranchId, sale.SaleDate, sale.InvoiceNumber,
-                    sale.Status.ToString(), sale.SaleType.ToString(),
+                    sale.Remarks, sale.Status.ToString(), sale.SaleType.ToString(),
                     sale.SubTotal, sale.DiscountAmount, sale.TaxAmount, sale.TotalAmount,
                     sale.PaidAmount, sale.DueAmount,
                     itemResponses,

@@ -17,6 +17,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     BranchId = request.BranchId,
                     SaleDate = request.SaleDate,
                     InvoiceNumber = request.InvoiceNumber,
+                    Remarks = request.Remarks,
                     Items = request.Items,
                     DiscountAmount = request.DiscountAmount,
                     TaxAmount = request.TaxAmount,
