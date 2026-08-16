@@ -236,6 +236,8 @@ namespace Inventory_Management_System.Database
         public DbSet<User> Users { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Designation> Designations { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
         #endregion
 

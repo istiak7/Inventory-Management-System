@@ -2,10 +2,13 @@ using FluentValidation;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Middleware;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Background;
 using Inventory_Management_System.Shared.Extensions.CorsExtension;
 using Inventory_Management_System.Shared.Extensions.DependencyExtensions;
+using Inventory_Management_System.Shared.RMQ;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Quartz;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +26,24 @@ builder.Services.AddSwaggerGen();
 //Database Registration
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DbConnectionString")));
+
+//RabbitMQ Registration
+builder.Services.Configure<RMQSettings>(builder.Configuration.GetSection("RMQSettings"));
+builder.Services.AddSingleton<IRabbitMQConnection, RabbitMQConnection>();
+builder.Services.AddSingleton<IMassageProducer, MessageProducer>();
+//Quartz Registration
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey("OutboxProcessorJob");
+    q.AddJob<OutboxProcessorJob>(opts => opts.WithIdentity(jobKey));
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("OutboxProcessorJob-trigger")
+        .WithCronSchedule("0/10 * * * * ?")); // Run every 10 seconds
+}
+);
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
 
 //MediatR Registration
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
