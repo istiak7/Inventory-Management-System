@@ -9,6 +9,7 @@ namespace Inventory_Management_System.Entities
         public decimal Amount { get; set; }
         public DateTime PaymentDate { get; set; } = DateTime.Now;
         public string PaymentMethod { get; set; } = "Cash"; // Cash, Bank Transfer, Cheque, Credit Card, Other
+        public string? Remarks { get; set; }
 
         // Navigation property
         public required Customer Customer { get; set; }

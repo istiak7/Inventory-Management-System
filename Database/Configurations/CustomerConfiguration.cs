@@ -90,6 +90,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasKey(p => p.Id); // Id is the primary key
             builder.Property(p => p.PaymentMethod).IsRequired().HasMaxLength(50);
             builder.Property(p => p.Amount).HasPrecision(18, 2);
+            builder.Property(p => p.Remarks).HasMaxLength(500);   // same length as SupplierPayment.Remarks
 
             builder.HasOne(p => p.Customer)
                    .WithMany(c => c.CustomerPayments)
