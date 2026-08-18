@@ -9,6 +9,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
         int? CustomerId = null,
         int? BranchId = null,
         string? SaleType = null,   // Cash | Credit
-        string? Search = null      // matches invoice number or customer name
+        string? Search = null,      // matches invoice number or customer name
+        DateTime? StartDate = null,
+        DateTime? EndDate = null
     ) : IRequest<Result>;
 }

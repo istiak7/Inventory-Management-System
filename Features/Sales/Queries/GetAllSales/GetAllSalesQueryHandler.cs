@@ -45,6 +45,13 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         (phoneTerm != null && EF.Functions.ILike(s.Customer.PhoneNumber, phoneTerm)));
                 }
 
+                if(request.StartDate.HasValue)
+                    query = query.Where(s => s.SaleDate >= request.StartDate.Value.Date);
+
+                if(request.EndDate.HasValue)
+                    query = query.Where(s => s.SaleDate < request.EndDate.Value.Date.AddDays(1));
+
+
                 // Materialize with enums intact, then map to string DTOs in memory — EF cannot
                 // translate Enum.ToString().
                 var paged = await query

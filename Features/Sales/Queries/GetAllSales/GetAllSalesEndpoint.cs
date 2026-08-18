@@ -14,10 +14,12 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                 int? customerId = null,
                 int? branchId = null,
                 string? saleType = null,
-                string? search = null) =>
+                string? search = null,
+                DateTime? startDate = null,
+                DateTime? endDate = null) =>
             {
                 var result = await mediator.Send(
-                    new GetAllSalesQuery(pageNumber, pageSize, customerId, branchId, saleType, search));
+                    new GetAllSalesQuery(pageNumber, pageSize, customerId, branchId, saleType, search, startDate, endDate));
                 return Results.Ok(result);
             }).WithTags("Sales");
         }
