@@ -21,6 +21,9 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 if (request.CustomerId is int customerId)
                     query = query.Where(t => t.CustomerId == customerId);
 
+                if(request.BranchId is int branchId)
+                    query = query.Where(t => t.CustomerSale.BranchId == branchId);
+
                 if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
                 {
                     var term = $"%{request.InvoiceNumber.Trim()}%";
@@ -33,6 +36,18 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                          t.CustomerPayment.SaleCustomerPayments.Any(sp =>
                             EF.Functions.ILike(sp.CustomerSale.InvoiceNumber, term))));
                 }
+
+                if (!string.IsNullOrWhiteSpace(request.TransactionType))
+                {
+                    query = query.Where(t => t.TransactionType == request.TransactionType);
+                }
+
+                if (request.StartDate.HasValue)
+                    query = query.Where(t => t.TransactionDate >= request.StartDate.Value.Date);
+
+                if (request.EndDate.HasValue)
+                    query = query.Where(t => t.TransactionDate < request.EndDate.Value.Date.AddDays(1));
+
 
                 var pagedResult = await query
                     .OrderByDescending(t => t.Id)

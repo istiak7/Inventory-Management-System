@@ -12,9 +12,14 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 int pageNumber = 1,
                 int pageSize = 20,
                 int? customerId = null,
-                string? invoiceNumber = null) =>
+                int? branchId = null,
+                string? invoiceNumber = null,
+                string? transactionType = null,
+                DateTime? startDate = null,
+                DateTime? endDate = null) =>
             {
-                var result = await mediator.Send(new GetCustomerTransactionsQuery(pageNumber, pageSize, customerId, invoiceNumber));
+                var result = await mediator.Send(new GetCustomerTransactionsQuery(
+                    pageNumber, pageSize, customerId, branchId, invoiceNumber, transactionType, startDate, endDate));
                 return Results.Ok(result);
             }).WithTags("Customer");
         }

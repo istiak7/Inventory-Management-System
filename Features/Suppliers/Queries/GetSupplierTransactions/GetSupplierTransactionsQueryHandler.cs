@@ -21,6 +21,9 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                 if (request.SupplierId is int supplierId)
                     query = query.Where(t => t.SupplierId == supplierId);
 
+                if (request.BranchId is int branchId)
+                    query = query.Where(t => t.SupplierPurchase.BranchId == branchId);
+
                 if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
                 {
                     var term = $"%{request.InvoiceNumber.Trim()}%";
@@ -35,6 +38,17 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                             pp.SupplierPurchase.InvoiceNumber != null &&
                             EF.Functions.ILike(pp.SupplierPurchase.InvoiceNumber, term))));
                 }
+
+                if (!string.IsNullOrWhiteSpace(request.TransactionType))
+                {
+                    query = query.Where(t => t.TransactionType == request.TransactionType);
+                }
+
+                if (request.StartDate.HasValue)
+                    query = query.Where(t => t.TransactionDate >= request.StartDate.Value.Date);
+
+                if (request.EndDate.HasValue)
+                    query = query.Where(t => t.TransactionDate < request.EndDate.Value.Date.AddDays(1));
 
                 var pagedResult = await query
                     .OrderByDescending(t => t.Id)

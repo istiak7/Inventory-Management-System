@@ -1,5 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
@@ -25,6 +26,31 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
 
                 if (request.SupplierId is int supplierId)
                     query = query.Where(p => p.SupplierId == supplierId);
+
+                if (request.BranchId is int branchId)
+                    query = query.Where(p => p.BranchId == branchId);
+
+                if (!string.IsNullOrWhiteSpace(request.PurchaseType) &&
+                    Enum.TryParse<PurchaseType>(request.PurchaseType, true, out var purchaseTypeFilter))
+                    query = query.Where(p => p.PurchaseType == purchaseTypeFilter);
+
+                if (!string.IsNullOrWhiteSpace(request.Search))
+                {
+                    var term = $"%{request.Search.Trim()}%";
+                    var phone = CustomerPhoneNumber.Normalize(request.Search);
+                    var phoneTerm = phone.Length > 0 ? $"%{phone}%" : null;
+
+                    query = query.Where(p =>
+                        EF.Functions.ILike(p.InvoiceNumber, term) ||
+                        EF.Functions.ILike(p.Supplier.Name, term) ||
+                        (phoneTerm != null && EF.Functions.ILike(p.Supplier.PhoneNumber, phoneTerm)));
+                }
+
+                if (request.StartDate.HasValue)
+                    query = query.Where(p => p.PurchaseDate >= request.StartDate.Value.Date);
+
+                if (request.EndDate.HasValue)
+                    query = query.Where(p => p.PurchaseDate < request.EndDate.Value.Date.AddDays(1));
 
                 // Materialize with enums intact, then map to string DTOs in memory.
                 var paged = await query
