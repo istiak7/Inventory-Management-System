@@ -4,6 +4,7 @@ using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
+using Inventory_Management_System.Shared.Extensions.QueryableFilterExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,11 +47,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                         (phoneTerm != null && EF.Functions.ILike(p.Supplier.PhoneNumber, phoneTerm)));
                 }
 
-                if (request.StartDate.HasValue)
-                    query = query.Where(p => p.PurchaseDate >= request.StartDate.Value.Date);
-
-                if (request.EndDate.HasValue)
-                    query = query.Where(p => p.PurchaseDate < request.EndDate.Value.Date.AddDays(1));
+                query = query.WhereDateRange(t => t.PurchaseDate, request.StartDate, request.EndDate);
 
                 // Materialize with enums intact, then map to string DTOs in memory.
                 var paged = await query

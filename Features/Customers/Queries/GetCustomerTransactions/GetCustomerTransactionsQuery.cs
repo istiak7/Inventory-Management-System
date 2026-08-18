@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
         int PageSize = 20,
         int? CustomerId = null,
         int? BranchId = null,
-        string? InvoiceNumber = null,   // contains-search on the related invoice(s)
+        string? Search = null,   // contains-search on the related invoice(s)
         string? TransactionType = null,
         DateTime? StartDate = null,
         DateTime? EndDate = null

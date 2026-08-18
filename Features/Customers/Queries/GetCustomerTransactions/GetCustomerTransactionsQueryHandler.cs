@@ -2,6 +2,7 @@ using Inventory_Management_System.Database;
 using Inventory_Management_System.Features.Customers.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
+using Inventory_Management_System.Shared.Extensions.QueryableFilterExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,9 +25,9 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 if(request.BranchId is int branchId)
                     query = query.Where(t => t.CustomerSale.BranchId == branchId);
 
-                if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
+                if (!string.IsNullOrWhiteSpace(request.Search))
                 {
-                    var term = $"%{request.InvoiceNumber.Trim()}%";
+                    var term = $"%{request.Search.Trim()}%";
                     // Match a sale by its own invoice, or a payment by any invoice it settled.
                     query = query.Where(t =>
                         (t.CustomerSale != null &&
@@ -37,16 +38,8 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                             EF.Functions.ILike(sp.CustomerSale.InvoiceNumber, term))));
                 }
 
-                if (!string.IsNullOrWhiteSpace(request.TransactionType))
-                {
-                    query = query.Where(t => t.TransactionType == request.TransactionType);
-                }
-
-                if (request.StartDate.HasValue)
-                    query = query.Where(t => t.TransactionDate >= request.StartDate.Value.Date);
-
-                if (request.EndDate.HasValue)
-                    query = query.Where(t => t.TransactionDate < request.EndDate.Value.Date.AddDays(1));
+                query = query.WhereTransactionType(t => t.TransactionType, request.TransactionType);
+                query = query.WhereDateRange(t => t.TransactionDate, request.StartDate, request.EndDate);
 
 
                 var pagedResult = await query
