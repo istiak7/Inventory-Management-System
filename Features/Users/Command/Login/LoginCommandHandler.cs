@@ -15,7 +15,8 @@ namespace Inventory_Management_System.Features.Users.Login
 
         public async Task<Result> Handle(LoginUserCommand request, CancellationToken token)
         {
-            var user = await _userRepository.GetAsync(u => u.Name == request.Identifier || u.Email == request.Identifier);
+            var user = await _userRepository.GetAsync(u => u.Name == request.Identifier || u.Email == request.Identifier);    
+
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return new Result

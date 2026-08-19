@@ -29,7 +29,7 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
                 {
                     Name = request.Username,
                     Email = request.Email,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    PasswordHash = request.Password,
                     RoleId = request.RoleId,
                     RefreshToken = RefreshToken,
                     RefreshTokenExpireTime = DateTime.UtcNow.AddDays(7)
