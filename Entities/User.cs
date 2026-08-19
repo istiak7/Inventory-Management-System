@@ -8,5 +8,10 @@ namespace Inventory_Management_System.Entities
         public string RefreshToken { get; set; }
         public DateTime RefreshTokenExpireTime { get; set; }
         public int RoleId { get; set; }
+
+
+        // Navigation property to Role
+        public ICollection<Role> Role { get; set; }
+        public ICollection<Permission> Permission { get; set; }
     }
 }
