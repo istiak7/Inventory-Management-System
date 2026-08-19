@@ -6,11 +6,6 @@ namespace Inventory_Management_System.Database
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        // PostgreSQL 'timestamp with time zone' only accepts DateTimes with Kind == Utc.
-        // Client/JSON values arrive as Unspecified (or Local), so we coerce to UTC at the
-        // PROVIDER boundary via a value converter. Doing this in SaveChanges by reassigning
-        // CurrentValue does NOT work: DateTime equality ignores Kind, so EF's value comparer
-        // treats the UTC value as unchanged and keeps the original Unspecified one.
         private static readonly ValueConverter<DateTime, DateTime> UtcConverter = new(
             v => v.Kind == DateTimeKind.Utc ? v
                : v.Kind == DateTimeKind.Local ? v.ToUniversalTime()
@@ -30,7 +25,6 @@ namespace Inventory_Management_System.Database
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-            // Apply the UTC converter to every DateTime / DateTime? property in the model.
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 foreach (var property in entityType.GetProperties())
@@ -43,9 +37,6 @@ namespace Inventory_Management_System.Database
             }
         }
 
-        // Both SaveChanges overloads are overridden at their widest signature: the parameterless
-        // ones delegate here, so overriding only those would let a direct
-        // SaveChangesAsync(acceptAllChangesOnSuccess, ct) call slip past the hooks below.
         public override async Task<int> SaveChangesAsync(
             bool acceptAllChangesOnSuccess,
             CancellationToken cancellationToken = default)
@@ -64,15 +55,10 @@ namespace Inventory_Management_System.Database
 
         #region Full-text search projection
 
-        // Hybrid FTS: the application owns ProductVariant.SearchText (plain text), the database
-        // trigger derives SearchVector from it. That keeps the tsvector impossible to drift,
-        // while the text stays debuggable and cheap to rebuild.
-
         private async Task SyncSearchTextAsync(CancellationToken cancellationToken)
         {
             var renamedProductIds = RenamedProductIds();
 
-            // A rename invalidates every variant of that product, including ones nobody touched.
             if (renamedProductIds.Count > 0)
             {
                 var ids = renamedProductIds.ToArray();
@@ -129,10 +115,6 @@ namespace Inventory_Management_System.Database
             ApplySearchText(variants, names);
         }
 
-        /// <summary>
-        /// Products whose name actually changed. Comparing original vs current matters because
-        /// DbSet.Update() flags every property as modified regardless of its value.
-        /// </summary>
         private HashSet<int> RenamedProductIds()
         {
             var ids = new HashSet<int>();
@@ -163,8 +145,6 @@ namespace Inventory_Management_System.Database
                 .Where(e => e.State != EntityState.Deleted && e.Entity.Id != 0)
                 .ToDictionary(e => e.Entity.Id, e => e.Entity.ProductName);
 
-        // ProductId == 0 means the parent Product is being inserted in this same unit of work,
-        // so the navigation is set and no lookup is needed.
         private static List<int> MissingProductIds(
             List<ProductVariant> variants,
             Dictionary<int, string> names) =>
@@ -184,10 +164,6 @@ namespace Inventory_Management_System.Database
 
         #endregion
 
-        /// <summary>
-        /// Keep BaseEntity audit fields populated. Kind coercion is handled by the value
-        /// converters above, so here we only need to set sensible timestamps.
-        /// </summary>
         private void StampAuditFields()
         {
             var now = DateTime.UtcNow;

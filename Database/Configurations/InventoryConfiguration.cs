@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Inventory_Management_System.Database.Configurations
 {
-    // Denormalized on-hand snapshot: exactly one row per (Branch, ProductVariant).
     public class StockConfiguration : IEntityTypeConfiguration<Stock>
     {
         public void Configure(EntityTypeBuilder<Stock> builder)
@@ -25,7 +24,6 @@ namespace Inventory_Management_System.Database.Configurations
         }
     }
 
-    // Append-only stock ledger.
     public class InventoryTransactionConfiguration : IEntityTypeConfiguration<InventoryTransaction>
     {
         public void Configure(EntityTypeBuilder<InventoryTransaction> builder)
@@ -53,7 +51,6 @@ namespace Inventory_Management_System.Database.Configurations
         }
     }
 
-    // One row per physical serialized unit; SerialNumber is globally unique.
     public class ProductSerialConfiguration : IEntityTypeConfiguration<ProductSerial>
     {
         public void Configure(EntityTypeBuilder<ProductSerial> builder)
