@@ -39,7 +39,7 @@ builder.Services.AddQuartz(q =>
     q.AddTrigger(opts => opts
         .ForJob(jobKey)
         .WithIdentity("OutboxProcessorJob-trigger")
-        .WithCronSchedule("0/30 * * * * ?"));// Run every 30 seconds
+        .WithCronSchedule("0 0/30 * * * ?")); // Run every 30 minutes
 }
 );
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
