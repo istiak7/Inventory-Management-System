@@ -13,7 +13,9 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
         ILogger<ResolveWarrantyClaimHandler> _logger
     ) : IRequestHandler<ResolveWarrantyClaimCommand, Result>
     {
-        public async Task<Result> Handle(ResolveWarrantyClaimCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            ResolveWarrantyClaimCommand request,
+            CancellationToken cancellationToken)
         {
             var resolution = Enum.Parse<WarrantyResolutionType>(request.Resolution, true);
 
@@ -22,13 +24,27 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
             {
                 var claim = await _dbContext.WarrantyClaims
                     .Include(c => c.ProductSerial)
-                    .FirstOrDefaultAsync(c => c.Id == request.WarrantyClaimId, cancellationToken);
+                    .FirstOrDefaultAsync(
+                    c => c.Id == request.WarrantyClaimId,
+                    cancellationToken);
 
                 if (claim == null)
-                    return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Warranty claim not found." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 404,
+                        Status = "Error",
+                        Message = "Warranty claim not found."
+                    };
 
                 if (!claim.IsOpen)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Claim {claim.ClaimNumber} is already {claim.Status} and cannot be resolved again." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Claim {claim.ClaimNumber} is already {claim.Status} and cannot be resolved again."
+                    };
 
                 var now = DateTime.UtcNow;
                 ProductSerial? replacement = null;
@@ -47,15 +63,31 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
                             s.Status == SerialStatus.InStock, cancellationToken);
 
                     if (replacement == null)
-                        return new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = $"Serial '{replacementSerialNumber}' is not an available in-stock unit of the same product at this branch. Pick another unit." };
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 409,
+                            Status = "Error",
+                            Message = $"Serial '{replacementSerialNumber}' is not an available in-stock unit of the same product at this branch. Pick another unit."
+                        };
 
-                    var branch = await _dbContext.Branches.FirstAsync(b => b.Id == claim.BranchId, cancellationToken);
+                    var branch = await _dbContext.Branches.FirstAsync(
+                        b => b.Id == claim.BranchId,
+                        cancellationToken);
 
                     var stock = await _dbContext.Stocks
-                        .FirstOrDefaultAsync(s => s.BranchId == claim.BranchId && s.ProductVariantId == original.ProductVariantId, cancellationToken);
+                        .FirstOrDefaultAsync(
+                        s => s.BranchId == claim.BranchId && s.ProductVariantId == original.ProductVariantId,
+                        cancellationToken);
 
                     if (stock == null || stock.CurrentStock < 1)
-                        return new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = $"No stock on hand for '{replacement.ProductVariant.Product.ProductName}' at this branch, so no unit can be issued as a replacement." };
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 409,
+                            Status = "Error",
+                            Message = $"No stock on hand for '{replacement.ProductVariant.Product.ProductName}' at this branch, so no unit can be issued as a replacement."
+                        };
 
                     var newBalance = stock.CurrentStock - 1;
                     stock.CurrentStock = newBalance;
@@ -101,13 +133,31 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
                     ? $"Claim {claim.ClaimNumber} resolved — unit replaced with serial {replacement!.SerialNumber}."
                     : $"Claim {claim.ClaimNumber} resolved — unit repaired.";
 
-                return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = message, Data = row.ToResponse() };
+                return new Result
+                {
+                    IsSuccess = true,
+                    StatusCode = 200,
+                    Status = "Success",
+                    Message = message,
+                    Data = row.ToResponse()
+                };
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                _logger.LogError(ex, "Error resolving warranty claim {ClaimId} as {Resolution}", request.WarrantyClaimId, request.Resolution);
-                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while resolving the warranty claim." };
+                _logger.LogError(
+                    ex,
+                    "Error resolving warranty claim {ClaimId} as {Resolution}",
+                    request.WarrantyClaimId,
+                    request.Resolution);
+
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 500,
+                    Status = "Error",
+                    Message = "An error occurred while resolving the warranty claim."
+                };
             }
         }
     }

@@ -14,37 +14,77 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
         ILogger<CreateWarrantyClaimHandler> _logger
     ) : IRequestHandler<CreateWarrantyClaimCommand, Result>
     {
-        public async Task<Result> Handle(CreateWarrantyClaimCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateWarrantyClaimCommand request,
+            CancellationToken cancellationToken)
         {
             var serialNumber = request.SerialNumber.Trim();
 
             try
             {
                 var serial = await _dbContext.ProductSerials
-                    .FirstOrDefaultAsync(s => s.SerialNumber == serialNumber, cancellationToken);
+                    .FirstOrDefaultAsync(
+                    s => s.SerialNumber == serialNumber,
+                    cancellationToken);
 
                 if (serial == null)
-                    return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"No unit with serial number '{serialNumber}' exists." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 404,
+                        Status = "Error",
+                        Message = $"No unit with serial number '{serialNumber}' exists."
+                    };
 
                 if (serial.Status != SerialStatus.Sold)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial '{serialNumber}' is not with a customer (status {serial.Status}), so it has no warranty to claim." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Serial '{serialNumber}' is not with a customer (status {serial.Status}), so it has no warranty to claim."
+                    };
 
-                var saleDetailsId = await WarrantyTerms.ResolveSaleDetailsIdAsync(_dbContext, serial.Id, cancellationToken);
+                var saleDetailsId = await WarrantyTerms.ResolveSaleDetailsIdAsync(
+                    _dbContext,
+                    serial.Id,
+                    cancellationToken);
+
                 if (saleDetailsId == null)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial '{serialNumber}' has never been sold, so there is no warranty to claim against." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Serial '{serialNumber}' has never been sold, so there is no warranty to claim against."
+                    };
 
                 var saleDetail = await _dbContext.SaleDetails
                     .Include(d => d.CustomerSale)
-                    .FirstAsync(d => d.Id == saleDetailsId, cancellationToken);
+                    .FirstAsync(
+                    d => d.Id == saleDetailsId,
+                    cancellationToken);
 
                 var warrantyMonths = saleDetail.WarrantyMonths ?? serial.WarrantyMonths;
                 var expiry = WarrantyTerms.ExpiryFor(serial.SoldDate, warrantyMonths);
 
                 if (expiry == null)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"No warranty was sold with serial '{serialNumber}'." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"No warranty was sold with serial '{serialNumber}'."
+                    };
 
                 if (!WarrantyTerms.IsUnderWarranty(expiry, DateTime.UtcNow))
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Warranty for serial '{serialNumber}' expired on {expiry:dd MMM yyyy}. This unit is no longer covered." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Warranty for serial '{serialNumber}' expired on {expiry:dd MMM yyyy}. This unit is no longer covered."
+                    };
 
                 var liveClaim = await _dbContext.WarrantyClaims
                     .AsNoTracking()
@@ -54,12 +94,27 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (liveClaim != null)
-                    return new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = $"Claim {liveClaim} is already open for serial '{serialNumber}'." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 409,
+                        Status = "Error",
+                        Message = $"Claim {liveClaim} is already open for serial '{serialNumber}'."
+                    };
 
                 var branchId = request.BranchId ?? serial.BranchId;
-                var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == branchId, cancellationToken);
+                var branch = await _dbContext.Branches.FirstOrDefaultAsync(
+                    b => b.Id == branchId,
+                    cancellationToken);
+
                 if (branch == null)
-                    return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Branch not found." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 404,
+                        Status = "Error",
+                        Message = "Branch not found."
+                    };
 
                 var customer = await _dbContext.Customers
                     .FirstAsync(c => c.Id == saleDetail.CustomerSale.CustomerId, cancellationToken);
@@ -93,17 +148,44 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
                     .ProjectToRow()
                     .FirstAsync(cancellationToken);
 
-                return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = $"Warranty claim {claim.ClaimNumber} opened successfully", Data = row.ToResponse() };
+                return new Result
+                {
+                    IsSuccess = true,
+                    StatusCode = 201,
+                    Status = "Success",
+                    Message = $"Warranty claim {claim.ClaimNumber} opened successfully",
+                    Data = row.ToResponse()
+                };
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
-                _logger.LogWarning(ex, "Warranty claim creation lost a uniqueness race for serial {SerialNumber}", serialNumber);
-                return new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "Another claim was saved at the same moment and took this claim number. Nothing was recorded — please try again." };
+                _logger.LogWarning(
+                    ex,
+                    "Warranty claim creation lost a uniqueness race for serial {SerialNumber}",
+                    serialNumber);
+
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 409,
+                    Status = "Error",
+                    Message = "Another claim was saved at the same moment and took this claim number. Nothing was recorded — please try again."
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating warranty claim for serial {SerialNumber}", serialNumber);
-                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while creating the warranty claim." };
+                _logger.LogError(
+                    ex,
+                    "Error creating warranty claim for serial {SerialNumber}",
+                    serialNumber);
+
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 500,
+                    Status = "Error",
+                    Message = "An error occurred while creating the warranty claim."
+                };
             }
         }
 
