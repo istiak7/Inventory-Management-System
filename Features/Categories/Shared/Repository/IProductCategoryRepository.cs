@@ -7,6 +7,10 @@ namespace Inventory_Management_System.Features.Categories.Shared.Repository
 {
     public interface IProductCategoryRepository : IBaseRepository<ProductCategories>
     {
-        Task<PagedResult<CategoryResponse>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResult<CategoryResponse>> GetAllPagedAsync(
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default
+        );
     }
 }

@@ -9,8 +9,8 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
         string? Status = null,
         int? SupplierId = null,
         int? BranchId = null,
-        string? PurchaseType = null,   // Cash | Credit
-        string? Search = null,          // matches invoice number or supplier name/phone
+        string? PurchaseType = null,
+        string? Search = null,
         DateTime? StartDate = null,
         DateTime? EndDate = null
     ) : IRequest<Result>;

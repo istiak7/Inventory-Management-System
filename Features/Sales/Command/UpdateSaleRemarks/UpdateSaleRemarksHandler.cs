@@ -18,7 +18,6 @@ namespace Inventory_Management_System.Features.Sales.Command.UpdateSaleRemarks
 
             try
             {
-                // Blank clears the note; stored as null so readers only check for null.
                 sale.Remarks = string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim();
                 sale.UpDatedAt = DateTime.UtcNow;
 

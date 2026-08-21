@@ -7,14 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Warranty.Command.StartWarrantyRepair
 {
-    // Open -> InRepair. No stock or money impact: the unit on the bench is the customer's property
-    // the whole time, so the only thing that changes is who is holding it and since when.
     public class StartWarrantyRepairHandler(
-            AppDbContext _dbContext,
-            ILogger<StartWarrantyRepairHandler> _logger
-        ) : IRequestHandler<StartWarrantyRepairCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<StartWarrantyRepairHandler> _logger
+    ) : IRequestHandler<StartWarrantyRepairCommand, Result>
     {
-        public async Task<Result> Handle(StartWarrantyRepairCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            StartWarrantyRepairCommand request,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -22,10 +22,22 @@ namespace Inventory_Management_System.Features.Warranty.Command.StartWarrantyRep
                     .FirstOrDefaultAsync(c => c.Id == request.WarrantyClaimId, cancellationToken);
 
                 if (claim == null)
-                    return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Warranty claim not found." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 404,
+                        Status = "Error",
+                        Message = "Warranty claim not found."
+                    };
 
                 if (claim.Status != WarrantyClaimStatus.Open)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Only an open claim can be sent for repair. Claim {claim.ClaimNumber} is {claim.Status}." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Only an open claim can be sent for repair. Claim {claim.ClaimNumber} is {claim.Status}."
+                    };
 
                 claim.Status = WarrantyClaimStatus.InRepair;
                 claim.RepairStartedAt = DateTime.UtcNow;
@@ -41,12 +53,29 @@ namespace Inventory_Management_System.Features.Warranty.Command.StartWarrantyRep
                     .ProjectToRow()
                     .FirstAsync(cancellationToken);
 
-                return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = $"Claim {claim.ClaimNumber} is now in repair", Data = row.ToResponse() };
+                return new Result
+                {
+                    IsSuccess = true,
+                    StatusCode = 200,
+                    Status = "Success",
+                    Message = $"Claim {claim.ClaimNumber} is now in repair",
+                    Data = row.ToResponse()
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error starting repair on warranty claim {ClaimId}", request.WarrantyClaimId);
-                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while starting the repair." };
+                _logger.LogError(
+                    ex,
+                    "Error starting repair on warranty claim {ClaimId}",
+                    request.WarrantyClaimId);
+
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 500,
+                    Status = "Error",
+                    Message = "An error occurred while starting the repair."
+                };
             }
         }
     }

@@ -49,7 +49,6 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
 
                 query = query.WhereDateRange(t => t.PurchaseDate, request.StartDate, request.EndDate);
 
-                // Materialize with enums intact, then map to string DTOs in memory.
                 var paged = await query
                     .OrderByDescending(p => p.Id)
                     .Select(p => new

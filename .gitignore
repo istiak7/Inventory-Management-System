@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 *.swp
 .vs/
 .claude
+
+# Production secrets live here - never commit. Use web.config.template instead.
+web.config
+!web.config.template

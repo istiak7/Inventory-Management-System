@@ -12,7 +12,5 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
         string? TransactionType = null,
         DateTime? StartDate = null,
         DateTime? EndDate = null
-
-
     ) : IRequest<Result>;
 }

@@ -15,8 +15,6 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
         {
             try
             {
-                // Enums stay intact through the projection and are stringified below — EF cannot
-                // translate Enum.ToString().
                 var sale = await _dbContext.CustomerSales
                     .AsNoTracking()
                     .Where(s => s.Id == request.Id)
@@ -55,8 +53,6 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                             d.Status,
                             SerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null
                         }).ToList(),
-                        // Amount comes from the allocation, not the payment: one payment can be
-                        // split across several sales, and this invoice only shows its own share.
                         Payments = s.SaleCustomerPayments.Select(p => new
                         {
                             p.CustomerPaymentId,

@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSupplierLedger
 {
-   
     public class GetInvoiceSupplierLedgerQueryHandler(
         AppDbContext _dbContext,
         ILogger<GetInvoiceSupplierLedgerQueryHandler> _logger
@@ -61,7 +60,6 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                         Message = "Purchase invoice not found for this supplier."
                     };
 
-                // fetch the latest allocation for the given date, if any
                 var allocation = purchase.Allocations
                     .Where(a => a.PaymentDate == request.Date)
                     .OrderByDescending(a => a.Id)

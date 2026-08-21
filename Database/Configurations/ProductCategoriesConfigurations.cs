@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<ProductCategories> builder)
         {
-            builder.HasKey(pc => pc.Id); // Id is the primary key
+            builder.HasKey(pc => pc.Id); 
             builder.Property(pc => pc.CategoryName).IsRequired().HasMaxLength(100);
             builder.Property(pc => pc.Description).HasMaxLength(500);
             builder.Property(pc => pc.ImageUrl).HasMaxLength(200);
@@ -19,25 +19,23 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<ProductSubCategories> builder)
         {
-            builder.HasKey(psc => psc.Id); // Id is the primary key
+            builder.HasKey(psc => psc.Id); 
             builder.Property(psc => psc.SubCategoryName).IsRequired().HasMaxLength(100);
             builder.Property(psc => psc.Description).HasMaxLength(500);
             builder.Property(psc => psc.ImageUrl).HasMaxLength(200);
             builder.Property(psc => psc.Code).IsRequired().HasMaxLength(50);
-            // Configure the relationship with ProductCategories
             builder.HasOne(psc => psc.ProductCategories)
                    .WithMany(pc => pc.ProductSubCategories)
                    .HasForeignKey(psc => psc.ProductCategoryId)
-                   .OnDelete(DeleteBehavior.Cascade); // Optional: specify delete behavior
+                   .OnDelete(DeleteBehavior.Cascade); 
         }
     }
 
-    // Product is catalog-only now: no SKU / price here (those moved to ProductVariant).
     public class ProductConfigurations : IEntityTypeConfiguration<Product>
     {
         public void Configure(EntityTypeBuilder<Product> builder)
         {
-            builder.HasKey(p => p.Id); // Id is the primary key
+            builder.HasKey(p => p.Id);
             builder.Property(p => p.ProductName).IsRequired().HasMaxLength(100);
             builder.Property(p => p.ProductDescription).HasMaxLength(500);
             builder.Property(p => p.ProductImageUrl).HasMaxLength(200);
@@ -49,8 +47,6 @@ namespace Inventory_Management_System.Database.Configurations
         }
     }
 
-    // The stockable/sellable unit. SKU is the globally-unique business key; AttributesJson is
-    // Postgres jsonb with a GIN index for attribute queries (e.g. RAM size, color).
     public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVariant>
     {
         public void Configure(EntityTypeBuilder<ProductVariant> builder)
@@ -62,10 +58,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(v => v.SellingPrice).HasPrecision(18, 2);
             builder.Property(v => v.AttributesJson).HasColumnType("jsonb");
             builder.HasIndex(v => v.AttributesJson).HasMethod("gin");
-            // SearchText is written by AppDbContext.SaveChanges; SearchVector is derived from it
-            // by a database trigger (see AddSearchVectorToProductVariant). Marking the vector
-            // store-generated keeps EF from sending a NULL for it on every INSERT/UPDATE and
-            // makes EF read the trigger's value back into the tracked entity.
+
             builder.Property(v => v.SearchText)
                 .HasColumnType("text")
                 .IsRequired(false);

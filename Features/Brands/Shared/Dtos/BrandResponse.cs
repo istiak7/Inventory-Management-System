@@ -5,5 +5,6 @@ namespace Inventory_Management_System.Features.Brands.Shared.Dtos
         string Name,
         string Description,
         string LogoUrl,
-        DateTime CreatedAt);
+        DateTime CreatedAt
+    );
 }

@@ -26,14 +26,12 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
             if (brand is null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Brand with id {request.BrandId} was not found." };
 
-            // SKU is the globally-unique variant business key.
             var existing = await _variantRepository.GetAsync(v => v.SKU == request.SKU, asNoTracking: true, cancellationToken);
             if (existing is not null)
                 return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A variant with SKU '{request.SKU}' already exists." };
 
             try
             {
-                // Product and its first variant are created together, atomically (one SaveChanges).
                 var product = new Product
                 {
                     ProductName = request.ProductName,

@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseOrder
 {
     public class RejectPurchaseOrderHandler(
-            AppDbContext _dbContext,
-            ILogger<RejectPurchaseOrderHandler> _logger
-        ) : IRequestHandler<RejectPurchaseOrderCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<RejectPurchaseOrderHandler> _logger
+    ) : IRequestHandler<RejectPurchaseOrderCommand, Result>
     {
         public async Task<Result> Handle(RejectPurchaseOrderCommand request, CancellationToken cancellationToken)
         {
@@ -26,7 +26,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
 
             try
             {
-                // Reject is purely a status change — no ledger entry, no payment, no stock impact.
                 purchase.Status = PurchaseStatus.Rejected;
                 foreach (var detail in purchase.SupplierPurchaseDetails)
                     detail.Reject();
@@ -35,7 +34,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
 
                 var response = new PurchaseOrderResponse(
                     purchase.Id, purchase.SupplierId, purchase.BranchId, purchase.PurchaseDate,
-                    purchase.InvoiceNumber,purchase.Remarks, purchase.Status.ToString(), purchase.PurchaseType.ToString(),
+                    purchase.InvoiceNumber, purchase.Remarks, purchase.Status.ToString(), purchase.PurchaseType.ToString(),
                     purchase.TotalAmount, purchase.DueAmount);
 
                 return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Purchase order rejected successfully", Data = response };

@@ -36,7 +36,6 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
                 });
                 await _userRepository.SaveChangesAsync();
 
-                //Event Publisbhing
                 var userCreatedEvent = new UserRegistrationEvent
                 (
                     existingUser?.Id ?? 0,

@@ -7,7 +7,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.RejectWarrantyCl
     {
         public int WarrantyClaimId { get; init; }
 
-        /// <summary>Why the shop is not fixing it — the customer will be told this, so it is required.</summary>
         public required string Reason { get; init; }
     }
 }

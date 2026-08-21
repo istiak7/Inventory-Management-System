@@ -1,6 +1,6 @@
 namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
 {
-    public sealed record    SupplierResponse(
+    public sealed record SupplierResponse(
         int Id,
         string Group,
         string Name,
@@ -9,5 +9,6 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         string Email,
         string NID,
         decimal OpeningBalance,
-        DateTime CreatedAt);
+        DateTime CreatedAt
+    );
 }

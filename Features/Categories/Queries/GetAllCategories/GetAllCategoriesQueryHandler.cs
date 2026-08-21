@@ -9,7 +9,9 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllCategori
         ILogger<GetAllCategoriesQueryHandler> _logger
     ) : IRequestHandler<GetAllCategoriesQuery, Result>
     {
-        public async Task<Result> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            GetAllCategoriesQuery request,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -21,7 +23,7 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllCategori
                 return new Result
                 {
                     IsSuccess = true,
-                    StatusCode = 200,
+                    StatusCode = 200,   
                     Status = "Success",
                     Message = "Categories retrieved successfully",
                     Data = pagedResult
@@ -29,7 +31,10 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllCategori
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving categories");
+                _logger.LogError(
+                    ex,
+                    "Error retrieving categories");
+
                 return new Result
                 {
                     IsSuccess = false,

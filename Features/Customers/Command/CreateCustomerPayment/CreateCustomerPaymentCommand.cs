@@ -13,7 +13,6 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
         public string PaymentMethod { get; set; } = "Cash";
         public string? Remarks { get; set; }
 
-        // Optional per-sale allocation; empty => recorded as on-account credit.
         public List<SaleAllocationRequest> Allocations { get; set; } = [];
     }
 }

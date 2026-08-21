@@ -19,8 +19,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
             {
                 item.RuleFor(i => i.ProductVariantId).GreaterThan(0).WithMessage("ProductVariantId is required.");
 
-                // Whether Quantity or SerialNumbers applies depends on ProductVariant.IsSerialized,
-                // which only the handler knows — this just bounds what is present.
                 item.RuleFor(i => i.Quantity).GreaterThan(0)
                     .When(i => i.Quantity.HasValue)
                     .WithMessage("Quantity must be greater than 0.");

@@ -15,8 +15,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
                 .Must(r => Allowed.Contains(r, StringComparer.OrdinalIgnoreCase))
                 .WithMessage("Resolution must be either 'Repaired' or 'Replaced'. Use the reject endpoint for a unit that cannot be fixed.");
 
-            // Which serial is acceptable is the handler's call (same variant, same branch, in
-            // stock); this only insists that a swap actually names one.
             RuleFor(x => x.ReplacementSerialNumber)
                 .NotEmpty().MaximumLength(100)
                 .When(x => string.Equals(x.Resolution, "Replaced", StringComparison.OrdinalIgnoreCase))

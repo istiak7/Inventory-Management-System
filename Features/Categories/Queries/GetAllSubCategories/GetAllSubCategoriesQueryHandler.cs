@@ -9,7 +9,9 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllSubCateg
         ILogger<GetAllSubCategoriesQueryHandler> _logger
     ) : IRequestHandler<GetAllSubCategoriesQuery, Result>
     {
-        public async Task<Result> Handle(GetAllSubCategoriesQuery request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            GetAllSubCategoriesQuery request,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -29,7 +31,10 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllSubCateg
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving sub-categories");
+                _logger.LogError(
+                    ex,
+                    "Error retrieving sub-categories");
+
                 return new Result
                 {
                     IsSuccess = false,

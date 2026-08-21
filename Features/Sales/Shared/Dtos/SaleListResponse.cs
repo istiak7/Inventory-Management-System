@@ -1,6 +1,5 @@
 namespace Inventory_Management_System.Features.Sales.Shared.Dtos
 {
-    /// <summary>Row of GET /get-all-sales. Sales-side mirror of PurchaseOrderListResponse.</summary>
     public sealed record SaleListResponse(
         int Id,
         int CustomerId,
@@ -20,5 +19,6 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal PaidAmount,
         decimal DueAmount,
         int ItemsCount,
-        IReadOnlyList<SaleLineResponse> Items);
+        IReadOnlyList<SaleLineResponse> Items
+    );
 }

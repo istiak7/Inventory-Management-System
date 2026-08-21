@@ -1,7 +1,7 @@
 namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
 {
     public sealed record PurchaseOrderDetailLineResponse(
-        int Id,   // SupplierPurchaseDetails id (the lot)
+        int Id,
         int ProductVariantId,
         string SKU,
         string ProductName,
@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         decimal TotalAmount,
         int WarrantyMonths,
         string Status,
-        IReadOnlyList<string> SerialNumbers   // populated only for serialized lines
+        IReadOnlyList<string> SerialNumbers
     );
 
     public sealed record PurchaseOrderDetailResponse(

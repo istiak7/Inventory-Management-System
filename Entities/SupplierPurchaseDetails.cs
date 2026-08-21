@@ -2,17 +2,15 @@ using Inventory_Management_System.Entities.Common;
 
 namespace Inventory_Management_System.Entities
 {
-    // One purchase line == one "lot": a specific quantity of a variant bought at a specific
-    // UnitPrice with a specific WarrantyMonths term. Cost/warranty live HERE, never on the variant.
     public class SupplierPurchaseDetails : BaseEntity
     {
-        public int PurchaseId { get; set; } //FK
-        public int ProductVariantId { get; set; } //FK
-        public int OrderedQuantity { get; set; }        // known at PO creation
-        public int? ReceivedQuantity { get; set; }      // null until first goods receipt; accumulates across receipts
-        public decimal UnitPrice { get; set; }          // this lot's purchase cost
-        public decimal TotalAmount { get; set; }        // extended line price = OrderedQuantity * UnitPrice
-        public int WarrantyMonths { get; set; }         // this lot's warranty term (entered at creation, copied to serials)
+        public int PurchaseId { get; set; } 
+        public int ProductVariantId { get; set; } 
+        public int OrderedQuantity { get; set; }       
+        public int? ReceivedQuantity { get; set; }      
+        public decimal UnitPrice { get; set; }        
+        public decimal TotalAmount { get; set; }        
+        public int WarrantyMonths { get; set; }        
         public LineStatus Status { get; set; } = LineStatus.Pending;
 
         // Navigation property

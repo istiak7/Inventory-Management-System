@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<Customer> builder)
         {
-            builder.HasKey(c => c.Id); // Id is the primary key
+            builder.HasKey(c => c.Id);
             builder.Property(c => c.Group).HasMaxLength(100);
             builder.Property(c => c.Name).IsRequired().HasMaxLength(100);
             builder.Property(c => c.Description).HasMaxLength(500);
@@ -17,13 +17,6 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(c => c.Address).HasMaxLength(250);
             builder.Property(c => c.NID).HasMaxLength(20);
             builder.Property(c => c.OpeningBalance).IsRequired().HasPrecision(18, 2);
-
-            // The mobile number IS the customer's identity: the sales form looks a customer up by
-            // it and creates one only when nothing comes back. Unique at the database level, not
-            // just in the handler, so two tills ringing up the same new walk-in at the same moment
-            // cannot both win the "does this phone exist?" check and insert twice.
-            // Values are stored normalized (see CustomerPhoneNumber.Normalize) so the comparison
-            // is not defeated by dashes, spaces or a +880 prefix.
             builder.HasIndex(c => c.PhoneNumber).IsUnique();
         }
     }
@@ -32,14 +25,14 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<CustomerSale> builder)
         {
-            builder.HasKey(s => s.Id); // Id is the primary key
+            builder.HasKey(s => s.Id); 
             builder.Property(s => s.CustomerId).IsRequired();
             builder.Property(s => s.BranchId).IsRequired();
             builder.Property(s => s.InvoiceNumber).IsRequired().HasMaxLength(100);
-            builder.HasIndex(s => s.InvoiceNumber).IsUnique(); // one invoice number, one sale
+            builder.HasIndex(s => s.InvoiceNumber).IsUnique();
             builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.SaleType).IsRequired().HasConversion<string>().HasMaxLength(20);
-            builder.Property(s => s.Remarks).HasMaxLength(500);   // same length as SupplierPurchase.Remarks
+            builder.Property(s => s.Remarks).HasMaxLength(500);   
             builder.Property(s => s.SubTotal).HasPrecision(18, 2);
             builder.Property(s => s.DiscountAmount).HasPrecision(18, 2);
             builder.Property(s => s.TaxAmount).HasPrecision(18, 2);
@@ -63,7 +56,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SaleDetails> builder)
         {
-            builder.HasKey(d => d.Id); // Id is the primary key
+            builder.HasKey(d => d.Id);
             builder.Property(d => d.SaleId).IsRequired();
             builder.Property(d => d.Quantity).IsRequired();
             builder.Property(d => d.UnitPrice).HasPrecision(18, 2);
@@ -87,10 +80,10 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<CustomerPayment> builder)
         {
-            builder.HasKey(p => p.Id); // Id is the primary key
+            builder.HasKey(p => p.Id); 
             builder.Property(p => p.PaymentMethod).IsRequired().HasMaxLength(50);
             builder.Property(p => p.Amount).HasPrecision(18, 2);
-            builder.Property(p => p.Remarks).HasMaxLength(500);   // same length as SupplierPayment.Remarks
+            builder.Property(p => p.Remarks).HasMaxLength(500);   
 
             builder.HasOne(p => p.Customer)
                    .WithMany(c => c.CustomerPayments)
@@ -108,7 +101,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SaleCustomerPayment> builder)
         {
-            builder.HasKey(sp => sp.Id); // Id is the primary key
+            builder.HasKey(sp => sp.Id); 
             builder.Property(sp => sp.Amount).HasPrecision(18, 2);
 
             builder.HasOne(sp => sp.CustomerSale)
@@ -127,7 +120,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<CustomerTransaction> builder)
         {
-            builder.HasKey(t => t.Id); // Id is the primary key
+            builder.HasKey(t => t.Id);
             builder.Property(t => t.TransactionType).IsRequired().HasMaxLength(20);
             builder.Property(t => t.Debit).HasPrecision(18, 2);
             builder.Property(t => t.Credit).HasPrecision(18, 2);

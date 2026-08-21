@@ -22,7 +22,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 if (request.CustomerId is int customerId)
                     query = query.Where(t => t.CustomerId == customerId);
 
-                if(request.BranchId is int branchId)
+                if (request.BranchId is int branchId)
                     query = query.Where(t => t.CustomerSale.BranchId == branchId);
 
                 if (!string.IsNullOrWhiteSpace(request.Search))
@@ -41,7 +41,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 query = query.WhereTransactionType(t => t.TransactionType, request.TransactionType);
                 query = query.WhereDateRange(t => t.TransactionDate, request.StartDate, request.EndDate);
 
-
                 var pagedResult = await query
                     .OrderByDescending(t => t.Id)
                     .Select(t => new CustomerLedgerEntryResponse(
@@ -50,7 +49,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                         t.Customer.Name,
                         t.TransactionType,
                         t.TransactionDate,
-                        // Reference: invoice number for sales, PAY-x for payments, else TXN-x.
                         t.SaleId != null
                             ? (t.CustomerSale!.InvoiceNumber ?? ("SAL-" + t.SaleId))
                             : t.CustomerPaymentId != null
@@ -59,8 +57,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                         t.Debit,
                         t.Credit,
                         t.BalanceAfter,
-                        // Invoice(s) tied to this row: the sale's own invoice, or the invoice(s)
-                        // a payment was applied against (from the allocation junction).
                         t.SaleId != null
                             ? new List<string> { t.CustomerSale!.InvoiceNumber ?? ("SAL-" + t.SaleId) }
                             : t.CustomerPaymentId != null
@@ -69,8 +65,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                                     .Select(sp => sp.CustomerSale.InvoiceNumber ?? ("SAL-" + sp.SaleId))
                                     .ToList()
                                 : new List<string>(),
-                        // Remarks: the sale's own remarks for a Sale row, or the payment's remarks
-                        // for a Payment row.
                         t.SaleId != null
                             ? t.CustomerSale!.Remarks
                             : t.CustomerPaymentId != null

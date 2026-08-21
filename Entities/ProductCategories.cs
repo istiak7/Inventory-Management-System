@@ -7,8 +7,7 @@
         public string ImageUrl { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
 
-
-        //Navigation property
+        // Navigation property
         public ICollection<ProductSubCategories> ProductSubCategories { get; set; } = [];
 
     }

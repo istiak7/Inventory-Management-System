@@ -42,9 +42,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerByPh
                         c.Address,
                         c.NID,
                         c.OpeningBalance,
-                        // Same definition GetAllCustomers and the sale handler use: the receivable
-                        // as of the latest ledger row, so the till can see what is already owed
-                        // before agreeing to another credit sale.
                         c.CustomerTransactions
                             .OrderByDescending(t => t.Id)
                             .Select(t => (decimal?)t.BalanceAfter)
@@ -52,9 +49,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerByPh
                         c.CreatedAt))
                     .FirstOrDefaultAsync(cancellationToken);
 
-                // "Nobody has this number" is a successful answer, not a failure — it is the
-                // branch that tells the sales form to offer customer creation. Reporting it as an
-                // error would make the client show a toast on every new walk-in.
                 return new Result
                 {
                     IsSuccess = true,

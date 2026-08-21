@@ -2,18 +2,15 @@ using Inventory_Management_System.Entities.Common;
 
 namespace Inventory_Management_System.Entities
 {
-    // One physical serialized unit (laptop, GPU, ...). Bound to the lot it arrived in
-    // (SupplierPurchaseDetails), so its purchase cost is always lot.UnitPrice and its warranty
-    // is copied from the lot at receipt — never recomputed or duplicated as a separate cost field.
     public class ProductSerial : BaseEntity
     {
-        public int ProductVariantId { get; set; } //FK
-        public int SupplierPurchaseDetailsId { get; set; } //FK -> the lot (cost + supplier lineage)
-        public int BranchId { get; set; } //FK -- current holder; moved to the destination branch when a transfer is approved
-        public int? StockTransferDetailsId { get; set; } //FK -> most recent transfer line that moved this unit, if any
-        public required string SerialNumber { get; set; }    // globally unique across the whole table (unique index)
+        public int ProductVariantId { get; set; } 
+        public int SupplierPurchaseDetailsId { get; set; } 
+        public int BranchId { get; set; } 
+        public int? StockTransferDetailsId { get; set; }
+        public required string SerialNumber { get; set; }   
         public SerialStatus Status { get; set; } = SerialStatus.InStock;
-        public int WarrantyMonths { get; set; }              // copied from the lot at receipt
+        public int WarrantyMonths { get; set; }          
         public DateTime ReceivedDate { get; set; } = DateTime.Now;
         public DateTime? SoldDate { get; set; } = null;
 
@@ -22,6 +19,6 @@ namespace Inventory_Management_System.Entities
         public required SupplierPurchaseDetails SupplierPurchaseDetails { get; set; }
         public required Branch Branch { get; set; }
         public StockTransferDetails? StockTransferDetails { get; set; }
-        public SaleDetails? SaleDetails { get; set; } // null if not yet sold
+        public SaleDetails? SaleDetails { get; set; } 
     }
 }

@@ -9,13 +9,18 @@ using Microsoft.EntityFrameworkCore;
 namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerPayment
 {
     public class CreateCustomerPaymentHandler(
-            AppDbContext _dbContext,
-            ILogger<CreateCustomerPaymentHandler> _logger
-        ) : IRequestHandler<CreateCustomerPaymentCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<CreateCustomerPaymentHandler> _logger
+    ) : IRequestHandler<CreateCustomerPaymentCommand, Result>
     {
-        public async Task<Result> Handle(CreateCustomerPaymentCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateCustomerPaymentCommand request,
+            CancellationToken cancellationToken)
         {
-            var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken);
+            var customer = await _dbContext.Customers.FirstOrDefaultAsync(
+                c => c.Id == request.CustomerId,
+                cancellationToken);
+
             if (customer == null)
                 return new Result
                 {
@@ -25,7 +30,10 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Message = "Customer not found."
                 };
 
-            var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
+            var branch = await _dbContext.Branches.FirstOrDefaultAsync(
+                b => b.Id == request.BranchId,
+                cancellationToken);
+
             if (branch == null)
                 return new Result
                 {
@@ -44,10 +52,10 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Message = "Payment amount must be greater than 0."
                 };
 
-
             var remainingDue = await _dbContext.CustomerSales
                 .Where(s => s.CustomerId == request.CustomerId)
                 .SumAsync(s => s.DueAmount, cancellationToken);
+
             if (remainingDue - request.Amount < 0)
                 return new Result
                 {
@@ -56,7 +64,6 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Status = "Error",
                     Message = "Payment amount exceeds the remaining due amount."
                 };
-
 
             foreach (var payment in request.Allocations)
             {
@@ -73,11 +80,8 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                         Status = "Error",
                         Message = $"Allocation amount for invoice {payment.SaleId} exceeds its remaining due amount."
                     };
-
             }
 
-            // Allocation is ALWAYS explicit — no auto FIFO. Any unallocated remainder stays as
-            // on-account credit (an advance), which is allowed.
             var hasAllocations = request.Allocations is { Count: > 0 };
             List<CustomerSale> targetedSales = [];
             if (hasAllocations)
@@ -161,7 +165,10 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Customer = customer,
                     Branch = branch,
                 };
-                await _dbContext.CustomerPayments.AddAsync(payment, cancellationToken);
+
+                await _dbContext.CustomerPayments.AddAsync(
+                    payment,
+                    cancellationToken);
 
                 decimal allocatedAmount = 0;
                 if (hasAllocations)
@@ -169,7 +176,7 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     foreach (var alloc in request.Allocations)
                     {
                         var sale = targetedSales.First(s => s.Id == alloc.SaleId);
-                        sale.ApplyPayment(alloc.Amount);   // keeps Paid/Due consistent, validates against due
+                        sale.ApplyPayment(alloc.Amount);
 
                         await _dbContext.SaleCustomerPayments.AddAsync(new SaleCustomerPayment
                         {
@@ -182,15 +189,20 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     allocatedAmount = request.Allocations.Sum(a => a.Amount);
                 }
 
-                // Ledger: the payment debits the customer account (they owe us less), regardless of
-                // how much was allocated — the unallocated part is on-account credit.
                 var runningBalance = await _dbContext.CustomerTransactions
                     .Where(t => t.CustomerId == request.CustomerId)
                     .GetLatestBalanceAsync(cancellationToken);
+
                 runningBalance -= request.Amount;
 
-                var customerTransaction = CustomerTransaction.ForPayment(payment, customer, runningBalance);
-                await _dbContext.CustomerTransactions.AddAsync(customerTransaction, cancellationToken);
+                var customerTransaction = CustomerTransaction.ForPayment(
+                    payment,
+                    customer,
+                    runningBalance);
+
+                await _dbContext.CustomerTransactions.AddAsync(
+                    customerTransaction,
+                    cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);

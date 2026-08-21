@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<Department> builder)
         {
-            builder.HasKey(d => d.Id); // Id is the primary key
+            builder.HasKey(d => d.Id); 
             builder.Property(d => d.Name).IsRequired().HasMaxLength(100);
             builder.Property(d => d.Description).HasMaxLength(500);
         }
@@ -18,7 +18,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<Designation> builder)
         {
-            builder.HasKey(d => d.Id); // Id is the primary key
+            builder.HasKey(d => d.Id); 
             builder.Property(d => d.Name).IsRequired().HasMaxLength(100);
             builder.Property(d => d.Description).HasMaxLength(500);
         }

@@ -9,7 +9,9 @@ namespace Inventory_Management_System.Features.Brands.Command.UpdateBrand
         ILogger<UpdateBrandCommandHandler> _logger
     ) : IRequestHandler<UpdateBrandCommand, Result>
     {
-        public async Task<Result> Handle(UpdateBrandCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            UpdateBrandCommand request,
+            CancellationToken cancellationToken)
         {
             var brand = await _brandRepository.GetByIdAsync(request.Id, cancellationToken);
 
@@ -44,7 +46,11 @@ namespace Inventory_Management_System.Features.Brands.Command.UpdateBrand
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating brand with id {Id}", request.Id);
+                _logger.LogError(
+                    ex,
+                    "Error updating brand with id {Id}",
+                    request.Id);
+
                 return new Result
                 {
                     IsSuccess = false,

@@ -19,9 +19,6 @@ namespace Inventory_Management_System.Database.Configurations
                    .HasForeignKey(t => t.SourceBranchId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            // Both FKs point at Branch, so EF cannot infer which is which without WithMany() on
-            // each side being explicit — a single shared collection would conflate inbound and
-            // outbound transfers on the Branch entity.
             builder.HasOne(t => t.DestinationBranch)
                    .WithMany()
                    .HasForeignKey(t => t.DestinationBranchId)

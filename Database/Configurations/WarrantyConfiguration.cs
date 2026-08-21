@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Inventory_Management_System.Database.Configurations
 {
-    // After-sales service jobs. Enums are stored as strings (same as the rest of the model) so the
-    // rows stay readable in psql and adding a state later cannot renumber the existing ones.
     public class WarrantyClaimConfiguration : IEntityTypeConfiguration<WarrantyClaim>
     {
         public void Configure(EntityTypeBuilder<WarrantyClaim> builder)
@@ -23,9 +21,6 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(c => c.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(c => c.Resolution).HasConversion<string>().HasMaxLength(20);
 
-            // A unit accumulates claims over its life, so this is deliberately NOT unique — the
-            // "only one live claim at a time" rule is a state check in the create handler, not an
-            // index, because it depends on Status.
             builder.HasIndex(c => c.ProductSerialId);
             builder.HasIndex(c => c.CustomerId);
             builder.HasIndex(c => c.Status);
@@ -35,8 +30,6 @@ namespace Inventory_Management_System.Database.Configurations
                    .HasForeignKey(c => c.ProductSerialId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            // Second FK into the same table — the unit issued as a replacement. Needs its own
-            // relationship or EF cannot tell the two navigations apart.
             builder.HasOne(c => c.ReplacementSerial)
                    .WithMany()
                    .HasForeignKey(c => c.ReplacementSerialId)

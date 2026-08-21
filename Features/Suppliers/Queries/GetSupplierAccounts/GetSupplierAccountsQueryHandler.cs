@@ -16,9 +16,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
         {
             try
             {
-                // NOTE: BaseEntity.IsActive defaults to 1, which the EntityStatus enum labels InActive
-                // (Active = 0). Records are created with 1 and never flipped to 0, so filtering on
-                // "Active" would exclude everything. Exclude only soft-deleted (2) rows instead.
                 var query = _dbContext.Suppliers
                     .AsNoTracking()
                     .Where(s => s.IsActive != (int)EntityStatus.Deleted);
@@ -26,9 +23,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
                 if (request.SupplierId is int supplierId)
                     query = query.Where(s => s.Id == supplierId);
 
-                // Balance = total debited (purchases) - total credited (payments). This equals the
-                // running BalanceAfter of the latest transaction, since ledger entries are appended
-                // in order. Suppliers with no ledger activity come back with zeros.
                 var accounts = await query
                     .OrderBy(s => s.Name)
                     .Select(s => new SupplierAccountResponse(
@@ -45,8 +39,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
                             .FirstOrDefault(),
                         s.PhoneNumber,
                         s.Email,
-                        // Supplier has no dedicated address column; Description is what the
-                        // create/update forms use for it.
                         s.Description,
                         s.OpeningBalance))
                     .ToListAsync(cancellationToken);

@@ -21,8 +21,17 @@ builder.Services.AddSwaggerGen();
 
 
 //Database Registration
+var dbConnectionString = builder.Configuration.GetConnectionString("DbConnectionString");
+
+// Fail at startup instead of on the first request, where a missing connection string
+// surfaces as a confusing Npgsql "host is required" error deep inside a handler.
+if (string.IsNullOrWhiteSpace(dbConnectionString))
+    throw new InvalidOperationException(
+        "ConnectionStrings:DbConnectionString is missing. Set it in appsettings.<Environment>.json " +
+        "or via the ConnectionStrings__DbConnectionString environment variable.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DbConnectionString")));
+    options.UseNpgsql(dbConnectionString));
 
 //MediatR Registration
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -44,7 +53,8 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSetting
 // wrote the raw secret to stdout, so it landed in every console and log sink.
 if (string.IsNullOrWhiteSpace(jwtSettings?.SecretKey) || jwtSettings.SecretKey.Length < 32)
     throw new InvalidOperationException(
-        "JwtSettings:SecretKey is missing or shorter than 32 characters. Configure it via user-secrets or an environment variable.");
+        "JwtSettings:SecretKey is missing or shorter than 32 characters. Set it via user-secrets locally, " +
+        "or via the JwtSettings__SecretKey environment variable on the server.");
 
 builder.AddJWTAuthentication();
 builder.Services.AddServices();

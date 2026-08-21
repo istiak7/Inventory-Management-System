@@ -1,6 +1,6 @@
 ﻿namespace Inventory_Management_System.Entities
 {
-    public class SupplierPurchasePayment : BaseEntity   // Junction Table
+    public class SupplierPurchasePayment : BaseEntity 
     {
         public int SupplierPurchaseId { get; set; }
         public int SupplierPaymentId { get; set; }

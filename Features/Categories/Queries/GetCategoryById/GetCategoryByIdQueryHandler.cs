@@ -10,11 +10,15 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetCategoryByI
         ILogger<GetCategoryByIdQueryHandler> _logger
     ) : IRequestHandler<GetCategoryByIdQuery, Result>
     {
-        public async Task<Result> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            GetCategoryByIdQuery request,
+            CancellationToken cancellationToken)
         {
             try
             {
-                var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
+                var category = await _categoryRepository.GetByIdAsync(
+                    request.Id,
+                    cancellationToken);
 
                 if (category is null)
                 {
@@ -46,7 +50,11 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetCategoryByI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving category with id {Id}", request.Id);
+                _logger.LogError(
+                    ex,
+                    "Error retrieving category with id {Id}",
+                    request.Id);
+
                 return new Result
                 {
                     IsSuccess = false,

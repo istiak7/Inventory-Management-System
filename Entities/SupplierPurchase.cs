@@ -9,10 +9,10 @@ namespace Inventory_Management_System.Entities
         public DateTime PurchaseDate { get; set; } = DateTime.Now;
         public string InvoiceNumber { get; set; } = string.Empty;
         public PurchaseStatus Status { get; set; } = PurchaseStatus.Pending;  
-        public PurchaseType PurchaseType { get; set; } = PurchaseType.Credit;  // created as Credit; paid after approval
+        public PurchaseType PurchaseType { get; set; } = PurchaseType.Credit;  
         public decimal TotalAmount { get; set; }   
         public decimal PaidAmount { get; set; }  
-        public decimal DueAmount { get; set; }      // outstanding = TotalAmount - PaidAmount
+        public decimal DueAmount { get; set; }      
         public string ? Remarks { get; set; } = string.Empty;
 
         // Navigation property

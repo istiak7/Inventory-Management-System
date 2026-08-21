@@ -9,7 +9,9 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetAllBrands
         ILogger<GetAllBrandsQueryHandler> _logger
     ) : IRequestHandler<GetAllBrandsQuery, Result>
     {
-        public async Task<Result> Handle(GetAllBrandsQuery request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            GetAllBrandsQuery request,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -29,7 +31,10 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetAllBrands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving brands");
+                _logger.LogError(
+                    ex,
+                    "Error retrieving brands");
+
                 return new Result
                 {
                     IsSuccess = false,

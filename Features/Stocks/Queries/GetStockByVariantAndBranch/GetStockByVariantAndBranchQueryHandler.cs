@@ -35,7 +35,6 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetStockByVariantA
                 if (stock is not null)
                     return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Stock retrieved successfully", Data = stock };
 
-                // No stock row yet — return a zero-stock response as long as the variant & branch are valid.
                 var variant = await _dbContext.ProductVariants
                     .AsNoTracking()
                     .Where(v => v.Id == request.ProductVariantId)

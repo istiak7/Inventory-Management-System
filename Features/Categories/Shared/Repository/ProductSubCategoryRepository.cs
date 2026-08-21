@@ -15,7 +15,8 @@ namespace Inventory_Management_System.Features.Categories.Shared.Repository
         public async Task<PagedResult<SubCategoryResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             return await _context.ProductSubCategories
                 .AsNoTracking()
@@ -35,7 +36,8 @@ namespace Inventory_Management_System.Features.Categories.Shared.Repository
             int categoryId,
             int pageNumber,
             int pageSize,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             return await _context.ProductSubCategories
                 .AsNoTracking()
