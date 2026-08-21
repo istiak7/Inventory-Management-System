@@ -6,5 +6,6 @@ namespace Inventory_Management_System.Features.Categories.Shared.Dtos
         string Description,
         string ImageUrl,
         string Code,
-        DateTime CreatedAt);
+        DateTime CreatedAt
+    );
 }

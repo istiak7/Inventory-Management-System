@@ -8,10 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarranty
 {
-    // The eligibility screen. Everything it reports is derived — nothing about cover is stored
-    // until a claim is actually opened — so scanning a serial can never mutate anything, and the
-    // same rules run again server-side at intake (CreateWarrantyClaimHandler) rather than trusting
-    // whatever the counter was shown a minute ago.
     public class LookupSerialWarrantyQueryHandler(
         AppDbContext _dbContext,
         ILogger<LookupSerialWarrantyQueryHandler> _logger
@@ -46,8 +42,6 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
                 if (serial == null)
                     return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"No unit with serial number '{serialNumber}' exists." };
 
-                // Claims already logged against this unit — shown alongside the card so the counter
-                // sees a repeat visitor before opening a duplicate job.
                 var claims = (await _dbContext.WarrantyClaims
                         .AsNoTracking()
                         .Where(c => c.ProductSerialId == serial.Id)
@@ -62,8 +56,6 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
 
                 var saleDetailsId = await WarrantyTerms.ResolveSaleDetailsIdAsync(_dbContext, serial.Id, cancellationToken);
 
-                // Never sold and never issued as a replacement: it is shop stock, not a customer's
-                // unit. Report it plainly rather than dressing it up as an expired warranty.
                 if (saleDetailsId == null)
                 {
                     var unsold = new WarrantySerialLookupResponse(
@@ -95,15 +87,11 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
                     })
                     .FirstAsync(cancellationToken);
 
-                // The line's own months are the terms the customer was sold; the serial's are the
-                // supplier-side figure it arrived with, used only if the line never recorded any.
                 var warrantyMonths = line.WarrantyMonths ?? serial.WarrantyMonths;
                 var expiry = WarrantyTerms.ExpiryFor(serial.SoldDate, warrantyMonths);
                 var now = DateTime.UtcNow;
                 var underWarranty = WarrantyTerms.IsUnderWarranty(expiry, now);
 
-                // The line points at a different unit => this one reached the customer as a swap,
-                // and the invoice above belongs to the unit it replaced.
                 var isReplacementUnit = line.ProductSerialId != serial.Id;
 
                 var sale = new WarrantySaleReference(
@@ -130,13 +118,13 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
             }
         }
 
-        /// <summary>
-        /// The single verdict, in the order a counter would reach it: is the unit still the
-        /// customer's, is it covered, and is it already on a bench somewhere. Each refusal names
-        /// its own reason — "not eligible" alone sends staff hunting for a fault that isn't theirs.
-        /// </summary>
         private static (bool CanOpenClaim, string Message) Eligibility(
-            SerialStatus status, DateTime? expiry, bool underWarranty, string? liveClaimNumber, DateTime now)
+            SerialStatus status,
+            DateTime? expiry,
+            bool underWarranty,
+            string? liveClaimNumber,
+            DateTime now
+        )
         {
             if (status == SerialStatus.RmaReturned)
                 return (false, "This unit was taken back by the shop under an earlier claim and replaced — the customer holds the replacement now.");

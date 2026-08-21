@@ -10,9 +10,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierPayment
 {
     public class CreateSupplierPaymentHandler(
-            AppDbContext _dbContext,
-            ILogger<CreateSupplierPaymentHandler> _logger
-        ) : IRequestHandler<CreateSupplierPaymentCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<CreateSupplierPaymentHandler> _logger
+    ) : IRequestHandler<CreateSupplierPaymentCommand, Result>
     {
         public async Task<Result> Handle(CreateSupplierPaymentCommand request, CancellationToken cancellationToken)
         {
@@ -45,7 +45,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Message = "Payment amount must be greater than 0."
                 };
 
-
             var remainingDue = await _dbContext.SupplierPurchases
                 .Where(p => p.SupplierId == request.SupplierId && p.Status == PurchaseStatus.Approved)
                 .SumAsync(p => p.DueAmount, cancellationToken);
@@ -57,7 +56,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Status = "Error",
                     Message = "Payment amount exceeds the remaining due amount."
                 };
-
 
             foreach (var payment in request.Allocations)
             {
@@ -74,11 +72,8 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                         Status = "Error",
                         Message = $"Allocation amount for invoice {payment.PurchaseId} exceeds its remaining due amount."
                     };
-
             }
 
-            // Allocation is ALWAYS explicit — no auto FIFO. Any unallocated remainder stays as
-            // on-account credit (an advance), which is allowed.
             var hasAllocations = request.Allocations is { Count: > 0 };
             List<SupplierPurchase> targetedPurchases = [];
             if (hasAllocations)
@@ -127,8 +122,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                             Status = "Error",
                             Message = $"Invoice {alloc.PurchaseId} not found for this supplier."
                         };
-                    // Only an approved (fully received) purchase is payable — pending, partially
-                    // received, or rejected orders must not generate payment records.
                     if (purchase.Status != PurchaseStatus.Approved)
                         return new Result
                         {
@@ -180,7 +173,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     foreach (var alloc in request.Allocations)
                     {
                         var purchase = targetedPurchases.First(p => p.Id == alloc.PurchaseId);
-                        purchase.ApplyPayment(alloc.Amount);   // keeps Paid/Due consistent, validates against due
+                        purchase.ApplyPayment(alloc.Amount);
 
                         await _dbContext.SupplierPurchasePayments.AddAsync(new SupplierPurchasePayment
                         {
@@ -193,24 +186,10 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     allocatedAmount = request.Allocations.Sum(a => a.Amount);
                 }
 
-                // Ledger: the payment credits the supplier account (we now owe less), regardless of
-                // how much was allocated — the unallocated part is on-account credit.
                 var runningBalance = await _dbContext.SupplierTransactions
                     .Where(t => t.SupplierId == request.SupplierId)
                     .GetLatestBalanceAsync(cancellationToken);
                 runningBalance -= request.Amount;
-
-                //await _dbContext.SupplierTransactions.AddAsync(new SupplierTransaction
-                //{
-                //    SupplierId = request.SupplierId,
-                //    TransactionType = "Payment",
-                //    TransactionDate = paymentDate,
-                //    Debit = 0,
-                //    Credit = request.Amount,
-                //    BalanceAfter = runningBalance,
-                //    SupplierPayment = payment,
-                //    Supplier = supplier,
-                //}, cancellationToken);
 
                 var supplierTransaction = SupplierTransaction.ForPayment(payment, supplier, runningBalance);
                 await _dbContext.SupplierTransactions.AddAsync(supplierTransaction, cancellationToken);

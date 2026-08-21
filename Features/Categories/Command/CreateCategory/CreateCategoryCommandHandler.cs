@@ -10,7 +10,9 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateCategory
         ILogger<CreateCategoryCommandHandler> _logger
     ) : IRequestHandler<CreateCategoryCommand, Result>
     {
-        public async Task<Result> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateCategoryCommand request,
+            CancellationToken cancellationToken)
         {
             var existing = await _categoryRepository.GetAsync(c => c.Code == request.Code);
             if (existing is not null)
@@ -48,7 +50,10 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateCategory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating category");
+                _logger.LogError(
+                    ex,
+                    "Error creating category");
+
                 return new Result
                 {
                     IsSuccess = false,

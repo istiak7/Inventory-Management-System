@@ -21,10 +21,12 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                 if (request.SupplierId is int supplierId)
                     query = query.Where(t => t.SupplierId == supplierId);
 
+                if (request.BranchId is int branchId)
+                    query = query.Where(t => t.SupplierPurchase.BranchId == branchId);
+
                 if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
                 {
                     var term = $"%{request.InvoiceNumber.Trim()}%";
-                    // Match a purchase by its own invoice, or a payment by any invoice it settled.
                     query = query.Where(t =>
                         (t.SupplierPurchase != null &&
                          t.SupplierPurchase.InvoiceNumber != null &&
@@ -36,6 +38,17 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                             EF.Functions.ILike(pp.SupplierPurchase.InvoiceNumber, term))));
                 }
 
+                if (!string.IsNullOrWhiteSpace(request.TransactionType))
+                {
+                    query = query.Where(t => t.TransactionType == request.TransactionType);
+                }
+
+                if (request.StartDate.HasValue)
+                    query = query.Where(t => t.TransactionDate >= request.StartDate.Value.Date);
+
+                if (request.EndDate.HasValue)
+                    query = query.Where(t => t.TransactionDate < request.EndDate.Value.Date.AddDays(1));
+
                 var pagedResult = await query
                     .OrderByDescending(t => t.Id)
                     .Select(t => new SupplierLedgerEntryResponse(
@@ -44,7 +57,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                         t.Supplier.Name,
                         t.TransactionType,
                         t.TransactionDate,
-                        // Reference: invoice number for purchases, PAY-x for payments, else TXN-x.
                         t.SupplierPurchaseId != null
                             ? (t.SupplierPurchase!.InvoiceNumber ?? ("PUR-" + t.SupplierPurchaseId))
                             : t.SupplierPaymentId != null
@@ -53,8 +65,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                         t.Debit,
                         t.Credit,
                         t.BalanceAfter,
-                        // Invoice(s) tied to this row: the purchase's own invoice, or the invoice(s)
-                        // a payment was applied against (from the allocation junction).
                         t.SupplierPurchaseId != null
                             ? new List<string> { t.SupplierPurchase!.InvoiceNumber ?? ("PUR-" + t.SupplierPurchaseId) }
                             : t.SupplierPaymentId != null
@@ -63,8 +73,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                                     .Select(pp => pp.SupplierPurchase.InvoiceNumber ?? ("PUR-" + pp.SupplierPurchaseId))
                                     .ToList()
                                 : new List<string>(),
-                        // Remarks: the purchase order's own remarks for a Purchase row, or the
-                        // payment's remarks for a Payment row.
                         t.SupplierPurchaseId != null
                             ? t.SupplierPurchase!.Remarks
                             : t.SupplierPaymentId != null

@@ -7,6 +7,10 @@ namespace Inventory_Management_System.Features.Brands.Shared.Repository
 {
     public interface IBrandRepository : IBaseRepository<Brand>
     {
-        Task<PagedResult<BrandResponse>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResult<BrandResponse>> GetAllPagedAsync(
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default
+        );
     }
 }

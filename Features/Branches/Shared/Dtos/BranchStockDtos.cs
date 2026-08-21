@@ -5,17 +5,17 @@ namespace Inventory_Management_System.Features.Branches.Shared.Dtos
         string SKU,
         string ProductName,
         bool IsSerialized,
-        int CurrentStock);
+        int CurrentStock
+    );
 
-    // A branch's full stock picture: total units on hand + per-variant breakdown.
     public sealed record BranchStockResponse(
         int BranchId,
         string BranchName,
         int TotalUnits,
         int VariantCount,
-        IReadOnlyList<BranchStockItem> Items);
+        IReadOnlyList<BranchStockItem> Items
+    );
 
-    // The number of stock for a single variant at a single branch.
     public sealed record BranchVariantStockResponse(
         int BranchId,
         string BranchName,
@@ -23,5 +23,6 @@ namespace Inventory_Management_System.Features.Branches.Shared.Dtos
         string SKU,
         string ProductName,
         bool IsSerialized,
-        int CurrentStock);
+        int CurrentStock
+    );
 }

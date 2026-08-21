@@ -7,7 +7,7 @@
         public DateTime TransactionDate { get; set; } = DateTime.Now;
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
-        public decimal BalanceAfter { get; set; }  // added — running balance, computed once at insert time
+        public decimal BalanceAfter { get; set; }  
 
         public int? SupplierPurchaseId { get; set; }
         public int? SupplierPaymentId { get; set; }

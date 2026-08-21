@@ -7,7 +7,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.StartWarrantyRep
     {
         public int WarrantyClaimId { get; init; }
 
-        /// <summary>Who picked the job up. Overwrites whatever intake guessed, when supplied.</summary>
         public string? TechnicianName { get; init; }
     }
 }

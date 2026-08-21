@@ -9,8 +9,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
             RuleFor(x => x.SerialNumber).NotEmpty().MaximumLength(100)
                 .WithMessage("A serial number is required.");
 
-            // The defect is the entire point of the job sheet — a technician who receives "not
-            // working" has to phone the counter back, so demand something a person can act on.
             RuleFor(x => x.DefectDescription).NotEmpty().MinimumLength(5).MaximumLength(1000)
                 .WithMessage("Describe the defect in at least 5 characters.");
 

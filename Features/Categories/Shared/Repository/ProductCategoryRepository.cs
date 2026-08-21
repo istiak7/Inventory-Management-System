@@ -15,7 +15,8 @@ namespace Inventory_Management_System.Features.Categories.Shared.Repository
         public async Task<PagedResult<CategoryResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             return await _context.ProductCategories
                 .AsNoTracking()

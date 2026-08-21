@@ -4,11 +4,6 @@ using Inventory_Management_System.Features.Warranty.Shared.Dtos;
 
 namespace Inventory_Management_System.Features.Warranty.Shared
 {
-    /// <summary>
-    /// Flat row a claim is read into. It exists only to carry the enums out of SQL intact —
-    /// EF cannot translate Enum.ToString(), so the stringifying happens in <see cref="ToResponse"/>
-    /// after materialization (same shape as the Sales query handlers).
-    /// </summary>
     public sealed record WarrantyClaimRow(
         int Id,
         string ClaimNumber,
@@ -41,12 +36,9 @@ namespace Inventory_Management_System.Features.Warranty.Shared
         DateTime? RepairStartedAt,
         DateTime? ResolvedAt,
         DateTime? RejectedAt,
-        DateTime? DeliveredAt);
+        DateTime? DeliveredAt
+    );
 
-    /// <summary>
-    /// Every read path — list, detail, and the row each command echoes back — goes through this
-    /// projection, so a claim looks identical wherever it surfaces.
-    /// </summary>
     public static class WarrantyClaimProjection
     {
         public static IQueryable<WarrantyClaimRow> ProjectToRow(this IQueryable<WarrantyClaim> query) =>

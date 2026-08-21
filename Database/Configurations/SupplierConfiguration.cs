@@ -8,13 +8,13 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<Supplier> builder)
         {
-            builder.HasKey(s => s.Id); // Id is the primary key
+            builder.HasKey(s => s.Id); 
             builder.Property(s => s.Group).IsRequired().HasMaxLength(100);
             builder.Property(s => s.Name).IsRequired().HasMaxLength(100);
             builder.Property(s => s.Description).HasMaxLength(500);
             builder.Property(s => s.PhoneNumber).HasMaxLength(20);
             builder.Property(s => s.Email).HasMaxLength(100).IsRequired();
-            builder.HasIndex(s => s.Email).IsUnique(); // Email should be unique
+            builder.HasIndex(s => s.Email).IsUnique();
             builder.Property(s => s.NID).HasMaxLength(20);
             builder.Property(s => s.OpeningBalance).IsRequired().HasPrecision(18, 2);
         }
@@ -24,7 +24,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SupplierPurchase> builder)
         {
-            builder.HasKey(s => s.Id); // Id is the primary key
+            builder.HasKey(s => s.Id); 
             builder.Property(s => s.SupplierId).IsRequired();
             builder.Property(s => s.BranchId).IsRequired();
             builder.Property(s => s.InvoiceNumber).HasMaxLength(100);
@@ -45,7 +45,7 @@ namespace Inventory_Management_System.Database.Configurations
                    .HasForeignKey(s => s.BranchId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasIndex(s => s.InvoiceNumber).IsUnique(); // InvoiceNumber should be unique
+            builder.HasIndex(s => s.InvoiceNumber).IsUnique();
         }
     }
 
@@ -53,7 +53,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SupplierPurchaseDetails> builder)
         {
-            builder.HasKey(d => d.Id); // Id is the primary key
+            builder.HasKey(d => d.Id); 
             builder.Property(d => d.OrderedQuantity).IsRequired();
             builder.Property(d => d.UnitPrice).HasPrecision(18, 2);
             builder.Property(d => d.TotalAmount).HasPrecision(18, 2);
@@ -77,7 +77,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SupplierPayment> builder)
         {
-            builder.HasKey(p => p.Id); // Id is the primary key
+            builder.HasKey(p => p.Id);
             builder.Property(p => p.PaymentMethod).IsRequired().HasMaxLength(50);
             builder.Property(p => p.Amount).HasPrecision(18, 2);
             builder.Property(p => p.Remarks).HasMaxLength(500);
@@ -93,7 +93,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SupplierPurchasePayment> builder)
         {
-            builder.HasKey(pp => pp.Id); // Id is the primary key
+            builder.HasKey(pp => pp.Id); 
             builder.Property(pp => pp.Amount).HasPrecision(18, 2);
 
             builder.HasOne(pp => pp.SupplierPurchase)
@@ -112,7 +112,7 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SupplierTransaction> builder)
         {
-            builder.HasKey(t => t.Id); // Id is the primary key
+            builder.HasKey(t => t.Id); 
             builder.Property(t => t.TransactionType).IsRequired().HasMaxLength(20);
             builder.Property(t => t.Debit).HasPrecision(18, 2);
             builder.Property(t => t.Credit).HasPrecision(18, 2);

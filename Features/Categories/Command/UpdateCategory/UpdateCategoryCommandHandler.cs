@@ -9,9 +9,13 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateCategory
         ILogger<UpdateCategoryCommandHandler> _logger
     ) : IRequestHandler<UpdateCategoryCommand, Result>
     {
-        public async Task<Result> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            UpdateCategoryCommand request,
+            CancellationToken cancellationToken)
         {
-            var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
+            var category = await _categoryRepository.GetByIdAsync(
+                request.Id,
+                cancellationToken);
 
             if (category is null)
             {
@@ -45,7 +49,11 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateCategory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating category with id {Id}", request.Id);
+                _logger.LogError(
+                    ex,
+                    "Error updating category with id {Id}",
+                    request.Id);
+
                 return new Result
                 {
                     IsSuccess = false,

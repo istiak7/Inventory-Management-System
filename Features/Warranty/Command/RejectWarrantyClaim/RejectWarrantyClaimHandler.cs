@@ -7,26 +7,39 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Warranty.Command.RejectWarrantyClaim
 {
-    // The "could not solve it" ending. No stock moves and the serial keeps its Sold status: the
-    // unit is still the customer's, unrepaired, and goes home with them — which is why Delivered
-    // is reachable from here just as it is from Resolved.
     public class RejectWarrantyClaimHandler(
-            AppDbContext _dbContext,
-            ILogger<RejectWarrantyClaimHandler> _logger
-        ) : IRequestHandler<RejectWarrantyClaimCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<RejectWarrantyClaimHandler> _logger
+    ) : IRequestHandler<RejectWarrantyClaimCommand, Result>
     {
-        public async Task<Result> Handle(RejectWarrantyClaimCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            RejectWarrantyClaimCommand request,
+            CancellationToken cancellationToken)
         {
             try
             {
                 var claim = await _dbContext.WarrantyClaims
-                    .FirstOrDefaultAsync(c => c.Id == request.WarrantyClaimId, cancellationToken);
+                    .FirstOrDefaultAsync(
+                    c => c.Id == request.WarrantyClaimId,
+                    cancellationToken);
 
                 if (claim == null)
-                    return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Warranty claim not found." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 404,
+                        Status = "Error",
+                        Message = "Warranty claim not found."
+                    };
 
                 if (!claim.IsOpen)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Claim {claim.ClaimNumber} is already {claim.Status} and cannot be rejected." };
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"Claim {claim.ClaimNumber} is already {claim.Status} and cannot be rejected."
+                    };
 
                 claim.Status = WarrantyClaimStatus.Rejected;
                 claim.Resolution = WarrantyResolutionType.NotRepairable;
@@ -41,12 +54,25 @@ namespace Inventory_Management_System.Features.Warranty.Command.RejectWarrantyCl
                     .ProjectToRow()
                     .FirstAsync(cancellationToken);
 
-                return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = $"Claim {claim.ClaimNumber} rejected", Data = row.ToResponse() };
+                return new Result
+                {
+                    IsSuccess = true,
+                    StatusCode = 200,
+                    Status = "Success",
+                    Message = $"Claim {claim.ClaimNumber} rejected",
+                    Data = row.ToResponse()
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error rejecting warranty claim {ClaimId}", request.WarrantyClaimId);
-                return new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "An error occurred while rejecting the warranty claim." };
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 500,
+                    Status = "Error",
+                    Message = "An error occurred while rejecting the warranty claim."
+                };
             }
         }
     }

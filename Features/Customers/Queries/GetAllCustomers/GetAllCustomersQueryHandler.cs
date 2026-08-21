@@ -38,8 +38,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetAllCustomers
                         c.Address,
                         c.NID,
                         c.OpeningBalance,
-                        // Receivable as of the latest ledger row — same definition the sale handler
-                        // uses when it computes the running balance (0 when they have no history).
                         c.CustomerTransactions
                             .OrderByDescending(t => t.Id)
                             .Select(t => (decimal?)t.BalanceAfter)

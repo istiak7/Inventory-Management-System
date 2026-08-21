@@ -11,9 +11,14 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
         ILogger<CreateSubCategoryCommandHandler> _logger
     ) : IRequestHandler<CreateSubCategoryCommand, Result>
     {
-        public async Task<Result> Handle(CreateSubCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateSubCategoryCommand request,
+            CancellationToken cancellationToken)
         {
-            var category = await _categoryRepository.GetByIdAsync(request.ProductCategoryId, cancellationToken);
+            var category = await _categoryRepository.GetByIdAsync(
+                request.ProductCategoryId,
+                cancellationToken);
+
             if (category is null)
             {
                 return new Result
@@ -26,6 +31,7 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
             }
 
             var existing = await _subCategoryRepository.GetAsync(s => s.Code == request.Code);
+
             if (existing is not null)
             {
                 return new Result
@@ -63,7 +69,10 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating sub-category");
+                _logger.LogError(
+                    ex,
+                    "Error creating sub-category");
+
                 return new Result
                 {
                     IsSuccess = false,

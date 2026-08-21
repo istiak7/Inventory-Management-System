@@ -29,7 +29,6 @@ namespace Inventory_Management_System.Features.Inventory.Queries.GetAllInventory
                     Enum.TryParse<InventoryTxnType>(request.TransactionType, true, out var typeFilter))
                     query = query.Where(t => t.TransactionType == typeFilter);
 
-                // Materialize with the enum intact, then map to a string DTO in memory (newest first).
                 var paged = await query
                     .OrderByDescending(t => t.Id)
                     .Select(t => new

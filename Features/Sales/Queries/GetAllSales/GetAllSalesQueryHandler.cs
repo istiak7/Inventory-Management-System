@@ -33,9 +33,6 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                 if (!string.IsNullOrWhiteSpace(request.Search))
                 {
                     var term = $"%{request.Search.Trim()}%";
-                    // Phone is how a walk-in identifies themselves, and it is stored normalized —
-                    // a typed "+880 17…" would never ILIKE-match the stored "017…", so compare the
-                    // normalized digits instead of the raw text.
                     var phone = CustomerPhoneNumber.Normalize(request.Search);
                     var phoneTerm = phone.Length > 0 ? $"%{phone}%" : null;
 
@@ -45,8 +42,12 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         (phoneTerm != null && EF.Functions.ILike(s.Customer.PhoneNumber, phoneTerm)));
                 }
 
-                // Materialize with enums intact, then map to string DTOs in memory — EF cannot
-                // translate Enum.ToString().
+                if (request.StartDate.HasValue)
+                    query = query.Where(s => s.SaleDate >= request.StartDate.Value.Date);
+
+                if (request.EndDate.HasValue)
+                    query = query.Where(s => s.SaleDate < request.EndDate.Value.Date.AddDays(1));
+
                 var paged = await query
                     .OrderByDescending(s => s.Id)
                     .Select(s => new

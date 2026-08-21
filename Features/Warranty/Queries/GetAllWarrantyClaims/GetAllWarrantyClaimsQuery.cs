@@ -6,9 +6,9 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetAllWarrantyCl
     public sealed record GetAllWarrantyClaimsQuery(
         int PageNumber = 1,
         int PageSize = 20,
-        string? Status = null,        // Open | InRepair | Resolved | Rejected | Delivered
+        string? Status = null,
         int? BranchId = null,
         int? CustomerId = null,
-        string? Search = null         // claim number, serial, invoice, customer name or phone
+        string? Search = null
     ) : IRequest<Result>;
 }

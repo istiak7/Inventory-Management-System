@@ -9,9 +9,9 @@ using System.Text.Json;
 namespace Inventory_Management_System.Features.Transfers.Command.RejectStockTransfer
 {
     public class RejectStockTransferHandler(
-            AppDbContext _dbContext,
-            ILogger<RejectStockTransferHandler> _logger
-        ) : IRequestHandler<RejectStockTransferCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<RejectStockTransferHandler> _logger
+    ) : IRequestHandler<RejectStockTransferCommand, Result>
     {
         public async Task<Result> Handle(RejectStockTransferCommand request, CancellationToken cancellationToken)
         {
@@ -29,8 +29,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.RejectStockTran
 
             try
             {
-                // Reject is purely a status change — neither side's stock was ever touched, since
-                // that only happens at approval.
                 transfer.Status = TransferStatus.Rejected;
                 transfer.RejectedAt = DateTime.UtcNow;
 

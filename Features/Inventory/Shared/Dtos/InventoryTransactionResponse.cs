@@ -13,5 +13,6 @@ namespace Inventory_Management_System.Features.Inventory.Shared.Dtos
         int BalanceAfter,
         DateTime TransactionDate,
         int? SupplierPurchaseDetailsId,
-        string? InvoiceNumber);
+        string? InvoiceNumber
+    );
 }

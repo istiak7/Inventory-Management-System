@@ -16,9 +16,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerAcco
         {
             try
             {
-                // NOTE: BaseEntity.IsActive defaults to 1, which the EntityStatus enum labels InActive
-                // (Active = 0). Records are created with 1 and never flipped to 0, so filtering on
-                // "Active" would exclude everything. Exclude only soft-deleted (2) rows instead.
                 var query = _dbContext.Customers
                     .AsNoTracking()
                     .Where(c => c.IsActive != (int)EntityStatus.Deleted);
@@ -26,12 +23,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerAcco
                 if (request.CustomerId is int customerId)
                     query = query.Where(c => c.Id == customerId);
 
-                // CustomerTransaction uses the OPPOSITE Debit/Credit convention from
-                // SupplierTransaction (see the entity's own comment): Sale -> Credit (balance up,
-                // they owe more), Payment -> Debit (balance down, they owe less). Balance = total
-                // credited (sales) - total debited (payments). This equals the running BalanceAfter
-                // of the latest transaction, since ledger entries are appended in order. Customers
-                // with no ledger activity come back with zeros.
                 var accounts = await query
                     .OrderBy(c => c.Name)
                     .Select(c => new CustomerAccountResponse(

@@ -16,7 +16,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
         {
             try
             {
-                // Every allocation of a payment to an invoice for this supplier, newest first.
                 var query = _dbContext.SupplierPurchasePayments
                     .AsNoTracking()
                     .Where(pp => pp.SupplierPayment.SupplierId == request.SupplierId);
@@ -50,8 +49,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
                         pp.SupplierPayment.SupplierId,
                         pp.SupplierPayment.Supplier.Name,
                         pp.SupplierPayment.Amount,
-                        // The payment wrote exactly one ledger row, whose BalanceAfter is the
-                        // supplier balance once this payment settled. Before = after + payment.
                         (_dbContext.SupplierTransactions
                             .Where(t => t.SupplierPaymentId == pp.SupplierPaymentId)
                             .Select(t => (decimal?)t.BalanceAfter)
@@ -61,9 +58,6 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0m,
                         pp.SupplierPurchase.TotalAmount,
-                        // Due on this invoice as it stood around this allocation — the live
-                        // DueAmount minus every allocation recorded after this one. Allocations are
-                        // append-only, so Id order is chronological order.
                         pp.SupplierPurchase.TotalAmount
                             - (pp.SupplierPurchase.SupplierPurchasePayments
                                 .Where(x => x.Id < pp.Id)

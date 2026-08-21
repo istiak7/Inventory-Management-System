@@ -8,8 +8,6 @@ namespace Inventory_Management_System.Features.Customers.Shared.Dtos
         decimal TotalPayments,
         decimal Balance,
         DateTime? LastTransactionDate,
-        // Contact details, carried so an account statement / receipt can be printed
-        // without a second round-trip to the customer list.
         string PhoneNumber,
         string Email,
         string Address,

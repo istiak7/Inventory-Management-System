@@ -11,16 +11,12 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
         ILogger<SearchProductsQueryHandler> _logger
     ) : IRequestHandler<SearchProductsQuery, Result>
     {
-        // Must match the configuration the trigger uses (to_tsvector('english', ...)); a mismatch
-        // silently returns nothing because the lexemes are stemmed differently.
         private const string SearchConfig = "english";
 
         public async Task<Result> Handle(SearchProductsQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                // Defence in depth: the validator already rejects these, but the handler must not
-                // depend on the pipeline being wired up to stay bounded.
                 var pageNumber = Math.Max(request.PageNumber, 1);
                 var pageSize = Math.Clamp(request.PageSize, 1, SearchProductsValidator.MaxPageSize);
 
@@ -33,9 +29,6 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 if (request.ProductId is int productId)
                     query = query.Where(v => v.ProductId == productId);
 
-                // Branch scope (e.g. sales): only variants with a stock record in that branch.
-                // Zero-stock variants are intentionally kept so the caller can show availability
-                // instead of items vanishing from search; AvailableStock carries the quantity.
                 var branchId = request.BranchId;
                 if (branchId is not null)
                     query = query.Where(v => v.Stocks.Any(s => s.BranchId == branchId));
@@ -53,7 +46,6 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
 
                 if (string.IsNullOrWhiteSpace(term))
                 {
-                    // No term: this is a plain filtered browse, so rank is meaningless.
                     projected = query
                         .OrderBy(v => v.ProductId).ThenBy(v => v.Id)
                         .Select(v => new SearchProductsResponse(
@@ -67,9 +59,6 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 }
                 else
                 {
-                    // Prefix match complements FTS: to_tsvector tokenises "LAP-1024-BLK" into
-                    // whole lexemes, so a partial SKU/barcode would otherwise never match. The
-                    // pattern is escaped so a term containing % or _ cannot turn into a wildcard.
                     var prefix = $"{EscapeLikePattern(term)}%";
 
                     projected = query

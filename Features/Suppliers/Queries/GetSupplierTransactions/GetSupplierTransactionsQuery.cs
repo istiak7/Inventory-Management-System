@@ -7,6 +7,10 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
         int PageNumber = 1,
         int PageSize = 20,
         int? SupplierId = null,
-        string? InvoiceNumber = null   // contains-search on the related invoice(s)
+        int? BranchId = null,
+        string? InvoiceNumber = null,
+        string? TransactionType = null,
+        DateTime? StartDate = null,
+        DateTime? EndDate = null
     ) : IRequest<Result>;
 }

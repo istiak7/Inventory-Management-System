@@ -10,9 +10,12 @@ namespace Inventory_Management_System.Features.Brands.Command.CreateBrand
         ILogger<CreateBrandCommandHandler> _logger
     ) : IRequestHandler<CreateBrandCommand, Result>
     {
-        public async Task<Result> Handle(CreateBrandCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateBrandCommand request,
+            CancellationToken cancellationToken)
         {
             var existing = await _brandRepository.GetAsync(b => b.Name == request.Name);
+
             if (existing is not null)
             {
                 return new Result

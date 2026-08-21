@@ -8,6 +8,6 @@ namespace Inventory_Management_System.Features.Inventory.Queries.GetAllInventory
         int PageSize = 20,
         int? BranchId = null,
         int? ProductVariantId = null,
-        string? TransactionType = null   // InventoryTxnType name, e.g. "PurchaseIn"
+        string? TransactionType = null
     ) : IRequest<Result>;
 }

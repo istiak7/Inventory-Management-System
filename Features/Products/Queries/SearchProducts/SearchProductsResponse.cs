@@ -10,5 +10,6 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
         bool IsSerialized,
         string AttributesJson,
         float Rank,
-        int? AvailableStock);
+        int? AvailableStock
+    );
 }

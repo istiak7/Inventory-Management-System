@@ -8,5 +8,6 @@ namespace Inventory_Management_System.Features.Stocks.Shared.Dtos
         string SKU,
         string ProductName,
         bool IsSerialized,
-        int CurrentStock);
+        int CurrentStock
+    );
 }

@@ -4,8 +4,6 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
 {
     public class SearchProductsValidator : AbstractValidator<SearchProductsQuery>
     {
-        // Page size is bounded here as well as clamped in the handler: an unbounded page size on
-        // a public search endpoint is a cheap way to pull the whole variant table in one call.
         public const int MaxPageSize = 100;
         public const int MaxTermLength = 200;
 

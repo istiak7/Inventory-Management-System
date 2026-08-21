@@ -6,7 +6,7 @@
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public required string Code { get; set; }
-        public int ProductCategoryId { get; set; } //FK
+        public int ProductCategoryId { get; set; }
 
         // Navigation property
         public required ProductCategories ProductCategories { get; set; }

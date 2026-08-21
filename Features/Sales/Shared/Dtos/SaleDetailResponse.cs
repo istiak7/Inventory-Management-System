@@ -1,9 +1,5 @@
 namespace Inventory_Management_System.Features.Sales.Shared.Dtos
 {
-    /// <summary>
-    /// GET /get-sale/{id}. Everything in <see cref="SaleListResponse"/> plus every payment allocated
-    /// to this sale — enough to render the invoice on its own.
-    /// </summary>
     public sealed record SaleDetailResponse(
         int Id,
         int CustomerId,
@@ -25,5 +21,6 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal DueAmount,
         int ItemsCount,
         IReadOnlyList<SaleLineResponse> Items,
-        IReadOnlyList<SalePaymentResponse> Payments);
+        IReadOnlyList<SalePaymentResponse> Payments
+    );
 }

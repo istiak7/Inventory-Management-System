@@ -1,4 +1,4 @@
-﻿using Inventory_Management_System.Entities;
+using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Repository;
 using MediatR;
@@ -7,12 +7,11 @@ using static Inventory_Management_System.Entities.Common.EntityConstant;
 namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
 {
     public class CreateSupplierCommandHandler(
-            IBaseRepository<Supplier> _supplierRepository,
-            ILogger<CreateSupplierCommandHandler> _logger
-        ) : IRequestHandler<CreateSupplierCommand, Result>
+        IBaseRepository<Supplier> _supplierRepository,
+        ILogger<CreateSupplierCommandHandler> _logger
+    ) : IRequestHandler<CreateSupplierCommand, Result>
 
     {
-
         public async Task<Result> Handle(CreateSupplierCommand request, CancellationToken cancellationToken)
         {
             var existingSupplier = await _supplierRepository.GetAsync(s => s.Name == request.Name && s.PhoneNumber == request.PhoneNumber
@@ -20,7 +19,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
 
             if (existingSupplier != null)
             {
-
                 return new Result
                 {
                     IsSuccess = false,
@@ -64,7 +62,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
                     Message = "An error occurred while creating the supplier."
                 };
             }
-
         }
     }
 }

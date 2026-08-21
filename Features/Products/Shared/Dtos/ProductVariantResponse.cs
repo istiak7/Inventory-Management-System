@@ -9,5 +9,6 @@ namespace Inventory_Management_System.Features.Products.Shared.Dtos
         decimal SellingPrice,
         bool IsSerialized,
         string AttributesJson,
-        DateTime CreatedAt);
+        DateTime CreatedAt
+    );
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TEMPLATE - safe to commit, contains no real secrets.
+
+  Setup:
+    1. Copy this file to web.config  (web.config is gitignored)
+    2. Fill in the two values marked FILL_ME below
+    3. dotnet publish -c Release
+
+  Note the DOUBLE underscore (__) in the variable names.
+  It maps to the ":" separator used in appsettings.json,
+  so JwtSettings__SecretKey overrides JwtSettings:SecretKey.
+-->
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore processPath="dotnet"
+                  arguments=".\Inventory-Management-System.dll"
+                  stdoutLogEnabled="false"
+                  stdoutLogFile=".\logs\stdout"
+                  hostingModel="inprocess">
+        <environmentVariables>
+          <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="Production" />
+
+          <!-- Must be at least 32 characters. Generate one with:
+               powershell -c "$b=New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)" -->
+          <environmentVariable name="JwtSettings__SecretKey" value="FILL_ME" />
+
+          <environmentVariable name="ConnectionStrings__DbConnectionString" value="FILL_ME" />
+        </environmentVariables>
+      </aspNetCore>
+    </system.webServer>
+  </location>
+</configuration>

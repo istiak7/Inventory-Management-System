@@ -10,13 +10,10 @@ using System.Text.Json;
 
 namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTransfer
 {
-    // Create only records the request as Draft/Pending — no stock moves here. Approval
-    // (ApproveStockTransferHandler) is the step that actually debits the source and credits the
-    // destination, so what happens below is validation plus a durable record of what was asked for.
     public class CreateStockTransferHandler(
-            AppDbContext _dbContext,
-            ILogger<CreateStockTransferHandler> _logger
-        ) : IRequestHandler<CreateStockTransferCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<CreateStockTransferHandler> _logger
+    ) : IRequestHandler<CreateStockTransferCommand, Result>
     {
         public async Task<Result> Handle(CreateStockTransferCommand request, CancellationToken cancellationToken)
         {
@@ -45,8 +42,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                     DestinationBranch = destinationBranch,
                 };
 
-                // Guards the same serial being named on two lines of this same request — the
-                // per-line DB count alone can't see a serial this same loop already claimed.
                 var claimedSerials = new HashSet<string>();
                 var built = new List<(StockTransferDetails Line, ProductVariant Variant, List<string> Serials)>();
 
@@ -71,21 +66,18 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                         if (serials.Count == 0)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial numbers are required for '{variant.Product.ProductName}' (SKU {variant.SKU})." };
 
-                        //var dupes = serials.Where(s => !claimedSerials.Add(s)).ToList();
                         var dupes = new List<string>();
                         foreach (var s in serials)
                         {
                             bool isNewSerial = claimedSerials.Add(s);
-                            if(!isNewSerial)
+                            if (!isNewSerial)
                             {
                                 dupes.Add(s);
                             }
                         }
-                            if (dupes.Count > 0)
+                        if (dupes.Count > 0)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Duplicate serial numbers in this transfer: {string.Join(", ", dupes)}." };
 
-                        // Best-effort only — the authoritative claim happens at approval, since
-                        // stock can move between this request being saved and being approved.
                         var availableCount = await _dbContext.ProductSerials.CountAsync(s =>
                             serials.Contains(s.SerialNumber) &&
                             s.ProductVariantId == variant.Id &&
@@ -124,7 +116,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                // Built after SaveChanges so each line carries its real, database-assigned Id.
                 var lineResponses = built.Select(b => new StockTransferLineResponse(
                     b.Line.Id, b.Variant.Id, b.Variant.SKU, b.Variant.Product.ProductName,
                     b.Variant.IsSerialized, b.Line.Quantity, b.Serials)).ToList();
