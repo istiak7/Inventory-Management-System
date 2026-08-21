@@ -13,7 +13,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
         public string PaymentMethod { get; set; } = "Cash";
         public string? Remarks { get; set; }
 
-        // Optional per-invoice allocation; empty => FIFO auto-allocation.
         public List<PaymentAllocationRequest> Allocations { get; set; } = [];
     }
 }

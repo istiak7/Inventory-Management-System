@@ -15,7 +15,8 @@ namespace Inventory_Management_System.Features.Brands.Shared.Repository
         public async Task<PagedResult<BrandResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             return await _context.Brands
                 .AsNoTracking()

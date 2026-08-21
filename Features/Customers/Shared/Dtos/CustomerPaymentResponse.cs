@@ -7,7 +7,7 @@ namespace Inventory_Management_System.Features.Customers.Shared.Dtos
         DateTime PaymentDate,
         string PaymentMethod,
         string? Remarks,
-        decimal AllocatedAmount,   // portion applied to outstanding sales
-        decimal BalanceAfter       // customer's overall receivable balance after this payment
+        decimal AllocatedAmount,
+        decimal BalanceAfter
     );
 }

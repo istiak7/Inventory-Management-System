@@ -7,8 +7,6 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerByPh
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            // Query string rather than a route segment: phone numbers people paste carry '+' and
-            // spaces, which a route parameter would mangle before the handler ever sees them.
             app.MapGet("/get-customer-by-phone", async (
                 IMediator mediator,
                 string phoneNumber) =>

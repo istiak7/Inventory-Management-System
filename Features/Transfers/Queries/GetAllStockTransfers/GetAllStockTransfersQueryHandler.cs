@@ -42,8 +42,6 @@ namespace Inventory_Management_System.Features.Transfers.Queries.GetAllStockTran
                             EF.Functions.ILike(d.ProductVariant.Product.ProductName, term)));
                 }
 
-                // Materialize with the enum and the raw serial JSON intact, then map to string
-                // DTOs (and deserialize the JSON) in memory — EF cannot translate either.
                 var paged = await query
                     .OrderByDescending(t => t.Id)
                     .Select(t => new

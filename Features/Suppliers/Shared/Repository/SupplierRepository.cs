@@ -16,9 +16,9 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
         public async Task<PagedResult<SupplierResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
-            
             var query = from supplier in _context.Suppliers
                         orderby supplier.Id
                         select new SupplierResponse(
@@ -33,7 +33,7 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
                                 .Where(sp => sp.Status == PurchaseStatus.Approved || sp.Status == PurchaseStatus.PartiallyReceived)
                                 .Sum(sp => (decimal?)sp.TotalAmount) ?? 0m)
                             - (supplier.SupplierPayments
-                                .Where(spp =>  spp.IsActive == 1)
+                                .Where(spp => spp.IsActive == 1)
                                 .Sum(spp => (decimal?)spp.Amount) ?? 0m),
 
                             supplier.CreatedAt);
@@ -41,7 +41,6 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
             return await query
                 .AsNoTracking()
                 .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
-
         }
     }
 }

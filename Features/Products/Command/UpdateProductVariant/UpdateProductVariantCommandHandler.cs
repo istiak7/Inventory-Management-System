@@ -16,7 +16,6 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProductVar
             if (variant is null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Variant with id {request.Id} was not found." };
 
-            // SKU stays globally unique — allow keeping its own SKU, reject collisions with others.
             var clash = await _variantRepository.GetAsync(v => v.SKU == request.SKU && v.Id != request.Id, asNoTracking: true, cancellationToken);
             if (clash is not null)
                 return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A variant with SKU '{request.SKU}' already exists." };

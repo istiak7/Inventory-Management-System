@@ -7,13 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Warranty.Command.RejectWarrantyClaim
 {
-    // The "could not solve it" ending. No stock moves and the serial keeps its Sold status: the
-    // unit is still the customer's, unrepaired, and goes home with them — which is why Delivered
-    // is reachable from here just as it is from Resolved.
     public class RejectWarrantyClaimHandler(
-            AppDbContext _dbContext,
-            ILogger<RejectWarrantyClaimHandler> _logger
-        ) : IRequestHandler<RejectWarrantyClaimCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<RejectWarrantyClaimHandler> _logger
+    ) : IRequestHandler<RejectWarrantyClaimCommand, Result>
     {
         public async Task<Result> Handle(RejectWarrantyClaimCommand request, CancellationToken cancellationToken)
         {

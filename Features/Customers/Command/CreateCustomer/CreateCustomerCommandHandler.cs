@@ -7,15 +7,12 @@ using MediatR;
 namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
 {
     public class CreateCustomerCommandHandler(
-            IBaseRepository<Customer> _customerRepository,
-            ILogger<CreateCustomerCommandHandler> _logger
-        ) : IRequestHandler<CreateCustomerCommand, Result>
+        IBaseRepository<Customer> _customerRepository,
+        ILogger<CreateCustomerCommandHandler> _logger
+    ) : IRequestHandler<CreateCustomerCommand, Result>
     {
         public async Task<Result> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
         {
-            // Normalize before comparing: the number is the customer's identity, and "01712-345678"
-            // typed here must collide with "+8801712345678" already on file rather than open a
-            // second record for the same person.
             var phoneNumber = CustomerPhoneNumber.Normalize(request.PhoneNumber);
 
             var existingCustomer = await _customerRepository.GetAsync(

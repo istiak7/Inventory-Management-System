@@ -24,7 +24,7 @@ namespace Inventory_Management_System.Features.Users.Shared.Services
         public string GenerateJwtToken(User user)
         {
             var claims = new[]
-           {
+            {
                 new Claim(JwtRegisteredClaimNames.Sub, _jwtSettings.Subject),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("username", user.Name),

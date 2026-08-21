@@ -7,12 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Warranty.Command.StartWarrantyRepair
 {
-    // Open -> InRepair. No stock or money impact: the unit on the bench is the customer's property
-    // the whole time, so the only thing that changes is who is holding it and since when.
     public class StartWarrantyRepairHandler(
-            AppDbContext _dbContext,
-            ILogger<StartWarrantyRepairHandler> _logger
-        ) : IRequestHandler<StartWarrantyRepairCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<StartWarrantyRepairHandler> _logger
+    ) : IRequestHandler<StartWarrantyRepairCommand, Result>
     {
         public async Task<Result> Handle(StartWarrantyRepairCommand request, CancellationToken cancellationToken)
         {

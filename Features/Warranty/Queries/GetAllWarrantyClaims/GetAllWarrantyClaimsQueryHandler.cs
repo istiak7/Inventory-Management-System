@@ -34,9 +34,6 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetAllWarrantyCl
                 if (!string.IsNullOrWhiteSpace(request.Search))
                 {
                     var term = $"%{request.Search.Trim()}%";
-                    // Phones are stored normalized, so a typed "+880 17…" would never ILIKE-match
-                    // the stored "017…". Compare the normalized digits instead — same rule the
-                    // customer lookup uses, so both find the same person.
                     var phone = CustomerPhoneNumber.Normalize(request.Search);
                     var phoneTerm = phone.Length > 0 ? $"%{phone}%" : null;
 

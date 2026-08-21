@@ -10,9 +10,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 {
     public class ReceiveGoodsHandler(
-            AppDbContext _dbContext,
-            ILogger<ReceiveGoodsHandler> _logger
-        ) : IRequestHandler<ReceiveGoodsCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<ReceiveGoodsHandler> _logger
+    ) : IRequestHandler<ReceiveGoodsCommand, Result>
     {
         public async Task<Result> Handle(ReceiveGoodsCommand request, CancellationToken cancellationToken)
         {
@@ -56,7 +56,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     Status = "Error",
                     Message = "Payment exceeds the order total. Pay the full amount or a smaller one."
                 };
-
 
             var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials)>();
             var allSerials = new List<string>();
@@ -124,7 +123,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 }
             }
 
-            // Serial uniqueness: within this request...
             var dupInRequest = allSerials.GroupBy(s => s).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
             if (dupInRequest.Count > 0)
                 return new Result
@@ -135,7 +133,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     Message = $"Duplicate serial numbers in this receipt: {string.Join(", ", dupInRequest)}."
                 };
 
-            // ...and globally against everything already stored.
             if (allSerials.Count > 0)
             {
                 var existing = await _dbContext.ProductSerials
@@ -157,7 +154,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             {
                 var now = DateTime.UtcNow;
                 var serialsCreated = 0;
-                // Cache the Stock snapshot per variant so multiple lines for the same variant accumulate correctly.
                 var stockByVariant = new Dictionary<int, Stock>();
 
                 var lineResults = new List<ReceivedLineResponse>();
@@ -166,7 +162,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 {
                     var variant = detail.ProductVariant;
 
-                    // Serialized: one ProductSerial per unit, bound to this lot (cost + warranty lineage).
                     foreach (var sn in serials)
                     {
                         await _dbContext.ProductSerials.AddAsync(new ProductSerial
@@ -185,10 +180,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         serialsCreated++;
                     }
 
-                    // Accumulate onto the lot and recompute the line status (over-receipt allowed).
                     detail.ApplyReceipt(qty);
 
-                    // Stock snapshot (upsert) + inventory ledger row, kept consistent.
                     var stock = await GetOrCreateStockAsync(stockByVariant, purchase, variant, cancellationToken);
                     var newBalance = stock.CurrentStock + qty;
                     stock.CurrentStock = newBalance;
@@ -212,16 +205,12 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         detail.Id, detail.OrderedQuantity, detail.ReceivedQuantity ?? 0, detail.Status.ToString()));
                 }
 
-                // Header status derives from the non-rejected lines.
                 var nonRejected = purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected).ToList();
                 if (nonRejected.Count > 0 && nonRejected.All(d => d.Status == LineStatus.Received))
                     purchase.Status = PurchaseStatus.Approved;
                 else if (nonRejected.Any(d => d.Status is LineStatus.Received or LineStatus.PartiallyReceived))
                     purchase.Status = PurchaseStatus.PartiallyReceived;
 
-                // A payment only makes sense once the order is actually Approved (that's when the
-                // debit below is posted) — a partial receipt must not accept money against goods
-                // that haven't fully arrived yet.
                 if (paymentAmount > 0 && purchase.Status != PurchaseStatus.Approved)
                 {
                     await transaction.RollbackAsync(cancellationToken);
@@ -236,9 +225,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
                 SupplierPayment? payment = null;
 
-                // Ledger (money): the purchase debits the supplier account only once the order is
-                // approved (every line fully received). Pending/rejected orders never touch the books.
-                // Runs at most once: an already-approved order is rejected at the top of this handler.
                 if (purchase.Status == PurchaseStatus.Approved)
                 {
                     var runningBalance = await _dbContext.SupplierTransactions
@@ -248,11 +234,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
                     var purchaseTxn = SupplierTransaction.ForPurchase(purchase, purchase.Supplier, runningBalance);
                     await _dbContext.SupplierTransactions.AddAsync(purchaseTxn, cancellationToken);
-                    // Payment settled at receipt (full due / partial / full payment), posted in the
-                    // same transaction as the debit above so Paid/Due and the ledger move together.
                     if (paymentAmount > 0)
                     {
-                        purchase.ApplyPayment(paymentAmount);   // keeps Paid/Due consistent
+                        purchase.ApplyPayment(paymentAmount);
                         purchase.PurchaseType = paymentAmount >= purchase.TotalAmount ? PurchaseType.Cash : PurchaseType.Credit;
 
                         var paymentDate = request.Payment?.PaymentDate ?? now;
@@ -282,7 +266,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         await _dbContext.SupplierTransactions.AddAsync(paymentTxn, cancellationToken);
                     }
                 }
-
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -314,9 +297,12 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             }
         }
 
-        /// <summary>Get the (Branch, Variant) stock row from cache/DB, or create a fresh one, tracked.</summary>
         private async Task<Stock> GetOrCreateStockAsync(
-            Dictionary<int, Stock> cache, SupplierPurchase purchase, ProductVariant variant, CancellationToken ct)
+            Dictionary<int, Stock> cache,
+            SupplierPurchase purchase,
+            ProductVariant variant,
+            CancellationToken ct
+        )
         {
             if (cache.TryGetValue(variant.Id, out var cached))
                 return cached;

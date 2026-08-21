@@ -25,9 +25,6 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetReplacementCa
                 if (claim == null)
                     return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Warranty claim not found." };
 
-                // Same variant, same branch, still on the shelf — the exact set the resolve handler
-                // will accept. The defective unit itself is excluded even in the impossible case
-                // that something put it back InStock.
                 var query = _dbContext.ProductSerials
                     .AsNoTracking()
                     .Where(s => s.ProductVariantId == claim.ProductVariantId
@@ -42,7 +39,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetReplacementCa
                 }
 
                 var candidates = await query
-                    .OrderBy(s => s.ReceivedDate)   // oldest stock leaves first
+                    .OrderBy(s => s.ReceivedDate)
                     .ThenBy(s => s.Id)
                     .Take(100)
                     .Select(s => new ReplacementCandidateResponse(

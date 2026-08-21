@@ -10,9 +10,9 @@ using Npgsql;
 namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseOrder
 {
     public class CreatePurchaseOrderHandler(
-            AppDbContext _dbContext,
-            ILogger<CreatePurchaseOrderHandler> _logger
-        ) : IRequestHandler<CreatePurchaseOrderCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<CreatePurchaseOrderHandler> _logger
+    ) : IRequestHandler<CreatePurchaseOrderCommand, Result>
     {
         public async Task<Result> Handle(CreatePurchaseOrderCommand request, CancellationToken cancellationToken)
         {
@@ -45,7 +45,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Message = "Branch not found."
                 };
 
-            // Client-supplied invoice numbers must not clash with an existing one.
             if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
             {
                 var taken = await _dbContext.SupplierPurchases
@@ -81,7 +80,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Branch = branch,
                 };
 
-
                 decimal totalAmount = 0;
                 foreach (var item in request.Items)
                 {
@@ -102,7 +100,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     {
                         ProductVariantId = item.ProductVariantId,
                         OrderedQuantity = item.Quantity,
-                        ReceivedQuantity = null,          // unknown until goods receipt
+                        ReceivedQuantity = null,
                         UnitPrice = item.UnitPrice,
                         TotalAmount = lineTotal,
                         WarrantyMonths = item.WarrantyMonths,
@@ -169,7 +167,10 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        private async Task<string> GenerateInvoiceNumberAsync(DateTime purchaseDate, CancellationToken cancellationToken)
+        private async Task<string> GenerateInvoiceNumberAsync(
+            DateTime purchaseDate,
+            CancellationToken cancellationToken
+        )
         {
             var prefix = $"PO-{purchaseDate.Year}-";
 

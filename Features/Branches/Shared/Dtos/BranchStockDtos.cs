@@ -5,14 +5,16 @@ namespace Inventory_Management_System.Features.Branches.Shared.Dtos
         string SKU,
         string ProductName,
         bool IsSerialized,
-        int CurrentStock);
+        int CurrentStock
+    );
 
     public sealed record BranchStockResponse(
         int BranchId,
         string BranchName,
         int TotalUnits,
         int VariantCount,
-        IReadOnlyList<BranchStockItem> Items);
+        IReadOnlyList<BranchStockItem> Items
+    );
 
     public sealed record BranchVariantStockResponse(
         int BranchId,
@@ -21,5 +23,6 @@ namespace Inventory_Management_System.Features.Branches.Shared.Dtos
         string SKU,
         string ProductName,
         bool IsSerialized,
-        int CurrentStock);
+        int CurrentStock
+    );
 }

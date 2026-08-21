@@ -6,7 +6,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 {
     public class CreateSaleCommand : IRequest<Result>
     {
-        // Either an existing customer's id, or the details to find-or-create one by phone number.
         public int? CustomerId { get; set; }
         public SaleCustomerRequest? Customer { get; set; }
 

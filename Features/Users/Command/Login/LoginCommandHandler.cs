@@ -7,12 +7,12 @@ using Inventory_Management_System.Shared.Repository;
 namespace Inventory_Management_System.Features.Users.Login
 {
     public class LoginCommandHandler(
-    IBaseRepository<User> _userRepository,
-    ITokenService tokenService)
+        IBaseRepository<User> _userRepository,
+        ITokenService tokenService
+    )
     : IRequestHandler<LoginUserCommand, Result>,
       IRequestHandler<RefreshTokenCommand, Result>
     {
-
         public async Task<Result> Handle(LoginUserCommand request, CancellationToken token)
         {
             var user = await _userRepository.GetAsync(u => u.Name == request.Identifier || u.Email == request.Identifier);

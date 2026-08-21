@@ -34,7 +34,6 @@ namespace Inventory_Management_System.Features.Branches.Queries.GetBranchVariant
                 if (stock is not null)
                     return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Stock retrieved successfully", Data = stock };
 
-                // No stock row yet — return 0 as long as the branch & variant are valid.
                 var branch = await _dbContext.Branches
                     .AsNoTracking()
                     .Where(b => b.Id == request.BranchId)

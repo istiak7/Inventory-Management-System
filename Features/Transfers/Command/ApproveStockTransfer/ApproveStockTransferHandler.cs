@@ -9,13 +9,10 @@ using System.Text.Json;
 
 namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTransfer
 {
-    // The approval button IS the transfer: this is the only place stock actually moves between
-    // branches. Draft/Pending both land here — either can be approved, since neither has touched
-    // stock yet and "Pending" only marks that someone asked for a decision.
     public class ApproveStockTransferHandler(
-            AppDbContext _dbContext,
-            ILogger<ApproveStockTransferHandler> _logger
-        ) : IRequestHandler<ApproveStockTransferCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<ApproveStockTransferHandler> _logger
+    ) : IRequestHandler<ApproveStockTransferCommand, Result>
     {
         public async Task<Result> Handle(ApproveStockTransferCommand request, CancellationToken cancellationToken)
         {
@@ -35,9 +32,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
             try
             {
                 var now = DateTime.UtcNow;
-                // (BranchId, ProductVariantId) -> tracked Stock row. A variant can appear on more
-                // than one line and each line touches both the source and destination side, so the
-                // running balance must accumulate across the whole approval, not just per line.
                 var stockCache = new Dictionary<(int BranchId, int VariantId), Stock>();
                 var claimedSerialIds = new HashSet<int>();
                 var lineResponses = new List<StockTransferLineResponse>();
@@ -46,19 +40,12 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
                 {
                     var variant = line.ProductVariant;
                     var requestedSerials = JsonSerializer.Deserialize<List<string>>(line.RequestedSerialNumbersJson) ?? [];
-                    // The serial count IS the quantity for a serialized line (the serial is the unit);
-                    // the JSON was already validated to match line.Quantity when this transfer was created.
                     var quantity = variant.IsSerialized ? requestedSerials.Count : line.Quantity;
 
-                    // Stock.CurrentStock is the aggregate on-hand for a (Branch, Variant) regardless
-                    // of serialization — ProductSerial only adds per-unit identity on top of it
-                    // (mirrors CreateSaleHandler / ReceiveGoodsHandler), so this check always applies.
                     var sourceStock = await GetTrackedStockAsync(stockCache, transfer.SourceBranchId, transfer.SourceBranch, variant, cancellationToken);
                     if (sourceStock.CurrentStock < quantity)
                         return new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}) at the source branch: {sourceStock.CurrentStock} on hand, {quantity} requested. Stock may have moved since this transfer was created." };
 
-                    // Resolve and claim the exact physical units this line asked for — re-checked
-                    // now (not trusted from creation time) since availability can have changed.
                     List<ProductSerial> serialsToMove = [];
                     if (variant.IsSerialized)
                     {
@@ -77,7 +64,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
                         }
                     }
 
-                    // Draw down the source and write the matching ledger row.
                     var sourceBalance = sourceStock.CurrentStock - quantity;
                     sourceStock.CurrentStock = sourceBalance;
 
@@ -94,7 +80,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
                         ProductVariant = variant,
                     }, cancellationToken);
 
-                    // Credit the destination and write its ledger row.
                     var destinationStock = await GetTrackedStockAsync(stockCache, transfer.DestinationBranchId, transfer.DestinationBranch, variant, cancellationToken);
                     var destinationBalance = destinationStock.CurrentStock + quantity;
                     destinationStock.CurrentStock = destinationBalance;
@@ -112,8 +97,6 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
                         ProductVariant = variant,
                     }, cancellationToken);
 
-                    // The physical units now live at the destination — never recomputed later,
-                    // since approval is the one and only moment a transfer moves stock.
                     foreach (var serial in serialsToMove)
                     {
                         serial.BranchId = transfer.DestinationBranchId;
@@ -147,10 +130,13 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
             }
         }
 
-        /// <summary>Get the (Branch, Variant) stock row from cache/DB, or create a fresh one, tracked.</summary>
         private async Task<Stock> GetTrackedStockAsync(
             Dictionary<(int BranchId, int VariantId), Stock> cache,
-            int branchId, Branch branch, ProductVariant variant, CancellationToken cancellationToken)
+            int branchId,
+            Branch branch,
+            ProductVariant variant,
+            CancellationToken cancellationToken
+        )
         {
             var key = (branchId, variant.Id);
             if (cache.TryGetValue(key, out var cached))

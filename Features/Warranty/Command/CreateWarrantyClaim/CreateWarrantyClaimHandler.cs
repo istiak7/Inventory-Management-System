@@ -9,14 +9,10 @@ using Npgsql;
 
 namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyClaim
 {
-    // Intake. Every rule the lookup screen showed is re-run here against live data — the counter
-    // may have been looking at that card for an hour, and in between the unit could have been
-    // swapped out or booked onto another job. Nothing about stock or money moves at intake; a claim
-    // is a job sheet until it is resolved.
     public class CreateWarrantyClaimHandler(
-            AppDbContext _dbContext,
-            ILogger<CreateWarrantyClaimHandler> _logger
-        ) : IRequestHandler<CreateWarrantyClaimCommand, Result>
+        AppDbContext _dbContext,
+        ILogger<CreateWarrantyClaimHandler> _logger
+    ) : IRequestHandler<CreateWarrantyClaimCommand, Result>
     {
         public async Task<Result> Handle(CreateWarrantyClaimCommand request, CancellationToken cancellationToken)
         {
@@ -33,7 +29,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
                 if (serial.Status != SerialStatus.Sold)
                     return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial '{serialNumber}' is not with a customer (status {serial.Status}), so it has no warranty to claim." };
 
-                // Its own sale line, or the one it inherited by having been issued as a replacement.
                 var saleDetailsId = await WarrantyTerms.ResolveSaleDetailsIdAsync(_dbContext, serial.Id, cancellationToken);
                 if (saleDetailsId == null)
                     return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Serial '{serialNumber}' has never been sold, so there is no warranty to claim against." };
@@ -51,8 +46,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
                 if (!WarrantyTerms.IsUnderWarranty(expiry, DateTime.UtcNow))
                     return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Warranty for serial '{serialNumber}' expired on {expiry:dd MMM yyyy}. This unit is no longer covered." };
 
-                // One live job per unit: two counters logging the same laptop would have two
-                // technicians hunting for one machine.
                 var liveClaim = await _dbContext.WarrantyClaims
                     .AsNoTracking()
                     .Where(c => c.ProductSerialId == serial.Id &&
@@ -102,8 +95,6 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
 
                 return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = $"Warranty claim {claim.ClaimNumber} opened successfully", Data = row.ToResponse() };
             }
-            // The claim number is guarded by a unique index because the generator below cannot see
-            // a claim another counter is committing at this exact moment.
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
                 _logger.LogWarning(ex, "Warranty claim creation lost a uniqueness race for serial {SerialNumber}", serialNumber);

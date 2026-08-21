@@ -7,7 +7,7 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         DateTime PaymentDate,
         string PaymentMethod,
         string? Remarks,
-        decimal AllocatedAmount,   // portion applied to outstanding invoices
-        decimal BalanceAfter       // supplier's overall balance after this payment
+        decimal AllocatedAmount,
+        decimal BalanceAfter
     );
 }

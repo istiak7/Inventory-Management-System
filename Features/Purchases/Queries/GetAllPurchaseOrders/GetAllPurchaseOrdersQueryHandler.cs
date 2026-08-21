@@ -52,7 +52,6 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                 if (request.EndDate.HasValue)
                     query = query.Where(p => p.PurchaseDate < request.EndDate.Value.Date.AddDays(1));
 
-                // Materialize with enums intact, then map to string DTOs in memory.
                 var paged = await query
                     .OrderByDescending(p => p.Id)
                     .Select(p => new

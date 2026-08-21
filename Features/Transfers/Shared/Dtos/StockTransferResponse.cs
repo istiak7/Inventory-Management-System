@@ -1,6 +1,5 @@
 namespace Inventory_Management_System.Features.Transfers.Shared.Dtos
 {
-    // Shared by the list and the by-id query, same shape both times (mirrors PurchaseOrderListResponse).
     public sealed record StockTransferResponse(
         int Id,
         string Reference,

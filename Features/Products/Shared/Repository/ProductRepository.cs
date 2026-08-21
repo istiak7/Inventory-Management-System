@@ -13,20 +13,30 @@ namespace Inventory_Management_System.Features.Products.Shared.Repository
         private readonly AppDbContext _context = context;
 
         public Task<PagedResult<ProductResponse>> GetAllPagedAsync(
-            int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default
+        )
             => Project(_context.Products).ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
 
         public Task<PagedResult<ProductResponse>> GetBySubCategoryIdPagedAsync(
-            int subCategoryId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            int subCategoryId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default
+        )
             => Project(_context.Products.Where(p => p.ProductSubCategoryId == subCategoryId))
                 .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
 
         public Task<PagedResult<ProductResponse>> GetByBrandIdPagedAsync(
-            int brandId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            int brandId,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default
+        )
             => Project(_context.Products.Where(p => p.BrandId == brandId))
                 .ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
 
-        // Shared projection: catalog fields + the primary (lowest-Id) variant's summary.
         private static IQueryable<ProductResponse> Project(IQueryable<Product> source) =>
             source
                 .AsNoTracking()

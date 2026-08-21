@@ -60,7 +60,6 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                         Message = "Sale invoice not found for this customer."
                     };
 
-                // fetch the latest allocation for the given date, if any
                 var allocation = sale.Allocations
                     .Where(a => a.PaymentDate == request.Date)
                     .OrderByDescending(a => a.Id)

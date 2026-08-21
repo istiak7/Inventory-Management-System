@@ -7,6 +7,10 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
 {
     public interface ISupplierRepository : IBaseRepository<Supplier>
     {
-        Task<PagedResult<SupplierResponse>> GetAllPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResult<SupplierResponse>> GetAllPagedAsync(
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default
+        );
     }
 }

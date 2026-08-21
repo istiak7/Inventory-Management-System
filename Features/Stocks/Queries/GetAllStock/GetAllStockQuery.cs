@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetAllStock
         int PageSize = 20,
         int? BranchId = null,
         int? ProductVariantId = null,
-        string? Search = null,               // matches SKU or product name
-        int? LowStockThreshold = null        // when set, only rows with CurrentStock <= threshold
+        string? Search = null,
+        int? LowStockThreshold = null
     ) : IRequest<Result>;
 }

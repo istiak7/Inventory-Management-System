@@ -7,9 +7,9 @@ using static Inventory_Management_System.Entities.Common.EntityConstant;
 namespace Inventory_Management_System.Features.Branches.Command.CreateBranch
 {
     public class CreateBranchCommandHandler(
-            IBaseRepository<Branch> _branchRepository,
-            ILogger<CreateBranchCommandHandler> _logger
-        ) : IRequestHandler<CreateBranchCommand, Result>
+        IBaseRepository<Branch> _branchRepository,
+        ILogger<CreateBranchCommandHandler> _logger
+    ) : IRequestHandler<CreateBranchCommand, Result>
     {
         public async Task<Result> Handle(CreateBranchCommand request, CancellationToken cancellationToken)
         {

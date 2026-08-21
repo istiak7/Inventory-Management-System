@@ -7,8 +7,8 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerPaym
         int CustomerId,
         int PageNumber = 1,
         int PageSize = 10,
-        string? InvoiceNumber = null,   // contains-search on the invoice number
-        int? PaymentId = null,          // filter to a single payment; null = all payments
-        string? PaymentMethod = null    // filter by payment method; null = all methods
+        string? InvoiceNumber = null,
+        int? PaymentId = null,
+        string? PaymentMethod = null
     ) : IRequest<Result>;
 }
