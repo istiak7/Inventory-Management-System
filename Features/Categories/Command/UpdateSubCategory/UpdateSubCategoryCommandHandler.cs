@@ -10,9 +10,13 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateSubCateg
         ILogger<UpdateSubCategoryCommandHandler> _logger
     ) : IRequestHandler<UpdateSubCategoryCommand, Result>
     {
-        public async Task<Result> Handle(UpdateSubCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            UpdateSubCategoryCommand request,
+            CancellationToken cancellationToken)
         {
-            var subCategory = await _subCategoryRepository.GetByIdAsync(request.Id, cancellationToken);
+            var subCategory = await _subCategoryRepository.GetByIdAsync(
+                request.Id,
+                cancellationToken);
 
             if (subCategory is null)
             {
@@ -25,7 +29,9 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateSubCateg
                 };
             }
 
-            var category = await _categoryRepository.GetByIdAsync(request.ProductCategoryId, cancellationToken);
+            var category = await _categoryRepository.GetByIdAsync(
+                request.ProductCategoryId,
+                cancellationToken);
 
             if (category is null)
             {
@@ -60,7 +66,11 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateSubCateg
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating sub-category with id {Id}", request.Id);
+                _logger.LogError(
+                    ex,
+                    "Error updating sub-category with id {Id}",
+                    request.Id);
+
                 return new Result
                 {
                     IsSuccess = false,

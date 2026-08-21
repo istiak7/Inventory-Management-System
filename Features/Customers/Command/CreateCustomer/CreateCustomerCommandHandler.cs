@@ -11,7 +11,9 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
         ILogger<CreateCustomerCommandHandler> _logger
     ) : IRequestHandler<CreateCustomerCommand, Result>
     {
-        public async Task<Result> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateCustomerCommand request,
+            CancellationToken cancellationToken)
         {
             var phoneNumber = CustomerPhoneNumber.Normalize(request.PhoneNumber);
 

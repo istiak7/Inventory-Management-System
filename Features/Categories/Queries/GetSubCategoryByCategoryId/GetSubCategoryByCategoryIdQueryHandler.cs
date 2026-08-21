@@ -10,9 +10,13 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetSubCategory
         ILogger<GetSubCategoryByCategoryIdQueryHandler> _logger
     ) : IRequestHandler<GetSubCategoryByCategoryIdQuery, Result>
     {
-        public async Task<Result> Handle(GetSubCategoryByCategoryIdQuery request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            GetSubCategoryByCategoryIdQuery request,
+            CancellationToken cancellationToken)
         {
-            var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
+            var category = await _categoryRepository.GetByIdAsync(
+                request.CategoryId,
+                cancellationToken);
 
             if (category is null)
             {
@@ -44,7 +48,11 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetSubCategory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving sub-categories for category id {CategoryId}", request.CategoryId);
+                _logger.LogError(
+                    ex,
+                    "Error retrieving sub-categories for category id {CategoryId}",
+                    request.CategoryId);
+
                 return new Result
                 {
                     IsSuccess = false,

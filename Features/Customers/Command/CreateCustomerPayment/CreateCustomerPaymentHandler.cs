@@ -13,9 +13,14 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
         ILogger<CreateCustomerPaymentHandler> _logger
     ) : IRequestHandler<CreateCustomerPaymentCommand, Result>
     {
-        public async Task<Result> Handle(CreateCustomerPaymentCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            CreateCustomerPaymentCommand request,
+            CancellationToken cancellationToken)
         {
-            var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == request.CustomerId, cancellationToken);
+            var customer = await _dbContext.Customers.FirstOrDefaultAsync(
+                c => c.Id == request.CustomerId,
+                cancellationToken);
+
             if (customer == null)
                 return new Result
                 {
@@ -25,7 +30,10 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Message = "Customer not found."
                 };
 
-            var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
+            var branch = await _dbContext.Branches.FirstOrDefaultAsync(
+                b => b.Id == request.BranchId,
+                cancellationToken);
+
             if (branch == null)
                 return new Result
                 {
@@ -47,6 +55,7 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
             var remainingDue = await _dbContext.CustomerSales
                 .Where(s => s.CustomerId == request.CustomerId)
                 .SumAsync(s => s.DueAmount, cancellationToken);
+
             if (remainingDue - request.Amount < 0)
                 return new Result
                 {
@@ -156,7 +165,10 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Customer = customer,
                     Branch = branch,
                 };
-                await _dbContext.CustomerPayments.AddAsync(payment, cancellationToken);
+
+                await _dbContext.CustomerPayments.AddAsync(
+                    payment,
+                    cancellationToken);
 
                 decimal allocatedAmount = 0;
                 if (hasAllocations)
@@ -180,10 +192,17 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                 var runningBalance = await _dbContext.CustomerTransactions
                     .Where(t => t.CustomerId == request.CustomerId)
                     .GetLatestBalanceAsync(cancellationToken);
+
                 runningBalance -= request.Amount;
 
-                var customerTransaction = CustomerTransaction.ForPayment(payment, customer, runningBalance);
-                await _dbContext.CustomerTransactions.AddAsync(customerTransaction, cancellationToken);
+                var customerTransaction = CustomerTransaction.ForPayment(
+                    payment,
+                    customer,
+                    runningBalance);
+
+                await _dbContext.CustomerTransactions.AddAsync(
+                    customerTransaction,
+                    cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);

@@ -10,11 +10,15 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetBrandById
         ILogger<GetBrandByIdQueryHandler> _logger
     ) : IRequestHandler<GetBrandByIdQuery, Result>
     {
-        public async Task<Result> Handle(GetBrandByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(
+            GetBrandByIdQuery request,
+            CancellationToken cancellationToken)
         {
             try
             {
-                var brand = await _brandRepository.GetByIdAsync(request.Id, cancellationToken);
+                var brand = await _brandRepository.GetByIdAsync(
+                    request.Id,
+                    cancellationToken);
 
                 if (brand is null)
                 {
@@ -45,7 +49,11 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetBrandById
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving brand with id {Id}", request.Id);
+                _logger.LogError(
+                    ex,
+                    "Error retrieving brand with id {Id}",
+                    request.Id);
+
                 return new Result
                 {
                     IsSuccess = false,
