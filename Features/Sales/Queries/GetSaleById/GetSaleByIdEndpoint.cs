@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
             {
                 var result = await mediator.Send(new GetSaleByIdQuery(id));
                 return Results.Ok(result);
-            }).WithTags("Sales");
+            }).WithTags("Sales").RequirePermission(Permissions.SalesView);
         }
     }
 }

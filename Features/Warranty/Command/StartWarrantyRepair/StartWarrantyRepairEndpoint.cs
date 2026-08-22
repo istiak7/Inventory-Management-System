@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Warranty.Command.StartWarrantyRep
             {
                 var result = await mediator.Send(command with { WarrantyClaimId = id });
                 return Results.Ok(result);
-            }).WithTags("Warranty");
+            }).WithTags("Warranty").RequirePermission(Permissions.WarrantyManage);
         }
     }
 }

@@ -1,4 +1,5 @@
 using Inventory_Management_System.Features.Users.Shared.Services;
+using Inventory_Management_System.Shared.CurrentUser;
 
 namespace Inventory_Management_System.Shared.Extensions.DependencyExtensions
 {
@@ -7,6 +8,10 @@ namespace Inventory_Management_System.Shared.Extensions.DependencyExtensions
         public static void AddServices(this IServiceCollection services)
         {
             services.AddScoped<ITokenService, TokenService>();
+
+            // Reads the logged-in user from the request; used for branch filtering.
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUser, CurrentUserService>();
         }
     }
 }

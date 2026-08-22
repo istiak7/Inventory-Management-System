@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Branches.Queries.GetAllBranches
             {
                 var result = await mediator.Send(new GetAllBranchesQuery(pageNumber, pageSize));
                 return Results.Ok(result);
-            }).WithTags("Branch");
+            }).WithTags("Branch").RequirePermission(Permissions.BranchesView);
         }
     }
 }

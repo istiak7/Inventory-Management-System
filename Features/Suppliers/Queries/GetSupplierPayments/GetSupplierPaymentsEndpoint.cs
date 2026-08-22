@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
             {
                 var result = await mediator.Send(new GetSupplierPaymentsQuery(supplierId));
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersView);
         }
     }
 }

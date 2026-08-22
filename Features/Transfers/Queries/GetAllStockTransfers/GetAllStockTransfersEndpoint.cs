@@ -19,7 +19,7 @@ namespace Inventory_Management_System.Features.Transfers.Queries.GetAllStockTran
                 var result = await mediator.Send(new GetAllStockTransfersQuery(
                     pageNumber, pageSize, sourceBranchId, destinationBranchId, status, search));
                 return Results.Ok(result);
-            }).WithTags("Transfers");
+            }).WithTags("Transfers").RequirePermission(Permissions.TransfersView);
         }
     }
 }

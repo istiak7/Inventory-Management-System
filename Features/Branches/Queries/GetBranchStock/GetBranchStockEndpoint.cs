@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Branches.Queries.GetBranchStock
             {
                 var result = await mediator.Send(new GetBranchStockQuery(branchId));
                 return Results.Ok(result);
-            }).WithTags("Branch");
+            }).WithTags("Branch").RequirePermission(Permissions.InventoryView);
         }
     }
 }

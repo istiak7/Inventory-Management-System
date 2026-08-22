@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Product");
+            }).WithTags("Product").RequirePermission(Permissions.ProductsManage);
         }
     }
 }

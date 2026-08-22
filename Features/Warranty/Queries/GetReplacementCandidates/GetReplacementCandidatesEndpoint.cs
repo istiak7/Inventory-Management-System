@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetReplacementCa
             {
                 var result = await mediator.Send(new GetReplacementCandidatesQuery(claimId, search));
                 return Results.Ok(result);
-            }).WithTags("Warranty");
+            }).WithTags("Warranty").RequirePermission(Permissions.WarrantyView);
         }
     }
 }

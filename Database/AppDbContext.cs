@@ -1,11 +1,24 @@
 using Inventory_Management_System.Entities;
+using Inventory_Management_System.Shared.CurrentUser;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Inventory_Management_System.Database
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+    public class AppDbContext : DbContext
     {
+        // Branch scoping: staff are tied to a single branch and only see that
+        // branch's data. Admins (no branch) and system operations see everything.
+        private readonly bool _filterByBranch;
+        private readonly int _branchId;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser currentUser)
+            : base(options)
+        {
+            _filterByBranch = currentUser.BranchId.HasValue;
+            _branchId = currentUser.BranchId ?? 0;
+        }
+
         private static readonly ValueConverter<DateTime, DateTime> UtcConverter = new(
             v => v.Kind == DateTimeKind.Utc ? v
                : v.Kind == DateTimeKind.Local ? v.ToUniversalTime()
@@ -25,6 +38,8 @@ namespace Inventory_Management_System.Database
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
+            ApplyBranchFilters(modelBuilder);
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 foreach (var property in entityType.GetProperties())
@@ -35,6 +50,34 @@ namespace Inventory_Management_System.Database
                         property.SetValueConverter(NullableUtcConverter);
                 }
             }
+        }
+
+        // Only rows of the current user's branch are visible when a branch is set.
+        // When no branch is set (admin/system) the filter is a no-op (returns everything).
+        private void ApplyBranchFilters(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Stock>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<InventoryTransaction>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<ProductSerial>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<CustomerSale>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<CustomerPayment>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<SupplierPurchase>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<SupplierPayment>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<WarrantyClaim>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+
+            // A transfer touches two branches: staff see it if their branch is either side.
+            modelBuilder.Entity<StockTransfer>()
+                .HasQueryFilter(e => !_filterByBranch
+                    || e.SourceBranchId == _branchId
+                    || e.DestinationBranchId == _branchId);
         }
 
         public override async Task<int> SaveChangesAsync(
@@ -210,6 +253,10 @@ namespace Inventory_Management_System.Database
         public DbSet<StockTransfer> StockTransfers { get; set; }
         public DbSet<StockTransferDetails> StockTransferDetails { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<UserPermission> UserPermissions { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Designation> Designations { get; set; }
 

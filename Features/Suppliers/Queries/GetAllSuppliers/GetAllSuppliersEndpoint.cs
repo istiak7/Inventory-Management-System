@@ -13,7 +13,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetAllSuppliers
             {
                 var result = await mediator.Send(new GetAllSuppliersQuery(pageNumber, pageSize));
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersView);
         }
     }
 }

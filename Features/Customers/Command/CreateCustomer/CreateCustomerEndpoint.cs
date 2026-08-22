@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Customer");
+            }).WithTags("Customer").RequirePermission(Permissions.CustomersManage);
         }
     }
 }

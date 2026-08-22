@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.UpdateSupplier
                 command.Id = id;
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersManage);
         }
     }
 }

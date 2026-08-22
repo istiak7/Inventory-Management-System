@@ -25,7 +25,8 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
             })
             .WithTags("Product")
             .WithSummary("Full-text search over product variants (name, SKU, barcode, attributes). " +
-                         "Pass branchId to scope results to variants stocked in that branch.");
+                         "Pass branchId to scope results to variants stocked in that branch.")
+            .RequirePermission(Permissions.ProductsView);
         }
     }
 }

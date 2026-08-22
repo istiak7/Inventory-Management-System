@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Sales.Command.UpdateSaleRemarks
                 command.Id = id;
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Sales");
+            }).WithTags("Sales").RequirePermission(Permissions.SalesManage);
         }
     }
 }

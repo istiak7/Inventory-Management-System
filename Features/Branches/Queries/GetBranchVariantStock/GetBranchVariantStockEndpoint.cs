@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Branches.Queries.GetBranchVariant
             {
                 var result = await mediator.Send(new GetBranchVariantStockQuery(branchId, productVariantId));
                 return Results.Ok(result);
-            }).WithTags("Branch");
+            }).WithTags("Branch").RequirePermission(Permissions.InventoryView);
         }
     }
 }

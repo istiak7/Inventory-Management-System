@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllCategori
             {
                 var result = await mediator.Send(new GetAllCategoriesQuery(pageNumber, pageSize));
                 return Results.Ok(result);
-            }).WithTags("Category");
+            }).WithTags("Category").RequirePermission(Permissions.ProductsView);
         }
     }
 }

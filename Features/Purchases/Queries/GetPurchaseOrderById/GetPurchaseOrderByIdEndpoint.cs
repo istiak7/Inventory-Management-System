@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetPurchaseOrde
             {
                 var result = await mediator.Send(new GetPurchaseOrderByIdQuery(id));
                 return Results.Ok(result);
-            }).WithTags("Purchase");
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesView);
         }
     }
 }

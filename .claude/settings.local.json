@@ -23,7 +23,8 @@
       "Bash(echo \"=== FRONTEND \\($\\(git -C \"C:/Users/User/Documents/Projects/inventory-management-frontend\" branch --show-current\\)\\) ===\")",
       "Bash(curl -sk --max-time 8 \"https://localhost:7034/get-sale/40\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; print\\('API healthy — sale 40:', d['invoiceNumber'], '|', d['saleType'], '| remark:', d['remarks']\\)\")",
-      "Read(//c/Users/User/Documents/Projects/**)"
+      "Read(//c/Users/User/Documents/Projects/**)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   },
   "enabledMcpjsonServers": [

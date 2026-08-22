@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerAcco
             {
                 var result = await mediator.Send(new GetCustomerAccountsQuery(customerId));
                 return Results.Ok(result);
-            }).WithTags("Customer");
+            }).WithTags("Customer").RequirePermission(Permissions.CustomersView);
         }
     }
 }

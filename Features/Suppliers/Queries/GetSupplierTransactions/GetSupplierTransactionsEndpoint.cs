@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                 var result = await mediator.Send(new GetSupplierTransactionsQuery(
                     pageNumber, pageSize, supplierId, branchId, invoiceNumber, transactionType, startDate, endDate));
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersView);
         }
     }
 }

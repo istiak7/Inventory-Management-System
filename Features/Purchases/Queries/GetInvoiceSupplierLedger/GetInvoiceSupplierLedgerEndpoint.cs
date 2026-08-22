@@ -15,7 +15,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
             {
                 var result = await mediator.Send(new GetInvoiceSupplierLedgerQuery(invoiceNumber, supplierId, date));
                 return Results.Ok(result);
-            }).WithTags("Purchase");
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesView);
         }
     }
 }

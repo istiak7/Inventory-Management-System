@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 command.PurchaseOrderId = id;
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Purchase");
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesManage);
         }
     }
 }

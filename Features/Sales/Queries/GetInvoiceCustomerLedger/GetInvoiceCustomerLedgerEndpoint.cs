@@ -15,7 +15,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
             {
                 var result = await mediator.Send(new GetInvoiceCustomerLedgerQuery(invoiceNumber, customerId, date));
                 return Results.Ok(result);
-            }).WithTags("Sales");
+            }).WithTags("Sales").RequirePermission(Permissions.SalesView);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Brands.Command.CreateBrand
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Brand");
+            }).WithTags("Brand").RequirePermission(Permissions.ProductsManage);
         }
     }
 }

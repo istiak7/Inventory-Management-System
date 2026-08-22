@@ -22,7 +22,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                 };
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersManage);
         }
     }
 }

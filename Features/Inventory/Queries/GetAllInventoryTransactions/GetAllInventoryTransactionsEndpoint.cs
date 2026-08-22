@@ -17,7 +17,7 @@ namespace Inventory_Management_System.Features.Inventory.Queries.GetAllInventory
             {
                 var result = await mediator.Send(new GetAllInventoryTransactionsQuery(pageNumber, pageSize, branchId, productVariantId, transactionType));
                 return Results.Ok(result);
-            }).WithTags("Inventory");
+            }).WithTags("Inventory").RequirePermission(Permissions.InventoryView);
         }
     }
 }

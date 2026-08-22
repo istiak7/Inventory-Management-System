@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
             {
                 var result = await mediator.Send(new GetSupplierByIdQuery(id));
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersView);
         }
     }
 }

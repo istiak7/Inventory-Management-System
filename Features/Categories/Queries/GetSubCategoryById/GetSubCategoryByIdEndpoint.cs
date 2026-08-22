@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetSubCategory
             {
                 var result = await mediator.Send(new GetSubCategoryByIdQuery(id));
                 return Results.Ok(result);
-            }).WithTags("SubCategory");
+            }).WithTags("SubCategory").RequirePermission(Permissions.ProductsView);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateCategory
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Category");
+            }).WithTags("Category").RequirePermission(Permissions.ProductsManage);
         }
     }
 }

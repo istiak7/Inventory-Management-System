@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                 };
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Purchase");
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesManage);
         }
     }
 }

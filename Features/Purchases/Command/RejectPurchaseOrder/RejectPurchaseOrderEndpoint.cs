@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
             {
                 var result = await mediator.Send(new RejectPurchaseOrderCommand { PurchaseOrderId = id });
                 return Results.Ok(result);
-            }).WithTags("Purchase");
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesManage);
         }
     }
 }

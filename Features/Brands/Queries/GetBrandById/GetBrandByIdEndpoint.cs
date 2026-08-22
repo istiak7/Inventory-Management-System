@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetBrandById
             {
                 var result = await mediator.Send(new GetBrandByIdQuery(id));
                 return Results.Ok(result);
-            }).WithTags("Brand");
+            }).WithTags("Brand").RequirePermission(Permissions.ProductsView);
         }
     }
 }

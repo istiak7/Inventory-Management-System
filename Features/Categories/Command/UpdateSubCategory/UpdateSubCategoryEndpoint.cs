@@ -12,7 +12,7 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateSubCateg
                 command.Id = id;
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("SubCategory");
+            }).WithTags("SubCategory").RequirePermission(Permissions.ProductsManage);
         }
     }
 }

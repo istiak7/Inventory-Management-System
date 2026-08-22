@@ -19,7 +19,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
                 var result = await mediator.Send(
                     new GetSupplierPaymentHistoryQuery(supplierId, pageNumber, pageSize, invoiceNumber, paymentId, paymentMethod));
                 return Results.Ok(result);
-            }).WithTags("Supplier");
+            }).WithTags("Supplier").RequirePermission(Permissions.SuppliersView);
         }
     }
 }

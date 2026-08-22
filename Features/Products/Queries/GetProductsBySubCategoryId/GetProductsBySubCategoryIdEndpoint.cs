@@ -13,7 +13,7 @@ namespace Inventory_Management_System.Features.Products.Queries.GetProductsBySub
             {
                 var result = await mediator.Send(new GetProductsBySubCategoryIdQuery(subCategoryId, pageNumber, pageSize));
                 return Results.Ok(result);
-            }).WithTags("SubCategory");
+            }).WithTags("SubCategory").RequirePermission(Permissions.ProductsView);
         }
     }
 }

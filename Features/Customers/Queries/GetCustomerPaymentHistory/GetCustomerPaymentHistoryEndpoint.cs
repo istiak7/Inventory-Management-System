@@ -19,7 +19,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerPaym
                 var result = await mediator.Send(
                     new GetCustomerPaymentHistoryQuery(customerId, pageNumber, pageSize, invoiceNumber, paymentId, paymentMethod));
                 return Results.Ok(result);
-            }).WithTags("Customer");
+            }).WithTags("Customer").RequirePermission(Permissions.CustomersView);
         }
     }
 }

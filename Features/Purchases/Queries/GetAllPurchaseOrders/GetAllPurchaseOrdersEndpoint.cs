@@ -22,7 +22,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                 var result = await mediator.Send(new GetAllPurchaseOrdersQuery(
                     pageNumber, pageSize, status, supplierId, branchId, purchaseType, search, startDate, endDate));
                 return Results.Ok(result);
-            }).WithTags("Purchase");
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesView);
         }
     }
 }

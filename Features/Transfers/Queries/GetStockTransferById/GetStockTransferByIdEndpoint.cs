@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Transfers.Queries.GetStockTransfe
             {
                 var result = await mediator.Send(new GetStockTransferByIdQuery(id));
                 return Results.Ok(result);
-            }).WithTags("Transfers");
+            }).WithTags("Transfers").RequirePermission(Permissions.TransfersView);
         }
     }
 }

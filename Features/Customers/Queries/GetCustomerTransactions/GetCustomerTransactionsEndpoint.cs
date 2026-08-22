@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 var result = await mediator.Send(new GetCustomerTransactionsQuery(
                     pageNumber, pageSize, customerId, branchId, search, transactionType, startDate, endDate));
                 return Results.Ok(result);
-            }).WithTags("Customer");
+            }).WithTags("Customer").RequirePermission(Permissions.CustomersView);
         }
     }
 }

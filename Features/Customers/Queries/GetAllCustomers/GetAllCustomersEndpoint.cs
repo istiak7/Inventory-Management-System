@@ -15,7 +15,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetAllCustomers
             {
                 var result = await mediator.Send(new GetAllCustomersQuery(pageNumber, pageSize, search));
                 return Results.Ok(result);
-            }).WithTags("Customer");
+            }).WithTags("Customer").RequirePermission(Permissions.CustomersView);
         }
     }
 }

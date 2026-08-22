@@ -10,7 +10,7 @@ namespace Inventory_Management_System.Features.Users.Shared.Services
 {
     public interface ITokenService
     {
-        public string GenerateJwtToken(User user);
+        public string GenerateJwtToken(User user, string roleName, IEnumerable<string> permissions);
         public string GenerateRefreshToken();
     }
     public class TokenService : ITokenService
@@ -21,17 +21,27 @@ namespace Inventory_Management_System.Features.Users.Shared.Services
         {
             _jwtSettings = jwtSettings.Value;
         }
-        public string GenerateJwtToken(User user)
+        public string GenerateJwtToken(User user, string roleName, IEnumerable<string> permissions)
         {
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, _jwtSettings.Subject),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("username", user.Name),
-                new Claim("id", user.Id.ToString()),
-                new Claim("roleId", user.RoleId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(JwtRegisteredClaimNames.Sub, _jwtSettings.Subject),
+                new(JwtRegisteredClaimNames.Email, user.Email),
+                new("username", user.Name),
+                new("id", user.Id.ToString()),
+                new("roleId", user.RoleId.ToString()),
+                // Standard role claim so [Authorize(Roles=...)] / RequireRole works.
+                new(ClaimTypes.Role, roleName),
+                // BranchId ("" when the user can access all branches, e.g. admin).
+                new("branchId", user.BranchId?.ToString() ?? string.Empty),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            // One "permission" claim per effective permission; endpoints check these.
+            foreach (var permission in permissions)
+            {
+                claims.Add(new Claim("permission", permission));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

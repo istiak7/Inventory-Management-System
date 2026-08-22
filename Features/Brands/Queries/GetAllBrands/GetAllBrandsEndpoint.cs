@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetAllBrands
             {
                 var result = await mediator.Send(new GetAllBrandsQuery(pageNumber, pageSize));
                 return Results.Ok(result);
-            }).WithTags("Brand");
+            }).WithTags("Brand").RequirePermission(Permissions.ProductsView);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetStockByVariant
             {
                 var result = await mediator.Send(new GetStockByVariantQuery(variantId));
                 return Results.Ok(result);
-            }).WithTags("Stock");
+            }).WithTags("Stock").RequirePermission(Permissions.InventoryView);
         }
     }
 }

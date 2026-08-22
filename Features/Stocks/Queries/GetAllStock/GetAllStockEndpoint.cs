@@ -18,7 +18,7 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetAllStock
             {
                 var result = await mediator.Send(new GetAllStockQuery(pageNumber, pageSize, branchId, productVariantId, search, lowStockThreshold));
                 return Results.Ok(result);
-            }).WithTags("Stock");
+            }).WithTags("Stock").RequirePermission(Permissions.InventoryView);
         }
     }
 }

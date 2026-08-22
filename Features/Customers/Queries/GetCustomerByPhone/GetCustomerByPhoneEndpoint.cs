@@ -13,7 +13,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerByPh
             {
                 var result = await mediator.Send(new GetCustomerByPhoneQuery(phoneNumber));
                 return Results.Ok(result);
-            }).WithTags("Customer");
+            }).WithTags("Customer").RequirePermission(Permissions.CustomersView);
         }
     }
 }

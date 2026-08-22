@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
             {
                 var result = await mediator.Send(new ApproveStockTransferCommand { StockTransferId = id });
                 return Results.Ok(result);
-            }).WithTags("Transfers");
+            }).WithTags("Transfers").RequirePermission(Permissions.TransfersManage);
         }
     }
 }

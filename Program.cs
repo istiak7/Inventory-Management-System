@@ -57,6 +57,13 @@ if (string.IsNullOrWhiteSpace(jwtSettings?.SecretKey) || jwtSettings.SecretKey.L
         "or via the JwtSettings__SecretKey environment variable on the server.");
 
 builder.AddJWTAuthentication();
+
+// Authorization: management endpoints (users, roles) are for admins only.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
 builder.Services.AddServices();
 builder.Services.AddRepositories();
 builder.Services.AddCorsExtension(builder.Configuration);
@@ -92,8 +99,16 @@ foreach (var endpoint in endpoints)
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Apply migrations and seed permissions, roles and the first admin user.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbSeeder.SeedAsync(db);
+}
 
 app.Run();

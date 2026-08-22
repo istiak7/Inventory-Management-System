@@ -20,7 +20,7 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                 };
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Transfers");
+            }).WithTags("Transfers").RequirePermission(Permissions.TransfersManage);
         }
     }
 }

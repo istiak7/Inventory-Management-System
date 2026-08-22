@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                 var result = await mediator.Send(
                     new GetAllSalesQuery(pageNumber, pageSize, customerId, branchId, saleType, search, startDate, endDate));
                 return Results.Ok(result);
-            }).WithTags("Sales");
+            }).WithTags("Sales").RequirePermission(Permissions.SalesView);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetAllWarrantyCl
                 var result = await mediator.Send(
                     new GetAllWarrantyClaimsQuery(pageNumber, pageSize, status, branchId, customerId, search));
                 return Results.Ok(result);
-            }).WithTags("Warranty");
+            }).WithTags("Warranty").RequirePermission(Permissions.WarrantyView);
         }
     }
 }

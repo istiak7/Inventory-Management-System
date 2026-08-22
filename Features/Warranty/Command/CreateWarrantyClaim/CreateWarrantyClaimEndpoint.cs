@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Warranty");
+            }).WithTags("Warranty").RequirePermission(Permissions.WarrantyManage);
         }
     }
 }
