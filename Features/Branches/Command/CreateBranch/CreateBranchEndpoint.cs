@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Branches.Command.CreateBranch
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Branch");
+            }).WithTags("Branch").RequirePermission(Permissions.BranchesManage);
         }
     }
 }
