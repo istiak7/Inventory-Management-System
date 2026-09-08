@@ -4,6 +4,7 @@ using Inventory_Management_System.Middleware;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.CorsExtension;
 using Inventory_Management_System.Shared.Extensions.DependencyExtensions;
+using Inventory_Management_System.Shared.Services.AgentService;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -66,6 +67,13 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddServices();
 builder.Services.AddRepositories();
+builder.Services.AddMcpTools();
+
+// Configure MCP Server with Streamable HTTP transport and discover tools from this assembly
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithToolsFromAssembly(typeof(ReportAgentService).Assembly); // Automatically scans for [McpServerToolType]
+
 builder.Services.AddCorsExtension(builder.Configuration);
 
 var app = builder.Build();
@@ -83,7 +91,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "API");
     });
 }
-
+app.MapMcp("api/mcp");
 
 app.UseCors("CorsPolicy");
 

@@ -19,6 +19,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.80.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.80.1" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
@@ -28,9 +31,7 @@
        but never published, so dev passwords and keys do not end up on the server. -->
   <ItemGroup>
     <Content Remove="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json" />
-    <None Include="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json"
-          CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Never" />
+    <None Include="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,7 +39,6 @@
     <Folder Include="Features\Purchases\Queries\GetInvoiceSupplierLedger\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Migrations\" />
-    <Folder Include="Shared\Services\" />
   </ItemGroup>
 
 </Project>
