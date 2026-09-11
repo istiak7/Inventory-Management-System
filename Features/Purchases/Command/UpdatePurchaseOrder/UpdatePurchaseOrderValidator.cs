@@ -1,12 +1,13 @@
 using FluentValidation;
 using Inventory_Management_System.Features.Purchases.Shared;
 
-namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseOrder
+namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseOrder
 {
-    public class CreatePurchaseOrderValidator : AbstractValidator<CreatePurchaseOrderCommand>
+    public class UpdatePurchaseOrderValidator : AbstractValidator<UpdatePurchaseOrderCommand>
     {
-        public CreatePurchaseOrderValidator()
+        public UpdatePurchaseOrderValidator()
         {
+            RuleFor(x => x.Id).GreaterThan(0).WithMessage("A valid purchase order id is required.");
             RuleFor(x => x.SupplierId).GreaterThan(0).WithMessage("SupplierId is required.");
             RuleFor(x => x.BranchId).GreaterThan(0).WithMessage("BranchId is required.");
 

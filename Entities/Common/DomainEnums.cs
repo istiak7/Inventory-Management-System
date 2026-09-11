@@ -16,10 +16,12 @@ namespace Inventory_Management_System.Entities.Common
         Rejected
     }
 
+    // How a purchase is settled. Cash is paid in full the moment the order is approved;
+    // Debit books the whole amount onto the supplier account to be paid later.
     public enum PurchaseType
     {
         Cash,
-        Credit
+        Debit
     }
 
     public enum SaleStatus

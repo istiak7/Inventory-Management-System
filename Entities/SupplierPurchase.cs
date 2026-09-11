@@ -9,7 +9,7 @@ namespace Inventory_Management_System.Entities
         public DateTime PurchaseDate { get; set; } = DateTime.Now;
         public string InvoiceNumber { get; set; } = string.Empty;
         public PurchaseStatus Status { get; set; } = PurchaseStatus.Pending;  
-        public PurchaseType PurchaseType { get; set; } = PurchaseType.Credit;  
+        public PurchaseType PurchaseType { get; set; } = PurchaseType.Debit;  
         public decimal TotalAmount { get; set; }   
         public decimal PaidAmount { get; set; }  
         public decimal DueAmount { get; set; }      
@@ -20,6 +20,13 @@ namespace Inventory_Management_System.Entities
         public required Branch Branch { get; set; }
         public ICollection<SupplierPurchaseDetails> SupplierPurchaseDetails { get; set; } = [];
         public ICollection<SupplierPurchasePayment> SupplierPurchasePayments { get; set; } = [];
+
+        // An approved order is complete: the goods are in stock and the supplier ledger has
+        // been posted, so it can no longer be edited or deleted.
+        public bool IsCompleted => Status == PurchaseStatus.Approved;
+
+        // Settles the whole order at once. Used when the order is paid by Cash on approval.
+        public void SettleInFull() => ApplyPayment(DueAmount);
 
         public void ApplyPayment(decimal amount)
         {

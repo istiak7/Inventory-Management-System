@@ -2,6 +2,7 @@ using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
         {
             var purchase = await _dbContext.SupplierPurchases
                 .Include(p => p.SupplierPurchaseDetails)
-                .FirstOrDefaultAsync(p => p.Id == request.PurchaseOrderId, cancellationToken);
+                .FirstOrDefaultAsync(
+                    p => p.Id == request.PurchaseOrderId && p.IsActive != (int)EntityStatus.Deleted,
+                    cancellationToken);
 
             if (purchase == null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Purchase order not found." };

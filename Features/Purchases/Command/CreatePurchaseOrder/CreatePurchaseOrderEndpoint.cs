@@ -8,6 +8,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
+            // Raising a purchase order is day-to-day work, so any signed-in member can do it.
+            // Approving it (receive-purchase-order) is what needs purchases.manage.
             app.MapPost("/create-purchase-order", async (CreatePurchaseOrderRequest request, IMediator mediator) =>
             {
                 var command = new CreatePurchaseOrderCommand
@@ -17,11 +19,12 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     PurchaseDate = request.PurchaseDate,
                     InvoiceNumber = request.InvoiceNumber,
                     Remarks = request.Remarks,
+                    PaymentType = request.PaymentType,
                     Items = request.Items
                 };
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesManage);
+            }).WithTags("Purchase").RequireAuthorization();
         }
     }
 }

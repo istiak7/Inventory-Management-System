@@ -12,12 +12,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             {
                 line.RuleFor(l => l.SupplierPurchaseDetailsId).GreaterThan(0).WithMessage("A valid line id is required.");
             });
-
-            When(x => x.Payment != null, () =>
-            {
-                RuleFor(x => x.Payment!.Amount).GreaterThanOrEqualTo(0).WithMessage("Payment amount must be greater than or equal to 0.");
-                RuleFor(x => x.Payment!.PaymentMethod).NotEmpty().WithMessage("Payment method is required.");
-            });
         }
     }
 }

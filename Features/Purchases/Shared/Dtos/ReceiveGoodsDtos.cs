@@ -7,13 +7,6 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         public List<string>? SerialNumbers { get; set; }
     }
 
-    public class ReceiveGoodsPaymentRequest
-    {
-        public decimal Amount { get; set; }
-        public DateTime? PaymentDate { get; set; }
-        public string PaymentMethod { get; set; } = "Cash";
-    }
-
     public sealed record ReceivedLineResponse(
         int SupplierPurchaseDetailsId,
         int OrderedQuantity,

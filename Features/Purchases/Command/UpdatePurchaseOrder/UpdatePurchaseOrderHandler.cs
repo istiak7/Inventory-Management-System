@@ -7,25 +7,17 @@ using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
-namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseOrder
+namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseOrder
 {
-    public class CreatePurchaseOrderHandler(
+    public class UpdatePurchaseOrderHandler(
         AppDbContext _dbContext,
-        ILogger<CreatePurchaseOrderHandler> _logger
-    ) : IRequestHandler<CreatePurchaseOrderCommand, Result>
+        ILogger<UpdatePurchaseOrderHandler> _logger
+    ) : IRequestHandler<UpdatePurchaseOrderCommand, Result>
     {
-        public async Task<Result> Handle(CreatePurchaseOrderCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(UpdatePurchaseOrderCommand request, CancellationToken cancellationToken)
         {
-            if (request.Items.Count == 0)
-                return new Result
-                {
-                    IsSuccess = false,
-                    StatusCode = 400,
-                    Status = "Error",
-                    Message = "At least one purchase item is required."
-                };
-
             if (!PurchasePaymentTypes.TryParse(request.PaymentType, out var paymentType))
                 return new Result
                 {
@@ -35,7 +27,56 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Message = $"Payment type must be one of: {PurchasePaymentTypes.Allowed}."
                 };
 
-            var supplier = await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken);
+            var purchase = await _dbContext.SupplierPurchases
+                .Include(p => p.Supplier)
+                .Include(p => p.Branch)
+                .Include(p => p.SupplierPurchaseDetails)
+                .FirstOrDefaultAsync(
+                    p => p.Id == request.Id && p.IsActive != (int)EntityStatus.Deleted,
+                    cancellationToken);
+
+            if (purchase == null)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 404,
+                    Status = "Error",
+                    Message = "Purchase order not found."
+                };
+
+            // The business rule the frontend also mirrors: once approved, the order is closed.
+            if (purchase.IsCompleted)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "This purchase order is completed and can no longer be edited."
+                };
+
+            if (purchase.Status == PurchaseStatus.Rejected)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "A rejected purchase order can no longer be edited."
+                };
+
+            // Goods already in stock were counted against these lines, so the order is no
+            // longer safe to rewrite.
+            if (purchase.Status == PurchaseStatus.PartiallyReceived)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Goods have already been received against this purchase order, so it can no longer be edited."
+                };
+
+            var supplier = purchase.SupplierId == request.SupplierId
+                ? purchase.Supplier
+                : await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken);
             if (supplier == null)
                 return new Result
                 {
@@ -45,7 +86,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Message = "Supplier not found."
                 };
 
-            var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
+            var branch = purchase.BranchId == request.BranchId
+                ? purchase.Branch
+                : await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
             if (branch == null)
                 return new Result
                 {
@@ -55,40 +98,40 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     Message = "Branch not found."
                 };
 
-            if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
+            var invoiceNumber = string.IsNullOrWhiteSpace(request.InvoiceNumber)
+                ? purchase.InvoiceNumber
+                : request.InvoiceNumber.Trim();
+
+            if (invoiceNumber != purchase.InvoiceNumber)
             {
                 var taken = await _dbContext.SupplierPurchases
-                    .AnyAsync(p => p.InvoiceNumber == request.InvoiceNumber, cancellationToken);
+                    .AnyAsync(p => p.InvoiceNumber == invoiceNumber && p.Id != purchase.Id, cancellationToken);
                 if (taken)
                     return new Result
                     {
                         IsSuccess = false,
                         StatusCode = 400,
                         Status = "Error",
-                        Message = $"Invoice number '{request.InvoiceNumber}' already exists."
+                        Message = $"Invoice number {invoiceNumber} already exists."
                     };
             }
 
             try
             {
-                var purchaseDate = request.PurchaseDate ?? DateTime.Now;
+                purchase.SupplierId = request.SupplierId;
+                purchase.BranchId = request.BranchId;
+                purchase.Supplier = supplier;
+                purchase.Branch = branch;
+                purchase.PurchaseDate = request.PurchaseDate ?? purchase.PurchaseDate;
+                purchase.InvoiceNumber = invoiceNumber;
+                purchase.Remarks = request.Remarks;
+                purchase.PurchaseType = paymentType;
+                purchase.UpDatedAt = DateTime.Now;
 
-                var invoiceNumber = string.IsNullOrWhiteSpace(request.InvoiceNumber)
-                    ? await GenerateInvoiceNumberAsync(purchaseDate, cancellationToken)
-                    : request.InvoiceNumber.Trim();
-
-                var purchase = new SupplierPurchase
-                {
-                    SupplierId = request.SupplierId,
-                    BranchId = request.BranchId,
-                    PurchaseDate = purchaseDate,
-                    InvoiceNumber = invoiceNumber,
-                    Status = PurchaseStatus.Pending,
-                    PurchaseType = paymentType,
-                    Remarks = request.Remarks,
-                    Supplier = supplier,
-                    Branch = branch,
-                };
+                // Nothing has been received yet, so the old lines carry no stock or serials and
+                // can simply be replaced by what was submitted.
+                _dbContext.SupplierPurchaseDetails.RemoveRange(purchase.SupplierPurchaseDetails);
+                purchase.SupplierPurchaseDetails.Clear();
 
                 decimal totalAmount = 0;
                 foreach (var item in request.Items)
@@ -120,11 +163,11 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     });
                 }
 
+                // Nothing is paid before approval, so the whole revised total is still due.
                 purchase.TotalAmount = totalAmount;
                 purchase.PaidAmount = 0;
                 purchase.DueAmount = totalAmount;
 
-                await _dbContext.SupplierPurchases.AddAsync(purchase, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
                 var response = new PurchaseOrderResponse(
@@ -142,60 +185,37 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                 return new Result
                 {
                     IsSuccess = true,
-                    StatusCode = 201,
+                    StatusCode = 200,
                     Status = "Success",
-                    Message = "Purchase order created successfully",
+                    Message = "Purchase order updated successfully",
                     Data = response
                 };
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {
-                var constraint = (ex.InnerException as PostgresException)?.ConstraintName;
-                _logger.LogWarning(ex, "Purchase order creation lost a uniqueness race on {Constraint}", constraint);
-
+                _logger.LogWarning(ex, "Purchase order {Id} update lost a uniqueness race", request.Id);
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 409,
                     Status = "Error",
-                    Message = "That invoice number was taken by another purchase order a moment ago. Leave it blank to have one generated."
+                    Message = "That invoice number was taken by another purchase order a moment ago."
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating purchase order");
+                _logger.LogError(ex, "Error updating purchase order {Id}", request.Id);
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 500,
                     Status = "Error",
-                    Message = "An error occurred while creating the purchase order."
+                    Message = "An error occurred while updating the purchase order."
                 };
             }
         }
 
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
-
-        private async Task<string> GenerateInvoiceNumberAsync(
-            DateTime purchaseDate,
-            CancellationToken cancellationToken
-        )
-        {
-            var prefix = $"PO-{purchaseDate.Year}-";
-
-            var latest = await _dbContext.SupplierPurchases
-                .AsNoTracking()
-                .Where(p => p.InvoiceNumber.StartsWith(prefix))
-                .OrderByDescending(p => p.Id)
-                .Select(p => p.InvoiceNumber)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var next = 1;
-            if (latest != null && int.TryParse(latest[prefix.Length..], out var lastSequence))
-                next = lastSequence + 1;
-
-            return prefix + next.ToString("D4");
-        }
     }
 }

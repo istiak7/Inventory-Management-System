@@ -4,6 +4,7 @@ using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 .Include(p => p.Supplier)
                 .Include(p => p.Branch)
                 .Include(p => p.SupplierPurchaseDetails).ThenInclude(d => d.ProductVariant)
-                .FirstOrDefaultAsync(p => p.Id == request.PurchaseOrderId, cancellationToken);
+                .FirstOrDefaultAsync(
+                    p => p.Id == request.PurchaseOrderId && p.IsActive != (int)EntityStatus.Deleted,
+                    cancellationToken);
 
             if (purchase == null)
                 return new Result
@@ -45,16 +48,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     StatusCode = 400,
                     Status = "Error",
                     Message = "This purchase order is already fully received."
-                };
-
-            var paymentAmount = request.Payment?.Amount ?? 0;
-            if (paymentAmount > purchase.TotalAmount)
-                return new Result
-                {
-                    IsSuccess = false,
-                    StatusCode = 400,
-                    Status = "Error",
-                    Message = "Payment exceeds the order total. Pay the full amount or a smaller one."
                 };
 
             var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials)>();
@@ -211,18 +204,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 else if (nonRejected.Any(d => d.Status is LineStatus.Received or LineStatus.PartiallyReceived))
                     purchase.Status = PurchaseStatus.PartiallyReceived;
 
-                if (paymentAmount > 0 && purchase.Status != PurchaseStatus.Approved)
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                    return new Result
-                    {
-                        IsSuccess = false,
-                        StatusCode = 400,
-                        Status = "Error",
-                        Message = "Payment can only be recorded once every line on this order has been received."
-                    };
-                }
-
                 SupplierPayment? payment = null;
 
                 if (purchase.Status == PurchaseStatus.Approved)
@@ -234,19 +215,23 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
                     var purchaseTxn = SupplierTransaction.ForPurchase(purchase, purchase.Supplier, runningBalance);
                     await _dbContext.SupplierTransactions.AddAsync(purchaseTxn, cancellationToken);
-                    if (paymentAmount > 0)
-                    {
-                        purchase.ApplyPayment(paymentAmount);
-                        purchase.PurchaseType = paymentAmount >= purchase.TotalAmount ? PurchaseType.Cash : PurchaseType.Credit;
 
-                        var paymentDate = request.Payment?.PaymentDate ?? now;
+                    // Cash settles the whole order here and now; Debit leaves the full amount
+                    // sitting on the supplier account, to be paid off later through
+                    // create-supplier-payment like any other outstanding balance.
+                    if (purchase.PurchaseType == PurchaseType.Cash && purchase.DueAmount > 0)
+                    {
+                        var paymentAmount = purchase.DueAmount;
+                        purchase.SettleInFull();
+
+                        var paymentDate = request.PaymentDate ?? now;
                         payment = new SupplierPayment
                         {
                             SupplierId = purchase.SupplierId,
                             BranchId = purchase.BranchId,
                             Amount = paymentAmount,
                             PaymentDate = paymentDate,
-                            PaymentMethod = request.Payment?.PaymentMethod ?? "Cash",
+                            PaymentMethod = PurchaseType.Cash.ToString(),
                             Supplier = purchase.Supplier,
                             Branch = purchase.Branch,
                         };

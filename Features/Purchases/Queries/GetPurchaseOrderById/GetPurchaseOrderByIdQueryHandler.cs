@@ -1,6 +1,7 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,7 +18,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetPurchaseOrde
             {
                 var purchase = await _dbContext.SupplierPurchases
                     .AsNoTracking()
-                    .Where(p => p.Id == request.Id)
+                    .Where(p => p.Id == request.Id && p.IsActive != (int)EntityStatus.Deleted)
                     .Select(p => new PurchaseOrderDetailResponse(
                         p.Id,
                         p.SupplierId,

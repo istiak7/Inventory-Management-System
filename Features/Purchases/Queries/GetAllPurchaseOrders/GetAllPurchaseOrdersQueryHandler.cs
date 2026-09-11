@@ -5,6 +5,7 @@ using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
 using Inventory_Management_System.Shared.Extensions.QueryableFilterExtensions;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,9 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
         {
             try
             {
-                var query = _dbContext.SupplierPurchases.AsNoTracking();
+                var query = _dbContext.SupplierPurchases
+                    .AsNoTracking()
+                    .Where(p => p.IsActive != (int)EntityStatus.Deleted);
 
                 if (!string.IsNullOrWhiteSpace(request.Status) &&
                     Enum.TryParse<PurchaseStatus>(request.Status, true, out var statusFilter))
