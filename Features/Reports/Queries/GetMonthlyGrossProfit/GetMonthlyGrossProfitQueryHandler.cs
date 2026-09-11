@@ -3,6 +3,7 @@ using Inventory_Management_System.Features.Reports.Shared;
 using Inventory_Management_System.Features.Reports.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Reports.Queries.GetMonthlyGrossProfit
 {
