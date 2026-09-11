@@ -17,6 +17,9 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         public decimal DiscountAmount { get; set; }
         public decimal TaxAmount { get; set; }
 
+        /// <summary>How the sale is settled: "Cash" or "Debit".</summary>
+        public string? PaymentType { get; set; }
+
         public SalePaymentRequest? Payment { get; set; }
     }
 }

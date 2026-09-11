@@ -32,10 +32,12 @@ namespace Inventory_Management_System.Entities.Common
         Completed
     }
 
+    // How a sale is settled. Cash is paid in full at the point of sale; Debit books the whole
+    // amount onto the customer account to be collected later.
     public enum SaleType
     {
         Cash,
-        Credit
+        Debit
     }
 
     public enum SerialStatus

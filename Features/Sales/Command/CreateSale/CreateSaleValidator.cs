@@ -1,4 +1,5 @@
 using FluentValidation;
+using Inventory_Management_System.Features.Sales.Shared;
 using Inventory_Management_System.Features.Customers.Shared;
 
 namespace Inventory_Management_System.Features.Sales.Command.CreateSale
@@ -56,11 +57,11 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     .WithMessage("SerialNumber must be 100 characters or fewer.");
             });
 
-            When(x => x.Payment != null, () =>
-            {
-                RuleFor(x => x.Payment!.Amount).GreaterThanOrEqualTo(0).WithMessage("Payment amount must be greater than or equal to 0.");
-                RuleFor(x => x.Payment!.PaymentMethod).NotEmpty().WithMessage("Payment method is required.");
-            });
+            RuleFor(x => x.PaymentType)
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Payment type is required.")
+                .Must(SalePaymentTypes.IsValid)
+                .WithMessage($"Payment type must be one of: {SalePaymentTypes.Allowed}.");
         }
     }
 }

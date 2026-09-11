@@ -16,6 +16,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
         public List<SaleItemRequest> Items { get; set; } = [];
         public decimal DiscountAmount { get; set; }
         public decimal TaxAmount { get; set; }
+        public string? PaymentType { get; set; }
         public SalePaymentRequest? Payment { get; set; }
     }
 }

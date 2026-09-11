@@ -2,6 +2,7 @@ using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Customers.Shared;
+using Inventory_Management_System.Features.Sales.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
@@ -27,6 +28,15 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     StatusCode = 400,
                     Status = "Error",
                     Message = "At least one item is required to create a sale."
+                };
+
+            if (!SalePaymentTypes.TryParse(request.PaymentType, out var paymentType))
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = $"Payment type must be one of: {SalePaymentTypes.Allowed}."
                 };
 
             var branch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.BranchId, cancellationToken);
@@ -81,6 +91,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     Branch = branch,
                 };
 
+                var costResolver = new ProductCostResolver(_dbContext);
                 var variantCache = new Dictionary<int, ProductVariant>();
                 var stockCache = new Dictionary<int, Stock>();
                 var itemResponses = new List<SaleItemResponse>();
@@ -146,6 +157,12 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     var lineTotal = (unitPrice - discountPerItem) * item.Quantity;
                     subTotal += lineTotal;
 
+                    // Snapshot what this unit cost us, so gross profit for this sale is fixed
+                    // now and is not rewritten by later purchases at a different price.
+                    var unitCost = serial != null
+                        ? await costResolver.GetSerialCostAsync(serial.SupplierPurchaseDetailsId, cancellationToken)
+                        : await costResolver.GetAverageCostAsync(variant.Id, cancellationToken);
+
                     var newBalance = stock.CurrentStock - item.Quantity;
                     stock.CurrentStock = newBalance;
 
@@ -174,6 +191,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         ProductVariantId = variant.Id,
                         Quantity = item.Quantity,
                         UnitPrice = unitPrice,
+                        UnitCost = unitCost,
                         DiscountPerItem = item.DiscountPerItem,
                         TotalAmount = lineTotal,
                         WarrantyMonths = warrantyMonths,
@@ -193,11 +211,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 var totalAmount = subTotal - request.DiscountAmount + request.TaxAmount;
 
-                var paidAmount = request.Payment?.Amount ?? 0;
-                if (paidAmount < 0)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment amount cannot be negative." };
-                if (paidAmount > totalAmount)
-                    return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Payment exceeds the total. Pay the full amount or a smaller one." };
+                // Cash clears the whole sale at the counter; Debit leaves all of it on the
+                // customer account, to be collected later through create-customer-payment.
+                var paidAmount = paymentType == SaleType.Cash ? totalAmount : 0m;
 
                 sale.SubTotal = subTotal;
                 sale.DiscountAmount = request.DiscountAmount;
@@ -205,7 +221,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 sale.TotalAmount = totalAmount;
                 sale.PaidAmount = 0;
                 sale.DueAmount = totalAmount;
-                sale.SaleType = paidAmount >= totalAmount && totalAmount > 0 ? SaleType.Cash : SaleType.Credit;
+                sale.SaleType = paymentType;
 
                 await _dbContext.CustomerSales.AddAsync(sale, cancellationToken);
 
@@ -228,7 +244,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         BranchId = sale.BranchId,
                         Amount = paidAmount,
                         PaymentDate = request.Payment?.PaymentDate ?? DateTime.UtcNow,
-                        PaymentMethod = request.Payment?.PaymentMethod ?? "Cash",
+                        PaymentMethod = SaleType.Cash.ToString(),
                         Customer = customer,
                         Branch = branch,
                     };
