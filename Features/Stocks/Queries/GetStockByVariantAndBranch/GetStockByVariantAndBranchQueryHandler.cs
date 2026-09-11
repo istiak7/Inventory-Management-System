@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Features.Stocks.Shared;
 using Inventory_Management_System.Features.Stocks.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -29,7 +30,8 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetStockByVariantA
                         s.ProductVariant.SKU,
                         s.ProductVariant.Product.ProductName,
                         s.ProductVariant.IsSerialized,
-                        s.CurrentStock))
+                        s.CurrentStock,
+                        s.CurrentStock > 0 ? StockStatuses.InStock : StockStatuses.OutOfStock))
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (stock is not null)
@@ -51,7 +53,7 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetStockByVariantA
                 if (branch is null)
                     return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = $"Branch {request.BranchId} not found." };
 
-                var zero = new StockResponse(0, branch.Id, branch.Name, variant.Id, variant.SKU, variant.ProductName, variant.IsSerialized, 0);
+                var zero = new StockResponse(0, branch.Id, branch.Name, variant.Id, variant.SKU, variant.ProductName, variant.IsSerialized, 0, StockStatuses.For(0));
                 return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "No stock yet for this variant at this branch", Data = zero };
             }
             catch (Exception ex)

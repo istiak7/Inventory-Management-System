@@ -21,6 +21,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     Items = request.Items,
                     DiscountAmount = request.DiscountAmount,
                     TaxAmount = request.TaxAmount,
+                    PaymentType = request.PaymentType,
                     Payment = request.Payment
                 };
                 var result = await mediator.Send(command);

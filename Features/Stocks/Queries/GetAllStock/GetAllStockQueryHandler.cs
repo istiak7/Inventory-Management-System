@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Features.Stocks.Shared;
 using Inventory_Management_System.Features.Stocks.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
@@ -45,7 +46,8 @@ namespace Inventory_Management_System.Features.Stocks.Queries.GetAllStock
                         s.ProductVariant.SKU,
                         s.ProductVariant.Product.ProductName,
                         s.ProductVariant.IsSerialized,
-                        s.CurrentStock))
+                        s.CurrentStock,
+                        s.CurrentStock > 0 ? StockStatuses.InStock : StockStatuses.OutOfStock))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result { IsSuccess = true, StatusCode = 200, Status = "Success", Message = "Stock retrieved successfully", Data = pagedResult };
