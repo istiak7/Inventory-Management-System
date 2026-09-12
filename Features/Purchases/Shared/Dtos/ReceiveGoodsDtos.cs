@@ -24,6 +24,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
     public sealed record ReceiveGoodsResponse(
         int PurchaseOrderId,
         string Status,
+        string? PurchaseType,
         int SerialsCreated,
         decimal PaidAmount,
         decimal DueAmount,

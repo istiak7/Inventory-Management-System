@@ -8,7 +8,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         string? InvoiceNumber,
         string? Remarks,
         string Status,
-        string PurchaseType,
+        string? PurchaseType,
         decimal TotalAmount,
         decimal TotalDueAmount
     );

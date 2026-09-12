@@ -62,6 +62,11 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 .NotEmpty().WithMessage("Payment type is required.")
                 .Must(SalePaymentTypes.IsValid)
                 .WithMessage($"Payment type must be one of: {SalePaymentTypes.Allowed}.");
+
+            RuleFor(x => x.Payment!.Amount)
+                .GreaterThan(0)
+                .When(x => x.Payment?.Amount.HasValue == true)
+                .WithMessage("Payment amount must be greater than 0.");
         }
     }
 }

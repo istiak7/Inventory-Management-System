@@ -29,7 +29,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetPurchaseOrde
                         p.Remarks,
                         p.PurchaseDate,
                         p.Status.ToString(),
-                        p.PurchaseType.ToString(),
+                        p.PurchaseType.HasValue ? p.PurchaseType.Value.ToString() : null,
                         p.TotalAmount,
                         p.PaidAmount,
                         p.DueAmount,

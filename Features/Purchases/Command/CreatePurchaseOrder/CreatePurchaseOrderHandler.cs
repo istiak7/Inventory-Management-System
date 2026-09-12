@@ -1,7 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
-using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -24,15 +23,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     StatusCode = 400,
                     Status = "Error",
                     Message = "At least one purchase item is required."
-                };
-
-            if (!PurchasePaymentTypes.TryParse(request.PaymentType, out var paymentType))
-                return new Result
-                {
-                    IsSuccess = false,
-                    StatusCode = 400,
-                    Status = "Error",
-                    Message = $"Payment type must be one of: {PurchasePaymentTypes.Allowed}."
                 };
 
             var supplier = await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == request.SupplierId, cancellationToken);
@@ -84,7 +74,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     PurchaseDate = purchaseDate,
                     InvoiceNumber = invoiceNumber,
                     Status = PurchaseStatus.Pending,
-                    PurchaseType = paymentType,
                     Remarks = request.Remarks,
                     Supplier = supplier,
                     Branch = branch,
@@ -135,7 +124,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     purchase.InvoiceNumber,
                     purchase.Remarks,
                     purchase.Status.ToString(),
-                    purchase.PurchaseType.ToString(),
+                    purchase.PurchaseType?.ToString(),
                     purchase.TotalAmount,
                     purchase.DueAmount);
 

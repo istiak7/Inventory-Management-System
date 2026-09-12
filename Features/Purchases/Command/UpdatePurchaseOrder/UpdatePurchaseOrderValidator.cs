@@ -1,5 +1,4 @@
 using FluentValidation;
-using Inventory_Management_System.Features.Purchases.Shared;
 
 namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseOrder
 {
@@ -10,12 +9,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
             RuleFor(x => x.Id).GreaterThan(0).WithMessage("A valid purchase order id is required.");
             RuleFor(x => x.SupplierId).GreaterThan(0).WithMessage("SupplierId is required.");
             RuleFor(x => x.BranchId).GreaterThan(0).WithMessage("BranchId is required.");
-
-            RuleFor(x => x.PaymentType)
-                .Cascade(CascadeMode.Stop)
-                .NotEmpty().WithMessage("Payment type is required.")
-                .Must(PurchasePaymentTypes.IsValid)
-                .WithMessage($"Payment type must be one of: {PurchasePaymentTypes.Allowed}.");
 
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one purchase item is required.");
 

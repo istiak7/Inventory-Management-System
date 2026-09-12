@@ -1,7 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
-using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -18,15 +17,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
     {
         public async Task<Result> Handle(UpdatePurchaseOrderCommand request, CancellationToken cancellationToken)
         {
-            if (!PurchasePaymentTypes.TryParse(request.PaymentType, out var paymentType))
-                return new Result
-                {
-                    IsSuccess = false,
-                    StatusCode = 400,
-                    Status = "Error",
-                    Message = $"Payment type must be one of: {PurchasePaymentTypes.Allowed}."
-                };
-
             var purchase = await _dbContext.SupplierPurchases
                 .Include(p => p.Supplier)
                 .Include(p => p.Branch)
@@ -125,7 +115,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                 purchase.PurchaseDate = request.PurchaseDate ?? purchase.PurchaseDate;
                 purchase.InvoiceNumber = invoiceNumber;
                 purchase.Remarks = request.Remarks;
-                purchase.PurchaseType = paymentType;
                 purchase.UpDatedAt = DateTime.Now;
 
                 // Nothing has been received yet, so the old lines carry no stock or serials and
@@ -178,7 +167,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                     purchase.InvoiceNumber,
                     purchase.Remarks,
                     purchase.Status.ToString(),
-                    purchase.PurchaseType.ToString(),
+                    purchase.PurchaseType?.ToString(),
                     purchase.TotalAmount,
                     purchase.DueAmount);
 

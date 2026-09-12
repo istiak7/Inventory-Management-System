@@ -1,6 +1,7 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
@@ -142,6 +143,84 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     };
             }
 
+            // Approval is the moment the order settles, so the payment type is decided here and
+            // checked before anything is written. An order raised before the type moved to this
+            // step keeps whatever it already carries unless the caller picks a new one.
+            var plannedQuantities = plan.ToDictionary(p => p.Detail.Id, p => p.Qty);
+            var openLines = purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected).ToList();
+            var willComplete = openLines.Count > 0 && openLines.All(d =>
+                (d.ReceivedQuantity ?? 0) + plannedQuantities.GetValueOrDefault(d.Id) >= d.OrderedQuantity);
+
+            PurchaseType? approvalPaymentType = null;
+            decimal settlementAmount = 0;
+
+            if (willComplete)
+            {
+                if (!string.IsNullOrWhiteSpace(request.PaymentType))
+                {
+                    if (!PurchasePaymentTypes.TryParse(request.PaymentType, out var selectedType))
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Payment type must be one of: {PurchasePaymentTypes.Allowed}."
+                        };
+
+                    approvalPaymentType = selectedType;
+                }
+                else
+                {
+                    approvalPaymentType = purchase.PurchaseType;
+                }
+
+                if (approvalPaymentType == null)
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"A payment type is required to approve this purchase order. Choose one of: {PurchasePaymentTypes.Allowed}."
+                    };
+
+                if (approvalPaymentType == PurchaseType.Cash)
+                {
+                    if (request.PaymentAmount.HasValue)
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = "A Cash order is settled in full on approval, so a payment amount cannot be sent with it."
+                        };
+
+                    settlementAmount = purchase.DueAmount;
+                }
+                else
+                {
+                    settlementAmount = request.PaymentAmount ?? 0m;
+
+                    if (settlementAmount > purchase.DueAmount)
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Payment {settlementAmount} exceeds the order total {purchase.DueAmount}."
+                        };
+                }
+            }
+            else if (request.PaymentAmount.HasValue)
+            {
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "A payment can only be taken on the receipt that completes the purchase order."
+                };
+            }
+
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
@@ -208,6 +287,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
                 if (purchase.Status == PurchaseStatus.Approved)
                 {
+                    purchase.PurchaseType = approvalPaymentType;
+
                     var runningBalance = await _dbContext.SupplierTransactions
                         .Where(t => t.SupplierId == purchase.SupplierId)
                         .GetLatestBalanceAsync(cancellationToken);
@@ -216,13 +297,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     var purchaseTxn = SupplierTransaction.ForPurchase(purchase, purchase.Supplier, runningBalance);
                     await _dbContext.SupplierTransactions.AddAsync(purchaseTxn, cancellationToken);
 
-                    // Cash settles the whole order here and now; Debit leaves the full amount
-                    // sitting on the supplier account, to be paid off later through
-                    // create-supplier-payment like any other outstanding balance.
-                    if (purchase.PurchaseType == PurchaseType.Cash && purchase.DueAmount > 0)
+                    // Cash settles the whole order here and now. Debit settles only what was
+                    // paid up front, if anything, and leaves the rest sitting on the supplier
+                    // account to be paid off later through create-supplier-payment.
+                    var paymentAmount = Math.Min(settlementAmount, purchase.DueAmount);
+                    if (paymentAmount > 0)
                     {
-                        var paymentAmount = purchase.DueAmount;
-                        purchase.SettleInFull();
+                        purchase.ApplyPayment(paymentAmount);
 
                         var paymentDate = request.PaymentDate ?? now;
                         payment = new SupplierPayment
@@ -256,7 +337,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 await transaction.CommitAsync(cancellationToken);
 
                 var response = new ReceiveGoodsResponse(
-                    purchase.Id, purchase.Status.ToString(), serialsCreated,
+                    purchase.Id, purchase.Status.ToString(), purchase.PurchaseType?.ToString(), serialsCreated,
                     purchase.PaidAmount, purchase.DueAmount, lineResults,
                     payment == null ? null : new ReceiveGoodsPaymentResponse(payment.Id, payment.Amount, payment.PaymentDate, payment.PaymentMethod));
                 return new Result

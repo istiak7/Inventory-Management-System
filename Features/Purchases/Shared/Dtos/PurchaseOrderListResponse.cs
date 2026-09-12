@@ -10,7 +10,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         string? Remarks,
         DateTime PurchaseDate,
         string Status,
-        string PurchaseType,
+        string? PurchaseType,
         decimal TotalAmount,
         decimal PaidAmount,
         decimal DueAmount,

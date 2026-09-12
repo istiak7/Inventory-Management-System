@@ -9,8 +9,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
         public int PurchaseOrderId { get; set; }
         public List<ReceiveLineRequest> Lines { get; set; } = [];
 
-        // Date to record the cash settlement on. Only used when the order's payment type is
-        // Cash and this receipt completes it; defaults to now.
+        // How the order is settled: "Cash" or "Debit". Chosen here, at approval, not when the
+        // order was raised. Required once this receipt brings every line in.
+        public string? PaymentType { get; set; }
+
+        // Only for a Debit approval: how much of the order is paid up front. Left null or 0,
+        // the whole amount stays on the supplier account.
+        public decimal? PaymentAmount { get; set; }
+
+        // Date to record the settlement on; defaults to now.
         public DateTime? PaymentDate { get; set; }
     }
 }

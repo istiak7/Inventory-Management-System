@@ -12,7 +12,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
         public DateTime? PurchaseDate { get; set; }
         public string? InvoiceNumber { get; set; }
         public string? Remarks { get; set; }
-        public string? PaymentType { get; set; }
         public List<PurchaseItemRequest> Items { get; set; } = [];
     }
 }

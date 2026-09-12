@@ -211,9 +211,24 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 var totalAmount = subTotal - request.DiscountAmount + request.TaxAmount;
 
-                // Cash clears the whole sale at the counter; Debit leaves all of it on the
-                // customer account, to be collected later through create-customer-payment.
-                var paidAmount = paymentType == SaleType.Cash ? totalAmount : 0m;
+                // Cash clears the whole sale at the counter. Debit collects only the partial
+                // payment the seller took, if any, and leaves the rest on the customer account
+                // to be collected later through create-customer-payment.
+                decimal paidAmount;
+                if (paymentType == SaleType.Cash)
+                {
+                    if (request.Payment?.Amount.HasValue == true)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "A Cash sale is settled in full, so a payment amount cannot be sent with it." };
+
+                    paidAmount = totalAmount;
+                }
+                else
+                {
+                    paidAmount = request.Payment?.Amount ?? 0m;
+
+                    if (paidAmount > totalAmount)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Partial payment {paidAmount} exceeds the sale total {totalAmount}." };
+                }
 
                 sale.SubTotal = subTotal;
                 sale.DiscountAmount = request.DiscountAmount;

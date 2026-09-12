@@ -11,7 +11,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
         public DateTime? PurchaseDate { get; set; }
         public string? InvoiceNumber { get; set; }
         public string? Remarks { get; set; } = null;
-        public string? PaymentType { get; set; }
         public List<PurchaseItemRequest> Items { get; set; } = [];
     }
 }
