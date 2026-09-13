@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: inventory-postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: istiakahmed
+      POSTGRES_DB: Inventory-Management
+    ports:
+        - "5432:5432"
+    volumes:
+        - postgres_data:/var/lib/postgresql/data
+    restart: always
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: inventory-management-backend:latest        
+    container_name: inventory-management-backend
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DbConnectionString=Host=postgres-db;Port=5432;Database=Inventory-Management;Username=postgres;Password=istiakahmed;Minimum Pool Size=4;Maximum Pool Size=20;Timeout=60;Command Timeout=60;Keepalive=10;
+    volumes:
+      # Host File Path : Container Target Path
+      - ./appsettings.json:/app/appsettings.json:ro
+      - ./appsettings.Development.json:/app/appsettings.Development.json:ro
+    restart: always
+
+volumes:
+  postgres_data:
