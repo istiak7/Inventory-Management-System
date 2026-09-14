@@ -36,7 +36,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
 
             try
             {
-                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize);
+                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize, request.IsExport);
                 var skip = ReportPaging.SkipCount(pageNumber, pageSize);
                 var sortBy = request.SortBy?.Trim().ToLowerInvariant();
 

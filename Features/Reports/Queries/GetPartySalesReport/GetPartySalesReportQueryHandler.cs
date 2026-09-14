@@ -30,7 +30,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
 
             try
             {
-                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize);
+                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize, request.IsExport);
                 var query = BuildQuery(request);
 
                 var totalCount = await query.LongCountAsync(cancellationToken);

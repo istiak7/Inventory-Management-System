@@ -18,7 +18,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetStockDateWiseR
         {
             try
             {
-                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize);
+                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize, request.IsExport);
                 var range = ReportDateRange.From(request.StartDate, request.EndDate);
 
                 var rangeStart = range.Start ?? DateTime.MinValue;

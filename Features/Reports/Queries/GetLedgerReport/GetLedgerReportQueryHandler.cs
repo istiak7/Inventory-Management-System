@@ -27,7 +27,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
 
             try
             {
-                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize);
+                var (pageNumber, pageSize) = ReportPaging.Normalize(request.PageNumber, request.PageSize, request.IsExport);
                 var range = ReportDateRange.From(request.StartDate, request.EndDate);
                 var skip = ReportPaging.SkipCount(pageNumber, pageSize);
 

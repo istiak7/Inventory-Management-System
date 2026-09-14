@@ -6,11 +6,23 @@ namespace Inventory_Management_System.Features.Reports.Shared
     {
         public const int MaxPageSize = 500;
 
-        public static (int PageNumber, int PageSize) Normalize(int pageNumber, int pageSize)
+        /// <summary>
+        /// An export writes the whole filtered result set as a single page, so it is allowed past
+        /// <see cref="MaxPageSize"/>. The ceiling still exists: it stops one request from pulling an
+        /// unbounded table into memory while the workbook is built.
+        /// </summary>
+        public const int MaxExportPageSize = 50_000;
+
+        /// <param name="forExport">
+        /// Only the export endpoints pass true. It is not bindable from the query string, so a normal
+        /// report request cannot page past <see cref="MaxPageSize"/> by asking nicely.
+        /// </param>
+        public static (int PageNumber, int PageSize) Normalize(int pageNumber, int pageSize, bool forExport = false)
         {
+            var max = forExport ? MaxExportPageSize : MaxPageSize;
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 20;
-            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+            if (pageSize > max) pageSize = max;
             return (pageNumber, pageSize);
         }
 
