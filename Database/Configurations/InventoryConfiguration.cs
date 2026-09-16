@@ -34,6 +34,8 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(t => t.QuantityOut).IsRequired();
             builder.Property(t => t.BalanceAfter).IsRequired();
 
+            builder.HasIndex(t => new { t.BranchId, t.ProductVariantId, t.TransactionDate });
+
             builder.HasOne(t => t.Branch)
                    .WithMany(b => b.InventoryTransactions)
                    .HasForeignKey(t => t.BranchId)

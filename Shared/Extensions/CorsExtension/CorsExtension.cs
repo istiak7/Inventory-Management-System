@@ -20,6 +20,9 @@
                     builder.WithOrigins(allowedOrigins)
                            .AllowAnyHeader()
                            .AllowAnyMethod()
+                           // Report exports name their own file. Without this the browser hides
+                           // the header from JS and every download lands as "download.xlsx".
+                           .WithExposedHeaders("Content-Disposition")
                            .AllowCredentials();
                 });
             });

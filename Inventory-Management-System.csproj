@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="MediatR" Version="14.1.0" />
@@ -28,9 +29,7 @@
        but never published, so dev passwords and keys do not end up on the server. -->
   <ItemGroup>
     <Content Remove="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json" />
-    <None Include="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json"
-          CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="Never" />
+    <None Include="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <ItemGroup>

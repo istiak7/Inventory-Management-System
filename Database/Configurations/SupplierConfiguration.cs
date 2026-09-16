@@ -118,6 +118,8 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(t => t.Credit).HasPrecision(18, 2);
             builder.Property(t => t.BalanceAfter).HasPrecision(18, 2);
 
+            builder.HasIndex(t => new { t.SupplierId, t.TransactionDate });
+
             builder.HasOne(t => t.Supplier)
                    .WithMany(s => s.SupplierTransactions)
                    .HasForeignKey(t => t.SupplierId)

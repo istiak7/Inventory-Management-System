@@ -127,6 +127,8 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(t => t.Credit).HasPrecision(18, 2);
             builder.Property(t => t.BalanceAfter).HasPrecision(18, 2);
 
+            builder.HasIndex(t => new { t.CustomerId, t.TransactionDate });
+
             builder.HasOne(t => t.Customer)
                    .WithMany(c => c.CustomerTransactions)
                    .HasForeignKey(t => t.CustomerId)
