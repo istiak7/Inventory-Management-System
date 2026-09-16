@@ -30,5 +30,15 @@ services:
       - ./appsettings.Development.json:/app/appsettings.Development.json:ro
     restart: always
 
+  frontend:
+    build:
+      context: ../../Inventory-Management-Frontend/inventory-management-frontend
+      dockerfile: Dockerfile
+    image: inventory-management-frontend  
+    container_name: inventory-management-frontend
+    ports:
+      - "3000:80"
+    restart: always
+
 volumes:
   postgres_data:
