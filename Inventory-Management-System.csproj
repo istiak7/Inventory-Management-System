@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Folder Include="Features\Categories\Queries\GetSubCategoryByCategoryId\" />
+    <Folder Include="Features\OfficeExpense\" />
     <Folder Include="Features\Purchases\Queries\GetInvoiceSupplierLedger\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Migrations\" />
