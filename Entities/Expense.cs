@@ -12,8 +12,23 @@
         public string PaymentMethod { get; set; } = "Cash";
         public int RecordByUserId { get; set; }
 
-        public required Branch Branch { get; set; }
-        public required ExpenseCategory ExpenseCategory { get; set; }
+        public Branch? Branch { get; set; }
+        public ExpenseCategory? ExpenseCategory { get; set; }
+
+        public static Expense CreateExpense(string name, string description, decimal amount, int branchId, int expenseCategoryId, DateTime expenseDate, string paymentMethod, int recordByUserId)
+        {
+            return new Expense
+            {
+                Name = name,
+                Description = description,
+                Amount = amount,
+                BranchId = branchId,
+                ExpenseCategoryId = expenseCategoryId,
+                ExpenseDate = expenseDate,
+                RecordByUserId = recordByUserId,
+                PaymentMethod = paymentMethod
+            };
+        }
 
     }
 }

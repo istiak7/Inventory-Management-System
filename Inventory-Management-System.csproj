@@ -34,7 +34,8 @@
 
   <ItemGroup>
     <Folder Include="Features\Categories\Queries\GetSubCategoryByCategoryId\" />
-    <Folder Include="Features\OfficeExpense\" />
+    <Folder Include="Features\OfficeExpense\Command\UpdateExpense\" />
+    <Folder Include="Features\OfficeExpense\Command\UpdateExpenseCategories\" />
     <Folder Include="Features\Purchases\Queries\GetInvoiceSupplierLedger\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Migrations\" />
