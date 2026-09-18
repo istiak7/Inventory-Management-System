@@ -23,20 +23,13 @@ namespace Inventory_Management_System.Features.OfficeExpense.Queries.GetExpenseC
         {
             try
             {
-                var expenseCategories = await _dbContext.Expenses
-                                 .Include(e => e.ExpenseCategory)
-                                 .Where(e => e.ExpenseCategory.Id == e.ExpenseCategoryId)
-                                 .Select(e => new ExpenseResponse()
-                                 {
-                                     Expensecategories = e.ExpenseCategory.Name,
-                                     ExpenseName = e.Name,
-                                     Description = e.Description,
-                                     Amount = e.Amount,
-                                     ExpenseDate = e.ExpenseDate,
-                                     BranchName = e.Branch.Name,
-                                     EntryBy = e.RecordByUserId.ToString()
-                                 })
-                                 .ToListAsync(cancellationToken);
+                var expenseCategories = await _dbContext.ExpenseCategories
+                    .Where(ec => ec.IsActive == 1)
+                    .Select(ec => new ExpenseCategoriesResponse
+                    {
+                        Name = ec.Name,
+                        Description = ec.Description
+                    }).ToListAsync(cancellationToken);
 
                 return new Result
                 {
