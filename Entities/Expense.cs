@@ -14,6 +14,7 @@
 
         public Branch? Branch { get; set; }
         public ExpenseCategory? ExpenseCategory { get; set; }
+        public User? RecordByUser { get; set; }
 
         public static Expense CreateExpense(string name, string description, decimal amount, int branchId, int expenseCategoryId, DateTime expenseDate, string paymentMethod, int recordByUserId)
         {

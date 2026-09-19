@@ -32,7 +32,7 @@ namespace Inventory_Management_System.Features.OfficeExpense.Queries.GetExpense.
                                      Amount = e.Amount,
                                      ExpenseDate = e.ExpenseDate,
                                      BranchName = e.Branch.Name,
-                                     EntryBy = e.RecordByUserId.ToString()
+                                     EntryBy = e.RecordByUser.Name ?? string.Empty
                                  })
                                  .ToListAsync(cancellationToken);
 
