@@ -10,7 +10,7 @@
         public decimal Amount { get; set; } = 0;
         public DateTime ExpenseDate { get; set; } = DateTime.Now;
         public string PaymentMethod { get; set; } = "Cash";
-        public int RecordByUserId { get; set; }
+        public int? RecordByUserId { get; set; }
 
         public Branch? Branch { get; set; }
         public ExpenseCategory? ExpenseCategory { get; set; }
@@ -29,6 +29,17 @@
                 RecordByUserId = recordByUserId,
                 PaymentMethod = paymentMethod
             };
+        }
+
+        public void UpdateExpense(string name, string description, decimal amount, int expenseCategoryId, DateTime expenseDate, string paymentMethod)
+        {
+            Name = name;
+            Description = description;
+            Amount = amount;
+            ExpenseCategoryId = expenseCategoryId;
+            ExpenseDate = expenseDate;
+            PaymentMethod = paymentMethod;
+            
         }
 
     }

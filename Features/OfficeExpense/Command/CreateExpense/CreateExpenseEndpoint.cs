@@ -7,7 +7,7 @@ namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpen
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/create-office-expense", async (CreateExpenseCommand command, IMediator mediator) =>
+            app.MapPost("/create-office-expense", async (CreateExpenseCommand command, IMediator mediator) =>
             {
                 var result = await mediator.Send(command);
                 return Results.Ok(result);

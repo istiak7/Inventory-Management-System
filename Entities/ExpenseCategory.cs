@@ -16,5 +16,12 @@
                 Description = description
             };
         }
+
+        public void UpdateCategory(string name, string? description = null)
+        {
+            Name = name;
+            Description = description;
+            
+        }
     }
 }

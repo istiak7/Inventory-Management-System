@@ -25,7 +25,7 @@ namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpen
         {
             try
             {
-                var currentUserId = _currentUser.UserId;
+                var currentUserId = _currentUser.UserId??6;
                 var expense = Expense.CreateExpense(request.Name, request.Description, request.Amount, request.BranchId, request.ExpenseCategoryId, request.ExpenseDate, "Cash", (int)currentUserId);
                 await _expenseRepository.AddAsync(expense, cancellationToken);
                 await _expenseRepository.SaveChangesAsync(cancellationToken);
