@@ -1,5 +1,6 @@
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Shared;
 using Microsoft.EntityFrameworkCore;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
 
@@ -88,7 +89,7 @@ namespace Inventory_Management_System.Features.Reports.Shared
                 .ToListAsync(cancellationToken);
 
             return rows
-                .GroupBy(r => DateOnly.FromDateTime(r.SaleDate))
+                .GroupBy(r => BusinessClock.LocalDateOf(r.SaleDate))
                 .OrderBy(g => g.Key)
                 .Select(g =>
                 {

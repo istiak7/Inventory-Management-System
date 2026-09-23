@@ -4,7 +4,7 @@
     {
         public int SupplierId { get; set; }
         public string TransactionType { get; set; } = "Purchase";
-        public DateTime TransactionDate { get; set; } = DateTime.Now;
+        public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
         public decimal BalanceAfter { get; set; }  
@@ -17,6 +17,21 @@
         public SupplierPurchase? SupplierPurchase { get; set; }
         public SupplierPayment? SupplierPayment { get; set; }
 
+
+        // What we already owed the supplier before using this system. First row of their ledger.
+        public static SupplierTransaction ForOpening(Supplier supplier)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "Opening",
+                TransactionDate = supplier.CreatedAt,
+                Debit = supplier.OpeningBalance,
+                Credit = 0m,
+                BalanceAfter = supplier.OpeningBalance,
+                Supplier = supplier
+            };
+        }
 
         public static SupplierTransaction ForPurchase(SupplierPurchase purchase, Supplier supplier, decimal runningBalance)
         {

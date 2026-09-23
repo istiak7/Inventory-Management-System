@@ -61,7 +61,8 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                     };
 
                 var allocation = purchase.Allocations
-                    .Where(a => a.PaymentDate == request.Date)
+                    // Within one second: a date sent back by the browser loses the sub-second part.
+                    .Where(a => Math.Abs((a.PaymentDate - request.Date.ToUniversalTime()).TotalSeconds) < 1)
                     .OrderByDescending(a => a.Id)
                     .FirstOrDefault();
 

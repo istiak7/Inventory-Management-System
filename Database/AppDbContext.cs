@@ -12,11 +12,15 @@ namespace Inventory_Management_System.Database
         private readonly bool _filterByBranch;
         private readonly int _branchId;
 
+        // The logged-in user, stamped on every row they create or change (null = system).
+        private readonly int? _currentUserId;
+
         public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser currentUser)
             : base(options)
         {
             _filterByBranch = currentUser.BranchId.HasValue;
             _branchId = currentUser.BranchId ?? 0;
+            _currentUserId = currentUser.UserId;
         }
 
         private static readonly ValueConverter<DateTime, DateTime> UtcConverter = new(
@@ -218,10 +222,13 @@ namespace Inventory_Management_System.Database
                     if (entry.Entity.CreatedAt == default)
                         entry.Entity.CreatedAt = now;
                     entry.Entity.UpDatedAt = now;
+                    entry.Entity.CreatedById ??= _currentUserId;
+                    entry.Entity.UpdatedById = _currentUserId ?? entry.Entity.CreatedById;
                 }
                 else if (entry.State == EntityState.Modified)
                 {
                     entry.Entity.UpDatedAt = now;
+                    entry.Entity.UpdatedById = _currentUserId;
                 }
             }
         }
@@ -253,6 +260,7 @@ namespace Inventory_Management_System.Database
         public DbSet<StockTransfer> StockTransfers { get; set; }
         public DbSet<StockTransferDetails> StockTransferDetails { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }

@@ -61,7 +61,9 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
                     {
                         foreach (var serialNumber in requestedSerials)
                         {
-                            var serial = await _dbContext.ProductSerials.FirstOrDefaultAsync(s =>
+                            // IgnoreQueryFilters: a user at the destination branch must still see
+                            // the source branch's units.
+                            var serial = await _dbContext.ProductSerials.IgnoreQueryFilters().FirstOrDefaultAsync(s =>
                                 s.SerialNumber == serialNumber &&
                                 s.ProductVariantId == variant.Id &&
                                 s.BranchId == transfer.SourceBranchId &&
@@ -152,7 +154,10 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
             if (cache.TryGetValue(key, out var cached))
                 return cached;
 
+            // IgnoreQueryFilters: a transfer touches two branches, but staff only "see" their own.
+            // Without this the other branch's stock row looks missing and a duplicate is created.
             var stock = await _dbContext.Stocks
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(s => s.BranchId == branchId && s.ProductVariantId == variant.Id, cancellationToken);
 
             if (stock == null)

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Inventory_Management_System.Middleware
 {
-    public class ExceptionHandlingMiddleware : IMiddleware
+    public class ExceptionHandlingMiddleware(ILogger<ExceptionHandlingMiddleware> _logger) : IMiddleware
     {
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
@@ -23,6 +23,10 @@ namespace Inventory_Management_System.Middleware
             }
             catch (Exception ex)
             {
+                // Logged with the request path so the cause can be found in "docker compose logs backend".
+                // The client only gets a general message: no internal details leak out.
+                _logger.LogError(ex, "Unhandled error on {Method} {Path}", context.Request.Method, context.Request.Path);
+
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsync("An unexpected error occurred.");
             }

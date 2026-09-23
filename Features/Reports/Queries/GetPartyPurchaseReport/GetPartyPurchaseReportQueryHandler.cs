@@ -45,14 +45,21 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
 
                 var totalCount = await query.LongCountAsync(cancellationToken);
 
-                var totalPurchase = await query.SumAsync(p => (decimal?)p.TotalAmount, cancellationToken) ?? 0m;
-                var totalPaid = await query.SumAsync(p => (decimal?)p.PaidAmount, cancellationToken) ?? 0m;
-                var totalDue = await query.SumAsync(p => (decimal?)p.DueAmount, cancellationToken) ?? 0m;
+                // The totals only count completed (approved) orders, the same orders the supplier
+                // ledger counts. A pending or rejected order is not owed to anyone. When the user
+                // filters by a status on purpose, that status is used as chosen.
+                var owedQuery = string.IsNullOrWhiteSpace(request.Status)
+                    ? query.Where(p => p.Status == PurchaseStatus.Approved)
+                    : query;
+
+                var totalPurchase = await owedQuery.SumAsync(p => (decimal?)p.TotalAmount, cancellationToken) ?? 0m;
+                var totalPaid = await owedQuery.SumAsync(p => (decimal?)p.PaidAmount, cancellationToken) ?? 0m;
+                var totalDue = await owedQuery.SumAsync(p => (decimal?)p.DueAmount, cancellationToken) ?? 0m;
 
                 var totalAdjustment = await _dbContext.SupplierPurchaseDetails
                     .AsNoTracking()
                     .Where(d => d.IsActive != (int)EntityStatus.Deleted
-                             && query.Select(p => p.Id).Contains(d.PurchaseId))
+                             && owedQuery.Select(p => p.Id).Contains(d.PurchaseId))
                     .SumAsync(d => (decimal?)((d.Status == LineStatus.Rejected
                         ? d.OrderedQuantity
                         : d.OrderedQuantity > (d.ReceivedQuantity ?? 0)

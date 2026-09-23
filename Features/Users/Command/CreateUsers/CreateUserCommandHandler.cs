@@ -18,11 +18,22 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
 
         public async Task<Result> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
+            // Emails are stored in lower case, so "Ali@x.com" and "ali@x.com" are the same user.
+            var email = request.Email.Trim().ToLowerInvariant();
+            var username = request.Username.Trim();
+
             var emailTaken = await _db.Users
-                .AnyAsync(u => u.Email == request.Email, cancellationToken);
+                .AnyAsync(u => u.Email.ToLower() == email, cancellationToken);
             if (emailTaken)
             {
-                return Fail(400, "User already exists");
+                return Fail(400, "A user with this email already exists");
+            }
+
+            var nameTaken = await _db.Users
+                .AnyAsync(u => u.Name == username, cancellationToken);
+            if (nameTaken)
+            {
+                return Fail(400, "A user with this user name already exists");
             }
 
             var roleExists = await _db.Roles
@@ -58,8 +69,8 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
             {
                 var user = new User
                 {
-                    Name = request.Username,
-                    Email = request.Email,
+                    Name = username,
+                    Email = email,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     RoleId = request.RoleId,
                     BranchId = request.BranchId,

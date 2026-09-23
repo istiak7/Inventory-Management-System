@@ -10,6 +10,7 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
         Task<PagedResult<SupplierResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
             CancellationToken cancellationToken = default
         );
     }

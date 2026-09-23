@@ -33,7 +33,26 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
 
                 var includeCustomer = ReportPartyTypes.IncludesCustomer(request.PartyType);
                 var includeSupplier = ReportPartyTypes.IncludesSupplier(request.PartyType);
+
+                // A party id means one customer OR one supplier; with "All" it would mix
+                // customer #5 and supplier #5 into one statement.
+                if (request.PartyId is > 0 && includeCustomer && includeSupplier)
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = "Choose Customer or Supplier as the party type when a party is selected."
+                    };
+
                 var singleParty = request.PartyId is > 0 && includeCustomer != includeSupplier;
+
+                // Filters that hide some of the party's rows (branch, type, search). With them,
+                // adding up the shown rows is not the party's balance, so the balances below are
+                // taken from the party's full ledger instead.
+                var hasRowFilters = request.BranchId is int
+                    || !string.IsNullOrWhiteSpace(request.TransactionType)
+                    || !string.IsNullOrWhiteSpace(request.Search);
 
                 var customerAll = includeCustomer ? BuildCustomerQuery(request) : null;
                 var supplierAll = includeSupplier ? BuildSupplierQuery(request) : null;
@@ -61,17 +80,29 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                 }
 
                 decimal? openingBalance = null;
+                decimal? closingBalance = null;
                 if (singleParty)
                 {
+                    var partyId = request.PartyId!.Value;
+                    var customerLedger = _dbContext.CustomerTransactions.AsNoTracking().Where(t => t.CustomerId == partyId);
+                    var supplierLedger = _dbContext.SupplierTransactions.AsNoTracking().Where(t => t.SupplierId == partyId);
+
+                    // Balance before the first day (the party's own opening balance is the first
+                    // "Opening" row of the ledger, so it is included).
                     openingBalance = range.Start is DateTime start
                         ? includeCustomer
-                            ? await customerAll!
+                            ? await customerLedger
                                 .Where(t => t.TransactionDate < start)
                                 .SumAsync(t => (decimal?)(t.Credit - t.Debit), cancellationToken) ?? 0m
-                            : await supplierAll!
+                            : await supplierLedger
                                 .Where(t => t.TransactionDate < start)
                                 .SumAsync(t => (decimal?)(t.Debit - t.Credit), cancellationToken) ?? 0m
                         : 0m;
+
+                    // Balance after the last day: every row of the party up to then, filtered or not.
+                    closingBalance = openingBalance + (includeCustomer
+                        ? await ApplyRange(customerLedger, range).SumAsync(t => (decimal?)(t.Credit - t.Debit), cancellationToken) ?? 0m
+                        : await ApplyRange(supplierLedger, range).SumAsync(t => (decimal?)(t.Debit - t.Credit), cancellationToken) ?? 0m);
                 }
 
                 PagedResult<LedgerReportRow> page;
@@ -104,7 +135,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                 }
 
                 var carried = openingBalance ?? 0m;
-                if (singleParty && skip > 0)
+                if (singleParty && !hasRowFilters && skip > 0)
                 {
                     carried += includeCustomer
                         ? await customerRange!
@@ -122,7 +153,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
 
                 foreach (var row in page.Items)
                 {
-                    if (singleParty)
+                    if (singleParty && !hasRowFilters)
                     {
                         running += SignedMovement(row);
                         rows.Add(row with { RunningBalance = running });
@@ -132,10 +163,6 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                         rows.Add(row with { RunningBalance = row.BalanceAfter });
                     }
                 }
-
-                decimal? closingBalance = singleParty
-                    ? (openingBalance ?? 0m) + (includeCustomer ? totalCredit - totalDebit : totalDebit - totalCredit)
-                    : null;
 
                 var response = new LedgerReportResponse(
                     new LedgerReportSummary(openingBalance, totalDebit, totalCredit, closingBalance, totalCount),

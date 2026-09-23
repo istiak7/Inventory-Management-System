@@ -17,6 +17,13 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
     {
         public async Task<Result> Handle(CreateStockTransferCommand request, CancellationToken cancellationToken)
         {
+            if (request.SourceBranchId == request.DestinationBranchId)
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Source and destination must be different branches." };
+
+            // Each product once: two lines of 6 must not both pass a stock check of 10.
+            if (request.Items.GroupBy(i => i.ProductVariantId).Any(g => g.Count() > 1))
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Each product can appear only once in a transfer. Put the total quantity on one line." };
+
             var sourceBranch = await _dbContext.Branches.FirstOrDefaultAsync(b => b.Id == request.SourceBranchId, cancellationToken);
             if (sourceBranch == null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Source branch not found." };
@@ -78,7 +85,7 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                         if (dupes.Count > 0)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Duplicate serial numbers in this transfer: {string.Join(", ", dupes)}." };
 
-                        var availableCount = await _dbContext.ProductSerials.CountAsync(s =>
+                        var availableCount = await _dbContext.ProductSerials.IgnoreQueryFilters().CountAsync(s =>
                             serials.Contains(s.SerialNumber) &&
                             s.ProductVariantId == variant.Id &&
                             s.BranchId == request.SourceBranchId &&
@@ -94,7 +101,7 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
                         if (quantity <= 0)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A quantity greater than 0 is required for '{variant.Product.ProductName}' (SKU {variant.SKU})." };
 
-                        var stock = await _dbContext.Stocks.FirstOrDefaultAsync(s =>
+                        var stock = await _dbContext.Stocks.IgnoreQueryFilters().FirstOrDefaultAsync(s =>
                             s.BranchId == request.SourceBranchId && s.ProductVariantId == variant.Id, cancellationToken);
                         if (stock == null || stock.CurrentStock < quantity)
                             return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Insufficient stock for '{variant.Product.ProductName}' (SKU {variant.SKU}) at the source branch: {stock?.CurrentStock ?? 0} on hand, {quantity} requested." };
@@ -145,22 +152,11 @@ namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTran
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        private async Task<string> GenerateReferenceAsync(DateTime date, CancellationToken cancellationToken)
-        {
-            var prefix = $"TR-{date.Year}-";
-
-            var latest = await _dbContext.StockTransfers
-                .AsNoTracking()
-                .Where(t => t.Reference.StartsWith(prefix))
-                .OrderByDescending(t => t.Id)
-                .Select(t => t.Reference)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var next = 1;
-            if (latest != null && int.TryParse(latest[prefix.Length..], out var lastSequence))
-                next = lastSequence + 1;
-
-            return prefix + next.ToString("D4");
-        }
+        private Task<string> GenerateReferenceAsync(DateTime date, CancellationToken cancellationToken) =>
+            DocumentNumbers.NextAsync(
+                _dbContext,
+                _dbContext.StockTransfers.IgnoreQueryFilters().Select(t => t.Reference),
+                $"TR-{BusinessClock.ToLocal(date).Year}-",
+                cancellationToken);
     }
 }

@@ -5,9 +5,17 @@ namespace Inventory_Management_System.Entities
     public class BaseEntity
     {
         public int Id { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpDatedAt { get; set; }
-        public int IsActive { get; set; } = 1;
+
+        // Who created / last changed the row (user id). Null for rows made by the system,
+        // e.g. the seeder, or rows that existed before this was added.
+        // Filled automatically by AppDbContext.SaveChanges from the logged-in user.
+        public int? CreatedById { get; set; }
+        public int? UpdatedById { get; set; }
+
+        // See EntityStatus: 0 = Active, 1 = InActive, 2 = Deleted.
+        public int IsActive { get; set; } = (int)EntityStatus.Active;
 
         public void Active()
         {

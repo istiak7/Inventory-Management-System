@@ -14,7 +14,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetMonthlyGrossPr
     {
         public async Task<Result> Handle(GetMonthlyGrossProfitQuery request, CancellationToken cancellationToken)
         {
-            var today = DateTime.Now;
+            var today = BusinessClock.Today;
             var year = request.Year ?? today.Year;
             var month = request.Month ?? today.Month;
 
@@ -40,8 +40,9 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetMonthlyGrossPr
             {
                 // Half-open range, so a sale timestamped late on the last day of the month is
                 // still counted and one at midnight on the 1st of the next month is not.
-                var monthStart = new DateTime(year, month, 1);
-                var monthEnd = monthStart.AddMonths(1);
+                // The month in the shop's time zone, as UTC moments.
+                var monthStart = BusinessClock.StartOfDayUtc(new DateTime(year, month, 1));
+                var monthEnd = BusinessClock.StartOfDayUtc(new DateTime(year, month, 1).AddMonths(1));
 
                 var sales = _dbContext.CustomerSales
                     .AsNoTracking()

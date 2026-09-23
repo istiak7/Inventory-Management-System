@@ -1,12 +1,15 @@
+using Inventory_Management_System.Database;
 using Inventory_Management_System.Features.Suppliers.Shared.Dtos;
 using Inventory_Management_System.Features.Suppliers.Shared.Repository;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
 
 namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
 {
     public class GetSupplierByIdQueryHandler(
         ISupplierRepository _supplierRepository,
+        AppDbContext _dbContext,
         ILogger<GetSupplierByIdQueryHandler> _logger
     ) : IRequestHandler<GetSupplierByIdQuery, Result>
     {
@@ -27,6 +30,10 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
                     };
                 }
 
+                var balance = await _dbContext.SupplierTransactions
+                    .Where(t => t.SupplierId == supplier.Id)
+                    .GetLatestBalanceAsync(cancellationToken);
+
                 var response = new SupplierResponse(
                     supplier.Id,
                     supplier.Group,
@@ -36,6 +43,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
                     supplier.Email,
                     supplier.NID,
                     supplier.OpeningBalance,
+                    balance,
                     supplier.CreatedAt);
 
                 return new Result

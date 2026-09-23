@@ -17,12 +17,14 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetDailyGrossProf
         {
             try
             {
-                var day = (request.Date ?? DateTime.Now).Date;
-                var nextDay = day.AddDays(1);
+                // A shop calendar day (Dhaka time), turned into the UTC moments it starts and ends.
+                var day = (request.Date ?? BusinessClock.Today).Date;
+                var dayStart = BusinessClock.StartOfDayUtc(day);
+                var nextDayStart = BusinessClock.StartOfDayUtc(day.AddDays(1));
 
                 var sales = _dbContext.CustomerSales
                     .AsNoTracking()
-                    .Where(s => s.SaleDate >= day && s.SaleDate < nextDay)
+                    .Where(s => s.SaleDate >= dayStart && s.SaleDate < nextDayStart)
                     .WhereCountsTowardProfit();
 
                 if (request.BranchId is int branchId)

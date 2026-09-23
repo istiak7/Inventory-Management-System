@@ -7,6 +7,7 @@ using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierPayment
 {
@@ -51,16 +52,17 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             await _dbContext.LockRowAsync<Supplier>(request.SupplierId, cancellationToken);
 
-            var remainingDue = await _dbContext.SupplierPurchases
-                .Where(p => p.SupplierId == request.SupplierId && p.Status == PurchaseStatus.Approved)
-                .SumAsync(p => p.DueAmount, cancellationToken);
-            if (remainingDue - request.Amount < 0)
+            // What we owe the supplier in total: the ledger balance (opening balance + purchases - payments).
+            var balance = await _dbContext.SupplierTransactions
+                .Where(t => t.SupplierId == request.SupplierId)
+                .GetLatestBalanceAsync(cancellationToken);
+            if (request.Amount > balance)
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = "Payment amount exceeds the remaining due amount."
+                    Message = $"Payment amount exceeds what is owed to this supplier ({balance:0.00})."
                 };
 
             foreach (var payment in request.Allocations)
@@ -157,7 +159,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
 
             try
             {
-                var paymentDate = request.PaymentDate ?? DateTime.Now;
+                var paymentDate = request.PaymentDate ?? DateTime.UtcNow;
 
                 var payment = new SupplierPayment
                 {
@@ -197,8 +199,12 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                 var unallocated = request.Amount - allocatedAmount;
                 if (unallocated > 0)
                 {
+                    // All branches: the supplier's account is one account.
+                    // What is left after all orders are paid settles the opening balance.
                     var openPurchases = await _dbContext.SupplierPurchases
+                        .IgnoreQueryFilters()
                         .Where(p => p.SupplierId == request.SupplierId
+                                    && p.IsActive != (int)EntityStatus.Deleted
                                     && p.Status == PurchaseStatus.Approved
                                     && p.DueAmount > 0)
                         .OrderBy(p => p.PurchaseDate).ThenBy(p => p.Id)

@@ -11,13 +11,13 @@ namespace Inventory_Management_System.Shared.Extensions.QueryableFilterExtension
             if (startDate.HasValue)
             {
                 var param = dateSelector.Parameters[0];
-                var body = Expression.GreaterThanOrEqual(dateSelector.Body, Expression.Constant(startDate.Value.Date));
+                var body = Expression.GreaterThanOrEqual(dateSelector.Body, Expression.Constant(BusinessClock.StartOfDayUtc(startDate.Value)));
                 source = source.Where(Expression.Lambda<Func<T, bool>>(body, param));
             }
             if (endDate.HasValue)
             {
                 var param = dateSelector.Parameters[0];
-                var body = Expression.LessThanOrEqual(dateSelector.Body, Expression.Constant(endDate.Value.Date.AddDays(1)));
+                var body = Expression.LessThan(dateSelector.Body, Expression.Constant(BusinessClock.StartOfDayUtc(endDate.Value.Date.AddDays(1))));
                 source = source.Where(Expression.Lambda<Func<T, bool>>(body, param));
             }
             return source;

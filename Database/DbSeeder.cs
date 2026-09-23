@@ -86,6 +86,7 @@ namespace Inventory_Management_System.Database
                 .Include(r => r.RolePermissions)
                 .FirstOrDefaultAsync(r => r.Name == name, cancellationToken);
 
+            var isNew = role is null;
             if (role is null)
             {
                 role = new Role { Name = name, Description = description };
@@ -93,7 +94,12 @@ namespace Inventory_Management_System.Database
                 await db.SaveChangesAsync(cancellationToken);
             }
 
-            // Add any permissions the role does not have yet (never removes).
+            // Default permissions are given only when the role is first created, so a permission
+            // an admin later removed from Staff does not come back on the next restart.
+            // Admin is the exception: it always gets every permission, including new ones.
+            if (!isNew && name != "Admin")
+                return role;
+
             var current = role.RolePermissions.Select(rp => rp.PermissionId).ToHashSet();
             var toAdd = permissionIds
                 .Where(id => !current.Contains(id))

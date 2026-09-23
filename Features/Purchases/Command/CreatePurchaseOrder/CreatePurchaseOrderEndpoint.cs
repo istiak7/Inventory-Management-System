@@ -1,6 +1,7 @@
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
+using Inventory_Management_System.Shared.CurrentUser;
 
 namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseOrder
 {
@@ -24,7 +25,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                 };
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Purchase").RequireAuthorization();
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesManage);
         }
     }
 }

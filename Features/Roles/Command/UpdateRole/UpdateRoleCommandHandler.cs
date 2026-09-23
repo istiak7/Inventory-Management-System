@@ -11,6 +11,8 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
         ILogger<UpdateRoleCommandHandler> _logger
     ) : IRequestHandler<UpdateRoleCommand, Result>
     {
+        private const string AdminRoleName = "Admin";
+
         public async Task<Result> Handle(UpdateRoleCommand request, CancellationToken cancellationToken)
         {
             var role = await _db.Roles
@@ -22,8 +24,16 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
                 return Fail(404, "Role not found");
             }
 
+            // Admin rights are tied to the role called "Admin", so renaming it would lock every
+            // admin out at once.
+            if (string.Equals(role.Name, AdminRoleName, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(request.Name.Trim(), role.Name, StringComparison.Ordinal))
+            {
+                return Fail(400, "The Admin role cannot be renamed");
+            }
+
             var nameTaken = await _db.Roles
-                .AnyAsync(r => r.Name == request.Name && r.Id != request.Id, cancellationToken);
+                .AnyAsync(r => r.Name.ToLower() == request.Name.Trim().ToLower() && r.Id != request.Id, cancellationToken);
             if (nameTaken)
             {
                 return Fail(400, "A role with this name already exists");
@@ -40,7 +50,7 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
 
             try
             {
-                role.Name = request.Name;
+                role.Name = request.Name.Trim();
                 role.Description = request.Description;
 
                 _db.RolePermissions.RemoveRange(role.RolePermissions);

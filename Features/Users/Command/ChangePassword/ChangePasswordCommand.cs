@@ -13,5 +13,8 @@ namespace Inventory_Management_System.Features.Users.Command.ChangePassword
 
         public required string CurrentPassword { get; set; }
         public required string NewPassword { get; set; }
+
+        // This device's refresh token: it stays signed in, every other device is signed out.
+        public string? RefreshToken { get; set; }
     }
 }

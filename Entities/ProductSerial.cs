@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Entities
         public required string SerialNumber { get; set; }   
         public SerialStatus Status { get; set; } = SerialStatus.InStock;
         public int WarrantyMonths { get; set; }          
-        public DateTime ReceivedDate { get; set; } = DateTime.Now;
+        public DateTime ReceivedDate { get; set; } = DateTime.UtcNow;
         public DateTime? SoldDate { get; set; } = null;
 
         // Navigation property

@@ -27,7 +27,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasOne(psc => psc.ProductCategories)
                    .WithMany(pc => pc.ProductSubCategories)
                    .HasForeignKey(psc => psc.ProductCategoryId)
-                   .OnDelete(DeleteBehavior.Cascade); 
+                   .OnDelete(DeleteBehavior.Restrict); 
         }
     }
 
@@ -43,7 +43,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasOne(p => p.ProductSubCategories)
                    .WithMany(psc => psc.Products)
                    .HasForeignKey(p => p.ProductSubCategoryId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 
@@ -73,7 +73,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasOne(v => v.Product)
                    .WithMany(p => p.ProductVariants)
                    .HasForeignKey(v => v.ProductId)
-                   .OnDelete(DeleteBehavior.Cascade);
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

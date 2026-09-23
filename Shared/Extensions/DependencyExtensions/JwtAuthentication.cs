@@ -20,9 +20,13 @@ namespace Inventory_Management_System.Shared.Extensions.DependencyExtensions
                         options.SaveToken = true;
                         options.TokenValidationParameters = new TokenValidationParameters
                         {
-                            ValidateIssuer = false,
-                            ValidateAudience = false,
+                            // Only accept tokens this API made for itself.
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
                             ValidateIssuerSigningKey = true,
+                            // Default is 5 minutes of extra life after expiry; keep it short.
+                            ClockSkew = TimeSpan.FromSeconds(30),
                             ValidIssuer = jwtSettings.Issuer,
                             ValidAudience = jwtSettings.Audience,
                             RequireExpirationTime = true,

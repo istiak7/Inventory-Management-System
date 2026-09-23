@@ -43,10 +43,16 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                 }
 
                 if (request.StartDate.HasValue)
-                    query = query.Where(s => s.SaleDate >= request.StartDate.Value.Date);
+                {
+                    var start = BusinessClock.StartOfDayUtc(request.StartDate.Value);
+                    query = query.Where(s => s.SaleDate >= start);
+                }
 
                 if (request.EndDate.HasValue)
-                    query = query.Where(s => s.SaleDate < request.EndDate.Value.Date.AddDays(1));
+                {
+                    var endExclusive = BusinessClock.StartOfDayUtc(request.EndDate.Value.Date.AddDays(1));
+                    query = query.Where(s => s.SaleDate < endExclusive);
+                }
 
                 var paged = await query
                     .OrderByDescending(s => s.Id)

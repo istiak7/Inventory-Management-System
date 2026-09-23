@@ -86,6 +86,12 @@ namespace Inventory_Management_System.Database.Configurations
                    .WithMany(s => s.SupplierPayments)
                    .HasForeignKey(p => p.SupplierId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            // Deleting a branch must never delete the money records made there.
+            builder.HasOne(p => p.Branch)
+                   .WithMany()
+                   .HasForeignKey(p => p.BranchId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 

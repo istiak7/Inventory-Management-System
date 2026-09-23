@@ -19,6 +19,7 @@ namespace Inventory_Management_System.Shared.Extensions.PaginationExtensions
         {
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 20;
+            if (pageSize > EFCorePaginationExtensions.MaxPageSize) pageSize = EFCorePaginationExtensions.MaxPageSize;
 
             var offset = (pageNumber - 1) * pageSize;
 
@@ -27,8 +28,8 @@ namespace Inventory_Management_System.Shared.Extensions.PaginationExtensions
                 {sql} LIMIT @_PageSize OFFSET @_Offset;";
 
             var dynamicParameters = new DynamicParameters(parameters);
-            dynamicParameters.Add("__PageSize", pageSize);
-            dynamicParameters.Add("__Offset", offset);
+            dynamicParameters.Add("_PageSize", pageSize);
+            dynamicParameters.Add("_Offset", offset);
 
             var command = new CommandDefinition(
                 batchedSql,

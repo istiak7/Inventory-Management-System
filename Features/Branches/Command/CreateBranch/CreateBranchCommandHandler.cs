@@ -14,7 +14,7 @@ namespace Inventory_Management_System.Features.Branches.Command.CreateBranch
         public async Task<Result> Handle(CreateBranchCommand request, CancellationToken cancellationToken)
         {
             var existingBranch = await _branchRepository.GetAsync(
-                b => b.Name == request.Name && b.IsActive == (int)EntityStatus.Active,
+                b => b.Name.ToLower() == request.Name.Trim().ToLower() && b.IsActive != (int)EntityStatus.Deleted,
                 cancellationToken: cancellationToken);
 
             if (existingBranch != null)

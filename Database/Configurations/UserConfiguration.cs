@@ -28,4 +28,20 @@ namespace Inventory_Management_System.Database.Configurations
                    .OnDelete(DeleteBehavior.Restrict);
         }
     }
+
+    public class UserRefreshTokenConfiguration : IEntityTypeConfiguration<UserRefreshToken>
+    {
+        public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
+        {
+            builder.HasKey(t => t.Id);
+            // SHA-256 as hex = 64 characters. Unique: it is how a token is looked up.
+            builder.Property(t => t.TokenHash).IsRequired().HasMaxLength(64);
+            builder.HasIndex(t => t.TokenHash).IsUnique();
+
+            builder.HasOne(t => t.User)
+                   .WithMany()
+                   .HasForeignKey(t => t.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 }

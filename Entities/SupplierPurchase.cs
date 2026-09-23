@@ -6,7 +6,7 @@ namespace Inventory_Management_System.Entities
     {
         public int SupplierId { get; set; } 
         public int BranchId { get; set; } 
-        public DateTime PurchaseDate { get; set; } = DateTime.Now;
+        public DateTime PurchaseDate { get; set; } = DateTime.UtcNow;
         public string InvoiceNumber { get; set; } = string.Empty;
         public PurchaseStatus Status { get; set; } = PurchaseStatus.Pending;  
         public PurchaseType? PurchaseType { get; set; }

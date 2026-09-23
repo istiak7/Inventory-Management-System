@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Entities
         public int QuantityIn { get; set; }
         public int QuantityOut { get; set; }
         public int BalanceAfter { get; set; }   
-        public DateTime TransactionDate { get; set; } = DateTime.Now;
+        public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
         // Navigation property
         public required Branch Branch { get; set; }

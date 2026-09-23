@@ -9,9 +9,10 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetAllSuppliers
         {
             app.MapGet("/get-all-suppliers", async (IMediator mediator,
                 int pageNumber = 1,
-                int pageSize = 20) =>
+                int pageSize = 20,
+                string? search = null) =>
             {
-                var result = await mediator.Send(new GetAllSuppliersQuery(pageNumber, pageSize));
+                var result = await mediator.Send(new GetAllSuppliersQuery(pageNumber, pageSize, search));
                 return Results.Ok(result);
             }).WithTags("Supplier").RequirePermission(Permissions.SuppliersView);
         }

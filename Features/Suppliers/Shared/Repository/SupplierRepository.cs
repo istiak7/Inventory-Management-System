@@ -16,10 +16,23 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
         public async Task<PagedResult<SupplierResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
             CancellationToken cancellationToken = default
         )
         {
-            var query = from supplier in _context.Suppliers
+            var suppliers = _context.Suppliers.AsQueryable();
+
+            // Search by name, phone or email.
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = $"%{search.Trim()}%";
+                suppliers = suppliers.Where(s =>
+                    EF.Functions.ILike(s.Name, term) ||
+                    EF.Functions.ILike(s.PhoneNumber, term) ||
+                    EF.Functions.ILike(s.Email, term));
+            }
+
+            var query = from supplier in suppliers
                         orderby supplier.Id
                         select new SupplierResponse(
                             supplier.Id,
@@ -29,12 +42,13 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
                             supplier.PhoneNumber,
                             supplier.Email,
                             supplier.NID,
-                            (supplier.SupplierPurchases
-                                .Where(sp => sp.Status == PurchaseStatus.Approved || sp.Status == PurchaseStatus.PartiallyReceived)
-                                .Sum(sp => (decimal?)sp.TotalAmount) ?? 0m)
-                            - (supplier.SupplierPayments
-                                .Where(spp => spp.IsActive == 1)
-                                .Sum(spp => (decimal?)spp.Amount) ?? 0m),
+                            supplier.OpeningBalance,
+                            // The balance is the supplier ledger's latest running balance, the same
+                            // number the supplier accounts page and the payment check use.
+                            supplier.SupplierTransactions
+                                .OrderByDescending(t => t.Id)
+                                .Select(t => (decimal?)t.BalanceAfter)
+                                .FirstOrDefault() ?? 0m,
 
                             supplier.CreatedAt);
 

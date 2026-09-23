@@ -198,22 +198,11 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        private async Task<string> GenerateClaimNumberAsync(DateTime claimDate, CancellationToken cancellationToken)
-        {
-            var prefix = $"WC-{claimDate.Year}-";
-
-            var latest = await _dbContext.WarrantyClaims
-                .AsNoTracking()
-                .Where(c => c.ClaimNumber.StartsWith(prefix))
-                .OrderByDescending(c => c.Id)
-                .Select(c => c.ClaimNumber)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var next = 1;
-            if (latest != null && int.TryParse(latest[prefix.Length..], out var lastSequence))
-                next = lastSequence + 1;
-
-            return prefix + next.ToString("D4");
-        }
+        private Task<string> GenerateClaimNumberAsync(DateTime claimDate, CancellationToken cancellationToken) =>
+            DocumentNumbers.NextAsync(
+                _dbContext,
+                _dbContext.WarrantyClaims.IgnoreQueryFilters().Select(c => c.ClaimNumber),
+                $"WC-{BusinessClock.ToLocal(claimDate).Year}-",
+                cancellationToken);
     }
 }

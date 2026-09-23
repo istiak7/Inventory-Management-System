@@ -6,7 +6,7 @@ namespace Inventory_Management_System.Entities
     {
         public int CustomerId { get; set; } 
         public int BranchId { get; set; } 
-        public DateTime SaleDate { get; set; } = DateTime.Now;
+        public DateTime SaleDate { get; set; } = DateTime.UtcNow;
         public required string InvoiceNumber { get; set; } 
         public SaleStatus Status { get; set; } = SaleStatus.Completed;
         public SaleType SaleType { get; set; } = SaleType.Cash;   

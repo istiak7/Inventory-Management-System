@@ -14,7 +14,7 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
         public async Task<Result> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
         {
             var nameTaken = await _db.Roles
-                .AnyAsync(r => r.Name == request.Name, cancellationToken);
+                .AnyAsync(r => r.Name.ToLower() == request.Name.Trim().ToLower(), cancellationToken);
             if (nameTaken)
             {
                 return Fail(400, "A role with this name already exists");

@@ -15,7 +15,7 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
         public async Task<Result> Handle(CreateSupplierCommand request, CancellationToken cancellationToken)
         {
             var existingSupplier = await _supplierRepository.GetAsync(s => s.Name == request.Name && s.PhoneNumber == request.PhoneNumber
-                                            && s.IsActive == (int)EntityStatus.Active, cancellationToken: cancellationToken);
+                                            && s.IsActive != (int)EntityStatus.Deleted, cancellationToken: cancellationToken);
 
             if (existingSupplier != null)
             {
@@ -40,6 +40,11 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
                     OpeningBalance = request.OpeningBalance,
                     CreatedAt = DateTime.UtcNow,
                 };
+
+                // The opening balance goes into the ledger, so the balance, the payment limit
+                // and every statement include it.
+                if (supplier.OpeningBalance != 0)
+                    supplier.SupplierTransactions.Add(SupplierTransaction.ForOpening(supplier));
                 await _supplierRepository.AddAsync(supplier, cancellationToken);
                 await _supplierRepository.SaveChangesAsync(cancellationToken);
 

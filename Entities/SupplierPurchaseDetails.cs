@@ -27,5 +27,25 @@ namespace Inventory_Management_System.Entities
         }
 
         public void Reject() => Status = LineStatus.Rejected;
+
+        /// <summary>
+        /// Remaining quantity will never come: the line is closed at what was received
+        /// (and costs only that). A line that received nothing is rejected.
+        /// </summary>
+        public void CloseShort()
+        {
+            var received = ReceivedQuantity ?? 0;
+            if (received == 0)
+            {
+                Reject();
+                return;
+            }
+
+            if (received < OrderedQuantity)
+            {
+                Status = LineStatus.Received;
+                TotalAmount = decimal.Round(received * UnitPrice, 2, MidpointRounding.AwayFromZero);
+            }
+        }
     }
 }

@@ -3,6 +3,8 @@ namespace Inventory_Management_System.Shared.Extensions.PaginationExtensions
 {
     public static class EFCorePaginationExtensions
     {
+        public const int MaxPageSize = 500;
+
         public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
             this IQueryable<T> source,
             int pageNumber,
@@ -12,6 +14,8 @@ namespace Inventory_Management_System.Shared.Extensions.PaginationExtensions
 
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 20;
+            // A very large page would load a whole table at once.
+            if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
 
             var totalCount = await source.LongCountAsync(cancellationToken);

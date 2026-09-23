@@ -59,11 +59,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.DeletePurchaseO
             {
                 // Soft delete, the same way the rest of the system retires a record.
                 purchase.Delete();
-                purchase.UpDatedAt = DateTime.Now;
                 foreach (var detail in purchase.SupplierPurchaseDetails)
                 {
                     detail.Delete();
-                    detail.UpDatedAt = DateTime.Now;
                 }
 
                 await _dbContext.SaveChangesAsync(cancellationToken);

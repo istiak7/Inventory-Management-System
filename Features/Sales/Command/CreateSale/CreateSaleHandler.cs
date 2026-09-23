@@ -52,7 +52,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
             if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
             {
+                // Invoice numbers are unique across all branches, so check them all.
                 var taken = await _dbContext.CustomerSales
+                    .IgnoreQueryFilters()
                     .AnyAsync(s => s.InvoiceNumber == request.InvoiceNumber, cancellationToken);
                 if (taken)
                     return new Result
@@ -269,7 +271,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         CustomerId = sale.CustomerId,
                         BranchId = sale.BranchId,
                         Amount = paidAmount,
-                        PaymentDate = request.Payment?.PaymentDate ?? DateTime.UtcNow,
+                        // Money taken at the counter is dated with the sale, so a backdated sale's
+                        // cash does not show up as today's receipt.
+                        PaymentDate = request.Payment?.PaymentDate ?? saleDate,
                         PaymentMethod = SaleType.Cash.ToString(),
                         Customer = customer,
                         Branch = branch,
@@ -396,22 +400,11 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        private async Task<string> GenerateInvoiceNumberAsync(DateTime saleDate, CancellationToken cancellationToken)
-        {
-            var prefix = $"INV-{saleDate.Year}-";
-
-            var latest = await _dbContext.CustomerSales
-                .AsNoTracking()
-                .Where(s => s.InvoiceNumber.StartsWith(prefix))
-                .OrderByDescending(s => s.Id)
-                .Select(s => s.InvoiceNumber)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var next = 1;
-            if (latest != null && int.TryParse(latest[prefix.Length..], out var lastSequence))
-                next = lastSequence + 1;
-
-            return prefix + next.ToString("D4");
-        }
+        private Task<string> GenerateInvoiceNumberAsync(DateTime saleDate, CancellationToken cancellationToken) =>
+            DocumentNumbers.NextAsync(
+                _dbContext,
+                _dbContext.CustomerSales.IgnoreQueryFilters().Select(s => s.InvoiceNumber),
+                $"INV-{BusinessClock.ToLocal(saleDate).Year}-",
+                cancellationToken);
     }
 }

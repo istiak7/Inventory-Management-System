@@ -1,5 +1,6 @@
 using Inventory_Management_System.Shared;
 using MediatR;
+using Inventory_Management_System.Shared.CurrentUser;
 
 namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseOrder
 {
@@ -14,7 +15,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                 command.Id = id;
                 var result = await mediator.Send(command);
                 return Results.Ok(result);
-            }).WithTags("Purchase").RequireAuthorization();
+            }).WithTags("Purchase").RequirePermission(Permissions.PurchasesManage);
         }
     }
 }

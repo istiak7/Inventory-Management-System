@@ -1,11 +1,14 @@
 using Inventory_Management_System.Features.Transfers.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
+using Inventory_Management_System.Shared.CurrentUser;
 
 namespace Inventory_Management_System.Features.Transfers.Command.CreateStockTransfer
 {
-    public class CreateStockTransferCommand : IRequest<Result>
+    public class CreateStockTransferCommand : IRequest<Result>, IBranchScopedRequest
     {
+        public bool IsAllowedForBranch(int userBranchId) => SourceBranchId == userBranchId || DestinationBranchId == userBranchId;
+
         public int SourceBranchId { get; set; }
         public int DestinationBranchId { get; set; }
         public List<TransferItemRequest> Items { get; set; } = [];

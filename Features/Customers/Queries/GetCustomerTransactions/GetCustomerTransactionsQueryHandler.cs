@@ -22,8 +22,11 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                 if (request.CustomerId is int customerId)
                     query = query.Where(t => t.CustomerId == customerId);
 
+                // A sale row belongs to its sale's branch, a payment row to its payment's branch.
                 if (request.BranchId is int branchId)
-                    query = query.Where(t => t.CustomerSale.BranchId == branchId);
+                    query = query.Where(t =>
+                        (t.CustomerSale != null && t.CustomerSale.BranchId == branchId) ||
+                        (t.CustomerPayment != null && t.CustomerPayment.BranchId == branchId));
 
                 if (!string.IsNullOrWhiteSpace(request.Search))
                 {

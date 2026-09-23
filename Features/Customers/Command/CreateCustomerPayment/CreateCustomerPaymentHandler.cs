@@ -58,17 +58,18 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             await _dbContext.LockRowAsync<Customer>(request.CustomerId, cancellationToken);
 
-            var remainingDue = await _dbContext.CustomerSales
-                .Where(s => s.CustomerId == request.CustomerId)
-                .SumAsync(s => s.DueAmount, cancellationToken);
+            // What the customer owes in total: the ledger balance (opening balance + sales - payments).
+            var balance = await _dbContext.CustomerTransactions
+                .Where(t => t.CustomerId == request.CustomerId)
+                .GetLatestBalanceAsync(cancellationToken);
 
-            if (remainingDue - request.Amount < 0)
+            if (request.Amount > balance)
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = "Payment amount exceeds the remaining due amount."
+                    Message = $"Payment amount exceeds what the customer owes ({balance:0.00})."
                 };
 
             foreach (var payment in request.Allocations)
@@ -157,7 +158,7 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
 
             try
             {
-                var paymentDate = request.PaymentDate ?? DateTime.Now;
+                var paymentDate = request.PaymentDate ?? DateTime.UtcNow;
 
                 var payment = new CustomerPayment
                 {
@@ -200,7 +201,10 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                 var unallocated = request.Amount - allocatedAmount;
                 if (unallocated > 0)
                 {
+                    // All branches: the customer's debt is one debt, wherever it was made.
+                    // What is left after all invoices are paid settles the opening balance.
                     var openSales = await _dbContext.CustomerSales
+                        .IgnoreQueryFilters()
                         .Where(s => s.CustomerId == request.CustomerId && s.DueAmount > 0)
                         .OrderBy(s => s.SaleDate).ThenBy(s => s.Id)
                         .ToListAsync(cancellationToken);

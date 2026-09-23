@@ -17,9 +17,18 @@ namespace Inventory_Management_System.Features.Users.Queries.GetAllUsers
         {
             try
             {
-                var pagedResult = await _db.Users
+                var query = _db.Users
                     .AsNoTracking()
-                    .Where(u => u.IsActive != (int)EntityStatus.Deleted)
+                    .Where(u => u.IsActive != (int)EntityStatus.Deleted);
+
+                // Search by name or email.
+                if (!string.IsNullOrWhiteSpace(request.Search))
+                {
+                    var term = $"%{request.Search.Trim()}%";
+                    query = query.Where(u => EF.Functions.ILike(u.Name, term) || EF.Functions.ILike(u.Email, term));
+                }
+
+                var pagedResult = await query
                     .OrderBy(u => u.Id)
                     .Select(u => new UserResponse(
                         u.Id,

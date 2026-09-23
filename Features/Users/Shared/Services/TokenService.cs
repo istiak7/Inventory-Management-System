@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 using Inventory_Management_System.Entities;
@@ -16,7 +17,14 @@ namespace Inventory_Management_System.Features.Users.Shared.Services
     public class TokenService : ITokenService
     {
         private readonly JwtSettings _jwtSettings;
-        public string GenerateRefreshToken() => Guid.NewGuid().ToString();
+        // 32 random bytes: cannot be guessed. Only its hash is stored (see HashRefreshToken).
+        public string GenerateRefreshToken() =>
+            Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
+
+        // SHA-256 is enough here: the token is long and random (no dictionary to guess from),
+        // and unlike BCrypt the same token always gives the same hash, so it can be looked up.
+        public static string HashRefreshToken(string refreshToken) =>
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
         public TokenService(IOptions<JwtSettings> jwtSettings)
         {
             _jwtSettings = jwtSettings.Value;
@@ -25,7 +33,7 @@ namespace Inventory_Management_System.Features.Users.Shared.Services
         {
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, _jwtSettings.Subject),
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new(JwtRegisteredClaimNames.Email, user.Email),
                 new("username", user.Name),
                 new("id", user.Id.ToString()),

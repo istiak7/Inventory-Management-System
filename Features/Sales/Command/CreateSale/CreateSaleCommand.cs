@@ -1,11 +1,14 @@
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
+using Inventory_Management_System.Shared.CurrentUser;
 
 namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 {
-    public class CreateSaleCommand : IRequest<Result>
+    public class CreateSaleCommand : IRequest<Result>, IBranchScopedRequest
     {
+        public bool IsAllowedForBranch(int userBranchId) => BranchId == userBranchId;
+
         public int? CustomerId { get; set; }
         public SaleCustomerRequest? Customer { get; set; }
 

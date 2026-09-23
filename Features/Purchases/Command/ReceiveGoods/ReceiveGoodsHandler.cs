@@ -57,6 +57,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     Message = "This purchase order is already fully received."
                 };
 
+            if (request.Lines.GroupBy(l => l.SupplierPurchaseDetailsId).Any(g => g.Count() > 1))
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "The same line is listed twice in this receipt."
+                };
+
             var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials)>();
             var allSerials = new List<string>();
 
@@ -88,6 +97,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         Message = $"Line {line.SupplierPurchaseDetailsId} is already received."
                     };
 
+                // More than was ordered can never be received on a line.
+                var remaining = detail.OrderedQuantity - (detail.ReceivedQuantity ?? 0);
+
                 if (detail.ProductVariant.IsSerialized)
                 {
                     var serials = (line.SerialNumbers ?? [])
@@ -104,6 +116,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                             Message = $"Serial numbers are required for serialized line {line.SupplierPurchaseDetailsId}."
                         };
 
+                    if (serials.Count > remaining)
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Line {line.SupplierPurchaseDetailsId}: {serials.Count} serial numbers sent, but only {remaining} still to receive."
+                        };
+
                     allSerials.AddRange(serials);
                     plan.Add((detail, serials.Count, serials));
                 }
@@ -117,6 +138,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                             StatusCode = 400,
                             Status = "Error",
                             Message = $"A received quantity greater than 0 is required for line {line.SupplierPurchaseDetailsId}."
+                        };
+
+                    if (qty > remaining)
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Line {line.SupplierPurchaseDetailsId}: {qty} received, but only {remaining} still to receive."
                         };
 
                     plan.Add((detail, qty, []));
@@ -135,7 +165,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
             if (allSerials.Count > 0)
             {
+                // Serial numbers are unique across all branches, so check them all.
                 var existing = await _dbContext.ProductSerials
+                    .IgnoreQueryFilters()
                     .Where(s => allSerials.Contains(s.SerialNumber))
                     .Select(s => s.SerialNumber)
                     .ToListAsync(cancellationToken);
@@ -154,8 +186,28 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
             // step keeps whatever it already carries unless the caller picks a new one.
             var plannedQuantities = plan.ToDictionary(p => p.Detail.Id, p => p.Qty);
             var openLines = purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected).ToList();
-            var willComplete = openLines.Count > 0 && openLines.All(d =>
-                (d.ReceivedQuantity ?? 0) + plannedQuantities.GetValueOrDefault(d.Id) >= d.OrderedQuantity);
+            int ReceivedAfter(SupplierPurchaseDetails d) => (d.ReceivedQuantity ?? 0) + plannedQuantities.GetValueOrDefault(d.Id);
+
+            // Closing short completes the order with whatever has arrived.
+            var willComplete = request.CloseRemaining
+                ? openLines.Any(d => ReceivedAfter(d) > 0)
+                : openLines.Count > 0 && openLines.All(d => ReceivedAfter(d) >= d.OrderedQuantity);
+
+            if (request.CloseRemaining && !willComplete)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Nothing has been received on this order, so it cannot be closed. Reject it instead."
+                };
+
+            // What the supplier is owed once this receipt is saved: the full order, or only
+            // what really arrived when the rest is cancelled.
+            var finalTotal = request.CloseRemaining
+                ? decimal.Round(openLines.Sum(d => ReceivedAfter(d) * d.UnitPrice), 2, MidpointRounding.AwayFromZero)
+                : purchase.TotalAmount;
+            var finalDue = finalTotal - purchase.PaidAmount;
 
             PurchaseType? approvalPaymentType = null;
             decimal settlementAmount = 0;
@@ -200,19 +252,19 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                             Message = "A Cash order is settled in full on approval, so a payment amount cannot be sent with it."
                         };
 
-                    settlementAmount = purchase.DueAmount;
+                    settlementAmount = finalDue;
                 }
                 else
                 {
                     settlementAmount = request.PaymentAmount ?? 0m;
 
-                    if (settlementAmount > purchase.DueAmount)
+                    if (settlementAmount > finalDue)
                         return new Result
                         {
                             IsSuccess = false,
                             StatusCode = 400,
                             Status = "Error",
-                            Message = $"Payment {settlementAmount} exceeds the order total {purchase.DueAmount}."
+                            Message = $"Payment {settlementAmount} exceeds the order total {finalDue}."
                         };
                 }
             }
@@ -285,6 +337,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
                     lineResults.Add(new ReceivedLineResponse(
                         detail.Id, detail.OrderedQuantity, detail.ReceivedQuantity ?? 0, detail.Status.ToString()));
+                }
+
+                if (request.CloseRemaining)
+                {
+                    foreach (var detail in purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected))
+                        detail.CloseShort();
+
+                    purchase.TotalAmount = finalTotal;
+                    purchase.DueAmount = finalTotal - purchase.PaidAmount;
                 }
 
                 var nonRejected = purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected).ToList();

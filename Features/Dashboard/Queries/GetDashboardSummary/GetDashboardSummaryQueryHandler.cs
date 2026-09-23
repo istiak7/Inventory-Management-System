@@ -102,28 +102,30 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
 
                 #region Movements: daily trend and top moved products
 
-                // Dates are stored in UTC, the same as every report.
-                var today = DateTime.UtcNow.Date;
-                var from = today.AddDays(-(days - 1));
-                var to = today.AddDays(1);
+                // Days are the shop's calendar days (BusinessClock); the stored dates are UTC.
+                var today = BusinessClock.Today;
+                var firstDay = today.AddDays(-(days - 1));
+                var from = BusinessClock.StartOfDayUtc(firstDay);
+                var to = BusinessClock.StartOfDayUtc(today.AddDays(1));
 
                 var movements = _dbContext.InventoryTransactions
                     .AsNoTracking()
                     .Where(t => t.TransactionDate >= from && t.TransactionDate < to);
 
-                var perDay = await movements
-                    .GroupBy(t => t.TransactionDate.Date)
-                    .Select(g => new
-                    {
-                        Day = g.Key,
-                        Inbound = g.Sum(t => t.QuantityIn),
-                        Outbound = g.Sum(t => t.QuantityOut),
-                    })
-                    .ToDictionaryAsync(x => DateOnly.FromDateTime(x.Day), cancellationToken);
+                // Grouped here (not in SQL) so each movement lands on its local day.
+                var movementRows = await movements
+                    .Select(t => new { t.TransactionDate, t.QuantityIn, t.QuantityOut })
+                    .ToListAsync(cancellationToken);
+
+                var perDay = movementRows
+                    .GroupBy(t => BusinessClock.LocalDateOf(t.TransactionDate))
+                    .ToDictionary(
+                        g => g.Key,
+                        g => (Inbound: g.Sum(t => t.QuantityIn), Outbound: g.Sum(t => t.QuantityOut)));
 
                 // Every day in the range, with 0 on days without movements, so the chart has no gaps.
                 var movementTrend = Enumerable.Range(0, days)
-                    .Select(i => DateOnly.FromDateTime(from.AddDays(i)))
+                    .Select(i => DateOnly.FromDateTime(firstDay.AddDays(i)))
                     .Select(d => perDay.TryGetValue(d, out var m)
                         ? new DashboardMovementDay(d, m.Inbound, m.Outbound)
                         : new DashboardMovementDay(d, 0, 0))
@@ -156,10 +158,11 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
                 #region Revenue vs cost per month (this year)
 
                 // Same revenue and cost rules as the gross profit reports.
-                var yearStart = new DateTime(today.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var yearStart = BusinessClock.StartOfDayUtc(new DateTime(today.Year, 1, 1));
+                var yearEnd = BusinessClock.StartOfDayUtc(new DateTime(today.Year + 1, 1, 1));
                 var byDay = await _dbContext.CustomerSales
                     .AsNoTracking()
-                    .Where(s => s.SaleDate >= yearStart && s.SaleDate < yearStart.AddYears(1))
+                    .Where(s => s.SaleDate >= yearStart && s.SaleDate < yearEnd)
                     .WhereCountsTowardProfit()
                     .ToDailyGrossProfitAsync(cancellationToken);
 

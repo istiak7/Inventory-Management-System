@@ -36,6 +36,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
             try
             {
                 purchase.Status = PurchaseStatus.Rejected;
+                // Nothing will be delivered, so nothing is owed.
+                purchase.DueAmount = 0;
                 foreach (var detail in purchase.SupplierPurchaseDetails)
                     detail.Reject();
 

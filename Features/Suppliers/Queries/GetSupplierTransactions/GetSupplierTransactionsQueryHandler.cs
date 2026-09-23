@@ -21,8 +21,11 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                 if (request.SupplierId is int supplierId)
                     query = query.Where(t => t.SupplierId == supplierId);
 
+                // A purchase row belongs to its order's branch, a payment row to its payment's branch.
                 if (request.BranchId is int branchId)
-                    query = query.Where(t => t.SupplierPurchase.BranchId == branchId);
+                    query = query.Where(t =>
+                        (t.SupplierPurchase != null && t.SupplierPurchase.BranchId == branchId) ||
+                        (t.SupplierPayment != null && t.SupplierPayment.BranchId == branchId));
 
                 if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
                 {

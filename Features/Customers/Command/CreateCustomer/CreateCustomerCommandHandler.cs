@@ -48,6 +48,11 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
                     CreatedAt = DateTime.UtcNow,
                 };
 
+                // The opening balance goes into the ledger, so the balance, the payment limit
+                // and every statement include it.
+                if (customer.OpeningBalance != 0)
+                    customer.CustomerTransactions.Add(CustomerTransaction.ForOpening(customer));
+
                 await _customerRepository.AddAsync(customer, cancellationToken);
                 await _customerRepository.SaveChangesAsync(cancellationToken);
 

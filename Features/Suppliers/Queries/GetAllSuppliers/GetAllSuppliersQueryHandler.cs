@@ -17,6 +17,7 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetAllSuppliers
                 var pagedResult = await _supplierRepository.GetAllPagedAsync(
                     request.PageNumber,
                     request.PageSize,
+                    request.Search,
                     cancellationToken);
 
                 return new Result

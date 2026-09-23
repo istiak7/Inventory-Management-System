@@ -47,7 +47,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
 
             if (!string.IsNullOrWhiteSpace(request.InvoiceNumber))
             {
+                // Numbers are unique across all branches (and deleted orders keep theirs).
                 var taken = await _dbContext.SupplierPurchases
+                    .IgnoreQueryFilters()
                     .AnyAsync(p => p.InvoiceNumber == request.InvoiceNumber, cancellationToken);
                 if (taken)
                     return new Result
@@ -59,9 +61,11 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     };
             }
 
+            // A transaction so the number lock in DocumentNumbers holds until the order is saved.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                var purchaseDate = request.PurchaseDate ?? DateTime.Now;
+                var purchaseDate = request.PurchaseDate ?? DateTime.UtcNow;
 
                 var invoiceNumber = string.IsNullOrWhiteSpace(request.InvoiceNumber)
                     ? await GenerateInvoiceNumberAsync(purchaseDate, cancellationToken)
@@ -115,6 +119,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
 
                 await _dbContext.SupplierPurchases.AddAsync(purchase, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 var response = new PurchaseOrderResponse(
                     purchase.Id,
@@ -166,25 +171,11 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
         private static bool IsUniqueViolation(DbUpdateException ex) =>
             ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
-        private async Task<string> GenerateInvoiceNumberAsync(
-            DateTime purchaseDate,
-            CancellationToken cancellationToken
-        )
-        {
-            var prefix = $"PO-{purchaseDate.Year}-";
-
-            var latest = await _dbContext.SupplierPurchases
-                .AsNoTracking()
-                .Where(p => p.InvoiceNumber.StartsWith(prefix))
-                .OrderByDescending(p => p.Id)
-                .Select(p => p.InvoiceNumber)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var next = 1;
-            if (latest != null && int.TryParse(latest[prefix.Length..], out var lastSequence))
-                next = lastSequence + 1;
-
-            return prefix + next.ToString("D4");
-        }
+        private Task<string> GenerateInvoiceNumberAsync(DateTime purchaseDate, CancellationToken cancellationToken) =>
+            DocumentNumbers.NextAsync(
+                _dbContext,
+                _dbContext.SupplierPurchases.IgnoreQueryFilters().Select(p => p.InvoiceNumber),
+                $"PO-{BusinessClock.ToLocal(purchaseDate).Year}-",
+                cancellationToken);
     }
 }

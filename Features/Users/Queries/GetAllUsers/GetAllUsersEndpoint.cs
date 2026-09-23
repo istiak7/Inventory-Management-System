@@ -7,9 +7,9 @@ namespace Inventory_Management_System.Features.Users.Queries.GetAllUsers
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("/get-all-users", async (IMediator mediator, int pageNumber = 1, int pageSize = 10) =>
+            app.MapGet("/get-all-users", async (IMediator mediator, int pageNumber = 1, int pageSize = 10, string? search = null) =>
             {
-                var result = await mediator.Send(new GetAllUsersQuery(pageNumber, pageSize));
+                var result = await mediator.Send(new GetAllUsersQuery(pageNumber, pageSize, search));
                 return Results.Ok(result);
             })
             .WithTags("Users")

@@ -100,6 +100,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
             if (invoiceNumber != purchase.InvoiceNumber)
             {
                 var taken = await _dbContext.SupplierPurchases
+                    .IgnoreQueryFilters()
                     .AnyAsync(p => p.InvoiceNumber == invoiceNumber && p.Id != purchase.Id, cancellationToken);
                 if (taken)
                     return new Result
@@ -120,7 +121,6 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                 purchase.PurchaseDate = request.PurchaseDate ?? purchase.PurchaseDate;
                 purchase.InvoiceNumber = invoiceNumber;
                 purchase.Remarks = request.Remarks;
-                purchase.UpDatedAt = DateTime.Now;
 
                 // Nothing has been received yet, so the old lines carry no stock or serials and
                 // can simply be replaced by what was submitted.

@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Features.Users.Shared.Services;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,8 @@ namespace Inventory_Management_System.Features.Users.Command.ChangePassword
             try
             {
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                // Someone who knew the old password must not stay signed in on another device.
+                await RefreshTokenStore.RevokeAllAsync(_db, user.Id, request.RefreshToken, cancellationToken);
                 await _db.SaveChangesAsync(cancellationToken);
 
                 return new Result

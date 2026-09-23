@@ -1,4 +1,5 @@
 using FluentValidation;
+using Inventory_Management_System.Shared;
 using Inventory_Management_System.Features.Sales.Shared;
 using Inventory_Management_System.Features.Customers.Shared;
 
@@ -36,19 +37,25 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 .When(x => x.Remarks != null)
                 .WithMessage("Remarks must be 500 characters or fewer.");
 
-            RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0).WithMessage("DiscountAmount must be 0 or greater.");
-            RuleFor(x => x.TaxAmount).GreaterThanOrEqualTo(0).WithMessage("TaxAmount must be 0 or greater.");
+            RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0).WithMessage("DiscountAmount must be 0 or greater.").Money();
+            RuleFor(x => x.TaxAmount).GreaterThanOrEqualTo(0).WithMessage("TaxAmount must be 0 or greater.").Money();
+            RuleFor(x => x.SaleDate).NotInFuture();
+            RuleFor(x => x.Payment!.Amount).Money().When(x => x.Payment != null);
+            RuleFor(x => x.Payment!.PaymentDate).NotInFuture().When(x => x.Payment != null);
 
             RuleForEach(x => x.Items).ChildRules(item =>
             {
                 item.RuleFor(i => i.ProductVariantId).GreaterThan(0).WithMessage("ProductVariantId is required.");
                 item.RuleFor(i => i.Quantity).GreaterThan(0).WithMessage("Quantity must be greater than 0.");
-                item.RuleFor(i => i.UnitPrice).GreaterThanOrEqualTo(0)
+                // A typed price must be above 0: selling for nothing is done with a discount, which shows.
+                item.RuleFor(i => i.UnitPrice).GreaterThan(0)
                     .When(i => i.UnitPrice.HasValue)
-                    .WithMessage("UnitPrice must be 0 or greater.");
+                    .WithMessage("UnitPrice must be greater than 0.");
+                item.RuleFor(i => i.UnitPrice).Money();
                 item.RuleFor(i => i.DiscountPerItem).GreaterThanOrEqualTo(0)
                     .When(i => i.DiscountPerItem.HasValue)
                     .WithMessage("DiscountPerItem must be 0 or greater.");
+                item.RuleFor(i => i.DiscountPerItem).Money();
                 item.RuleFor(i => i.WarrantyMonths).GreaterThanOrEqualTo(0)
                     .When(i => i.WarrantyMonths.HasValue)
                     .WithMessage("WarrantyMonths must be 0 or greater.");

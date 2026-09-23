@@ -34,6 +34,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -60,6 +63,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("Branches");
@@ -75,6 +81,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -97,6 +106,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("Brands");
@@ -117,6 +129,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -158,6 +173,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PhoneNumber")
@@ -184,6 +202,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
 
@@ -204,6 +225,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -227,6 +251,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
@@ -283,6 +310,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
@@ -309,6 +339,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Credit")
                         .HasPrecision(18, 2)
@@ -341,6 +374,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerPaymentId");
@@ -363,6 +399,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -378,6 +417,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -395,6 +437,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -410,6 +455,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -432,6 +480,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
@@ -459,6 +510,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProductVariantId");
@@ -481,6 +535,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -496,6 +553,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -518,6 +578,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
@@ -542,6 +605,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -573,6 +639,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -588,6 +657,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -607,6 +679,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
@@ -638,6 +713,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("WarrantyMonths")
                         .HasColumnType("integer");
@@ -674,6 +752,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -697,6 +778,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -724,6 +808,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
@@ -754,6 +841,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AttributesJson");
@@ -783,6 +873,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -798,6 +891,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -818,6 +914,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
@@ -829,6 +928,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -858,6 +960,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CustomerPaymentId")
                         .HasColumnType("integer");
 
@@ -869,6 +974,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -889,6 +997,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("DiscountPerItem")
                         .HasPrecision(18, 2)
@@ -929,6 +1040,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("WarrantyMonths")
                         .HasColumnType("integer");
 
@@ -958,6 +1072,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CurrentStock")
                         .HasColumnType("integer");
 
@@ -969,6 +1086,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -996,6 +1116,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("DestinationBranchId")
                         .HasColumnType("integer");
@@ -1029,6 +1152,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DestinationBranchId");
@@ -1052,6 +1178,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
@@ -1073,6 +1202,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProductVariantId");
@@ -1092,6 +1224,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -1133,6 +1268,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -1159,6 +1297,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
@@ -1179,6 +1320,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1202,6 +1346,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("DueAmount")
                         .HasPrecision(18, 2)
@@ -1245,6 +1392,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
@@ -1267,6 +1417,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
@@ -1299,6 +1452,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("WarrantyMonths")
                         .HasColumnType("integer");
 
@@ -1329,6 +1485,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
@@ -1340,6 +1499,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1364,6 +1526,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Credit")
                         .HasPrecision(18, 2)
@@ -1396,6 +1561,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SupplierPaymentId");
@@ -1420,6 +1588,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -1451,6 +1622,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
@@ -1474,6 +1648,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
@@ -1482,6 +1659,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -1494,6 +1674,50 @@ namespace Inventory_Management_System.Migrations
                         .IsUnique();
 
                     b.ToTable("UserPermissions");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.UserRefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRefreshTokens");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.WarrantyClaim", b =>
@@ -1521,6 +1745,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
@@ -1573,6 +1800,9 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("WarrantyExpiryDate")
                         .HasColumnType("timestamp with time zone");
@@ -1697,7 +1927,7 @@ namespace Inventory_Management_System.Migrations
                     b.HasOne("Inventory_Management_System.Entities.ProductSubCategories", "ProductSubCategories")
                         .WithMany("Products")
                         .HasForeignKey("ProductSubCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Brand");
@@ -1744,7 +1974,7 @@ namespace Inventory_Management_System.Migrations
                     b.HasOne("Inventory_Management_System.Entities.ProductCategories", "ProductCategories")
                         .WithMany("ProductSubCategories")
                         .HasForeignKey("ProductCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ProductCategories");
@@ -1755,7 +1985,7 @@ namespace Inventory_Management_System.Migrations
                     b.HasOne("Inventory_Management_System.Entities.Product", "Product")
                         .WithMany("ProductVariants")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Product");
@@ -1886,7 +2116,7 @@ namespace Inventory_Management_System.Migrations
                     b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
                         .WithMany()
                         .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
@@ -2015,6 +2245,17 @@ namespace Inventory_Management_System.Migrations
                         .IsRequired();
 
                     b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.UserRefreshToken", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
