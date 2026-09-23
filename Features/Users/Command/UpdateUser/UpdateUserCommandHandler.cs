@@ -55,6 +55,9 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
                 user.BranchId = request.BranchId;
                 user.IsActive = request.IsActive;
 
+                if (!string.IsNullOrEmpty(request.NewPassword))
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
                 // Replace the direct permissions with the new set.
                 _db.UserPermissions.RemoveRange(user.UserPermissions);
                 user.UserPermissions = permissionIds

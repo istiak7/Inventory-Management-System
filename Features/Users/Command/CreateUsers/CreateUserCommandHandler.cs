@@ -60,7 +60,7 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
                 {
                     Name = request.Username,
                     Email = request.Email,
-                    PasswordHash = request.Password,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     RoleId = request.RoleId,
                     BranchId = request.BranchId,
                     IsActive = (int)EntityStatus.Active,

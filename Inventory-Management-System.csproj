@@ -29,7 +29,10 @@
        but never published, so dev passwords and keys do not end up on the server. -->
   <ItemGroup>
     <Content Remove="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json" />
-    <None Include="appsettings.Development.json;appsettings.Ashik.json;appsettings.Istiak.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <!-- Each file only if it exists: the Docker build leaves them out on purpose (.dockerignore). -->
+    <None Include="appsettings.Development.json" Condition="Exists('appsettings.Development.json')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <None Include="appsettings.Ashik.json" Condition="Exists('appsettings.Ashik.json')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <None Include="appsettings.Istiak.json" Condition="Exists('appsettings.Istiak.json')" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <ItemGroup>

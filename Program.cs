@@ -72,7 +72,8 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+// Swagger lists every endpoint, so it is only shown on developer machines, never on the server.
+if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
@@ -108,7 +109,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(db);
+    await DbSeeder.SeedAsync(db, app.Configuration, app.Environment);
 }
 
 app.Run();

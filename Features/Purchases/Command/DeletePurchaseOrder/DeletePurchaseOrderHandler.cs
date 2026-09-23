@@ -1,6 +1,8 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
@@ -14,6 +16,10 @@ namespace Inventory_Management_System.Features.Purchases.Command.DeletePurchaseO
     {
         public async Task<Result> Handle(DeletePurchaseOrderCommand request, CancellationToken cancellationToken)
         {
+            // Lock the order so goods cannot be received while the order is being deleted.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<SupplierPurchase>(request.PurchaseOrderId, cancellationToken);
+
             var purchase = await _dbContext.SupplierPurchases
                 .Include(p => p.SupplierPurchaseDetails)
                 .FirstOrDefaultAsync(
@@ -61,6 +67,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.DeletePurchaseO
                 }
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 return new Result
                 {

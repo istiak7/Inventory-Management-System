@@ -1,7 +1,9 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
+using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,10 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
     {
         public async Task<Result> Handle(RejectPurchaseOrderCommand request, CancellationToken cancellationToken)
         {
+            // Lock the order so goods cannot be received while the order is being rejected.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<SupplierPurchase>(request.PurchaseOrderId, cancellationToken);
+
             var purchase = await _dbContext.SupplierPurchases
                 .Include(p => p.SupplierPurchaseDetails)
                 .FirstOrDefaultAsync(
@@ -34,6 +40,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
                     detail.Reject();
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 var response = new PurchaseOrderResponse(
                     purchase.Id, purchase.SupplierId, purchase.BranchId, purchase.PurchaseDate,

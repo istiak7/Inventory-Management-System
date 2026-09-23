@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Transfers.Shared.Dtos;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -16,6 +17,11 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
     {
         public async Task<Result> Handle(ApproveStockTransferCommand request, CancellationToken cancellationToken)
         {
+            // Lock the transfer first: a double click on "Approve" now waits here, then sees
+            // the status is already Approved and stops, instead of moving the stock twice.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<StockTransfer>(request.StockTransferId, cancellationToken);
+
             var transfer = await _dbContext.StockTransfers
                 .Include(t => t.SourceBranch)
                 .Include(t => t.DestinationBranch)
@@ -28,9 +34,13 @@ namespace Inventory_Management_System.Features.Transfers.Command.ApproveStockTra
             if (transfer.Status is not (TransferStatus.Draft or TransferStatus.Pending))
                 return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "Only a draft or pending transfer can be approved." };
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                await _dbContext.LockStocksAsync(
+                    [transfer.SourceBranchId, transfer.DestinationBranchId],
+                    transfer.StockTransferDetails.Select(d => d.ProductVariantId),
+                    cancellationToken);
+
                 var now = DateTime.UtcNow;
                 var stockCache = new Dictionary<(int BranchId, int VariantId), Stock>();
                 var claimedSerialIds = new HashSet<int>();

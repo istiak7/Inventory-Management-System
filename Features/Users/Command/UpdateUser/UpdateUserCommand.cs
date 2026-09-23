@@ -17,5 +17,8 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
 
         // Uses EntityStatus: 0 = Active, 1 = InActive, 2 = Deleted.
         public int IsActive { get; set; }
+
+        // Optional. When set, the admin resets this user's password (e.g. they forgot it).
+        public string? NewPassword { get; set; }
     }
 }

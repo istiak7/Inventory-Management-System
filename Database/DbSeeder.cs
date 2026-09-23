@@ -9,22 +9,29 @@ namespace Inventory_Management_System.Database
     // database so the system can be used right after it is deployed.
     public static class DbSeeder
     {
-        // The default admin login. Change the password after the first sign in.
-        public const string AdminEmail = "admin@inventory.com";
-        public const string AdminPassword = "Admin@123";
+        // The first admin login comes from configuration (SeedAdmin:Email / SeedAdmin:Password,
+        // or the SeedAdmin__Email / SeedAdmin__Password environment variables).
+        // Only on a developer machine is there a fallback, so a server never gets a known password.
+        private const string DevAdminEmail = "admin@inventory.com";
+        private const string DevAdminPassword = "Admin@123";
+        private const int MinimumPasswordLength = 8;
 
         // The permission list and staff defaults live in Shared/CurrentUser/Permissions.cs
         // so the seeder and the endpoints always use the same names.
         private static readonly string[] StaffPermissions = Permissions.StaffDefaults;
 
-        public static async Task SeedAsync(AppDbContext db, CancellationToken cancellationToken = default)
+        public static async Task SeedAsync(
+            AppDbContext db,
+            IConfiguration configuration,
+            IHostEnvironment environment,
+            CancellationToken cancellationToken = default)
         {
             // Apply any pending migrations first so the tables exist.
             await db.Database.MigrateAsync(cancellationToken);
 
             await SeedPermissionsAsync(db, cancellationToken);
             var adminRoleId = await SeedRolesAsync(db, cancellationToken);
-            await SeedAdminUserAsync(db, adminRoleId, cancellationToken);
+            await SeedAdminUserAsync(db, adminRoleId, configuration, environment, cancellationToken);
         }
 
         private static async Task SeedPermissionsAsync(AppDbContext db, CancellationToken cancellationToken)
@@ -102,16 +109,36 @@ namespace Inventory_Management_System.Database
             return role;
         }
 
-        private static async Task SeedAdminUserAsync(AppDbContext db, int adminRoleId, CancellationToken cancellationToken)
+        private static async Task SeedAdminUserAsync(
+            AppDbContext db,
+            int adminRoleId,
+            IConfiguration configuration,
+            IHostEnvironment environment,
+            CancellationToken cancellationToken)
         {
-            var adminExists = await db.Users.AnyAsync(u => u.Email == AdminEmail, cancellationToken);
+            // Once any admin exists the seeder never touches users again.
+            var adminExists = await db.Users.AnyAsync(u => u.RoleId == adminRoleId, cancellationToken);
             if (adminExists) return;
+
+            var isDevelopment = environment.IsDevelopment();
+            var adminEmail = configuration["SeedAdmin:Email"];
+            var adminPassword = configuration["SeedAdmin:Password"];
+
+            if (string.IsNullOrWhiteSpace(adminEmail))
+                adminEmail = isDevelopment ? DevAdminEmail : null;
+            if (string.IsNullOrWhiteSpace(adminPassword))
+                adminPassword = isDevelopment ? DevAdminPassword : null;
+
+            if (adminEmail is null || adminPassword is null || adminPassword.Length < MinimumPasswordLength)
+                throw new InvalidOperationException(
+                    "There is no admin user yet. Set SeedAdmin__Email and SeedAdmin__Password " +
+                    $"(at least {MinimumPasswordLength} characters) so the first admin can be created.");
 
             var admin = new User
             {
                 Name = "Administrator",
-                Email = AdminEmail,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(AdminPassword),
+                Email = adminEmail.Trim(),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
                 RoleId = adminRoleId,
                 BranchId = null, // all branches
                 IsActive = (int)EntityStatus.Active,

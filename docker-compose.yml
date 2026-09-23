@@ -1,4 +1,13 @@
-version: '3.8'
+# Runs the whole system on one server: database + backend API + frontend website.
+#
+# Folder layout expected on the server (both repositories side by side):
+#   <any folder>/
+#     Inventory-Management-System/        <- this repository (run docker compose here)
+#     inventory-management-frontend/      <- the frontend repository
+#
+# Secrets are read from the ".env" file next to this file. Copy ".env.example" to ".env"
+# and fill it in. ".env" is git-ignored, so passwords never go into git.
+# Full steps: see DEPLOY.md.
 
 services:
   postgres-db:
@@ -6,38 +15,50 @@ services:
     container_name: inventory-postgres-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: istiakahmed
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: Inventory-Management
-    ports:
-        - "5432:5432"
+    # No "ports:" on purpose: the database is reachable only by the backend container,
+    # never from the network.
     volumes:
-        - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Inventory-Management"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     restart: always
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    image: inventory-management-backend:latest        
+    image: inventory-management-backend:latest
     container_name: inventory-management-backend
-    ports:
-      - "5000:8080"
+    # No "ports:" on purpose: the website's nginx forwards /api/... to this container.
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DbConnectionString=Host=postgres-db;Port=5432;Database=Inventory-Management;Username=postgres;Password=istiakahmed;Minimum Pool Size=4;Maximum Pool Size=20;Timeout=60;Command Timeout=60;Keepalive=10;
-    volumes:
-      # Host File Path : Container Target Path
-      - ./appsettings.json:/app/appsettings.json:ro
-      - ./appsettings.Development.json:/app/appsettings.Development.json:ro
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DbConnectionString=Host=postgres-db;Port=5432;Database=Inventory-Management;Username=postgres;Password=${POSTGRES_PASSWORD};Minimum Pool Size=4;Maximum Pool Size=20;Timeout=60;Command Timeout=60;Keepalive=10;
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      - SeedAdmin__Email=${SEED_ADMIN_EMAIL:?Set SEED_ADMIN_EMAIL in .env}
+      - SeedAdmin__Password=${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
+      - AllowedOrigins__0=${APP_URL:?Set APP_URL in .env}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
     restart: always
 
   frontend:
     build:
-      context: ../../Inventory-Management-Frontend/inventory-management-frontend
+      context: ../inventory-management-frontend
       dockerfile: Dockerfile
-    image: inventory-management-frontend  
+      args:
+        VITE_API_URL: /api
+    image: inventory-management-frontend:latest
     container_name: inventory-management-frontend
     ports:
-      - "3000:80"
+      - "${APP_PORT:-80}:80"
+    depends_on:
+      - backend
     restart: always
 
 volumes:

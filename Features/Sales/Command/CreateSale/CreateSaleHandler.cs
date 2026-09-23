@@ -6,6 +6,7 @@ using Inventory_Management_System.Features.Sales.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -68,6 +69,13 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Two tills selling the same item now wait for each other here, so the
+                // stock check below always sees the latest quantity and cannot oversell.
+                await _dbContext.LockStocksAsync(
+                    [request.BranchId],
+                    request.Items.Select(i => i.ProductVariantId),
+                    cancellationToken);
+
                 var resolved = await ResolveCustomerAsync(request, cancellationToken);
                 if (resolved.Error != null)
                     return resolved.Error;
@@ -240,6 +248,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                 await _dbContext.CustomerSales.AddAsync(sale, cancellationToken);
 
+                // Lock the customer so a payment saved at the same moment cannot read the
+                // same running balance and write a wrong BalanceAfter.
+                await _dbContext.LockRowAsync<Customer>(customer.Id, cancellationToken);
                 var runningBalance = await _dbContext.CustomerTransactions
                     .Where(t => t.CustomerId == sale.CustomerId)
                     .GetLatestBalanceAsync(cancellationToken);

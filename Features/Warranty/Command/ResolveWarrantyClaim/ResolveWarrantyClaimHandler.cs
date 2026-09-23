@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Warranty.Shared;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,10 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Lock the claim: a double click cannot resolve it twice, and it cannot be
+                // rejected or delivered while it is being resolved.
+                await _dbContext.LockRowAsync<WarrantyClaim>(request.WarrantyClaimId, cancellationToken);
+
                 var claim = await _dbContext.WarrantyClaims
                     .Include(c => c.ProductSerial)
                     .FirstOrDefaultAsync(
@@ -53,6 +58,11 @@ namespace Inventory_Management_System.Features.Warranty.Command.ResolveWarrantyC
                 {
                     var replacementSerialNumber = request.ReplacementSerialNumber!.Trim();
                     var original = claim.ProductSerial;
+
+                    // Lock the stock row first, so the replacement unit cannot be sold at the
+                    // counter (or given to another claim) while this claim takes it.
+                    await _dbContext.LockStocksAsync(
+                        [claim.BranchId], [original.ProductVariantId], cancellationToken);
 
                     replacement = await _dbContext.ProductSerials
                         .Include(s => s.ProductVariant).ThenInclude(v => v.Product)

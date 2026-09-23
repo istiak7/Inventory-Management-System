@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Warranty.Shared;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -20,6 +21,7 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
         {
             var serialNumber = request.SerialNumber.Trim();
 
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 var serial = await _dbContext.ProductSerials
@@ -44,6 +46,9 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
                         Status = "Error",
                         Message = $"Serial '{serialNumber}' is not with a customer (status {serial.Status}), so it has no warranty to claim."
                     };
+
+                // Lock the unit so a double click cannot open two claims for it.
+                await _dbContext.LockRowAsync<ProductSerial>(serial.Id, cancellationToken);
 
                 var saleDetailsId = await WarrantyTerms.ResolveSaleDetailsIdAsync(
                     _dbContext,
@@ -141,6 +146,7 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
 
                 await _dbContext.WarrantyClaims.AddAsync(claim, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 var row = await _dbContext.WarrantyClaims
                     .AsNoTracking()

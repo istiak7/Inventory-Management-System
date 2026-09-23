@@ -12,6 +12,9 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.CurrentStock).IsRequired();
             builder.HasIndex(s => new { s.BranchId, s.ProductVariantId }).IsUnique();
 
+            // Last safety net against overselling: the database itself refuses negative stock.
+            builder.ToTable(t => t.HasCheckConstraint("CK_Stocks_CurrentStock_NotNegative", "\"CurrentStock\" >= 0"));
+
             builder.HasOne(s => s.Branch)
                    .WithMany(b => b.Stocks)
                    .HasForeignKey(s => s.BranchId)

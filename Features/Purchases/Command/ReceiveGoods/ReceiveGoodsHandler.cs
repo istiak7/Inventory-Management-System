@@ -5,6 +5,7 @@ using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,11 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
     {
         public async Task<Result> Handle(ReceiveGoodsCommand request, CancellationToken cancellationToken)
         {
+            // Lock the order first: a double click on "Receive" now waits here, then sees the
+            // new status, instead of adding the same goods to stock twice.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<SupplierPurchase>(request.PurchaseOrderId, cancellationToken);
+
             var purchase = await _dbContext.SupplierPurchases
                 .Include(p => p.Supplier)
                 .Include(p => p.Branch)
@@ -221,9 +227,13 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 };
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                await _dbContext.LockStocksAsync(
+                    [purchase.BranchId],
+                    plan.Select(p => p.Detail.ProductVariantId),
+                    cancellationToken);
+
                 var now = DateTime.UtcNow;
                 var serialsCreated = 0;
                 var stockByVariant = new Dictionary<int, Stock>();
@@ -289,6 +299,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 {
                     purchase.PurchaseType = approvalPaymentType;
 
+                    await _dbContext.LockRowAsync<Supplier>(purchase.SupplierId, cancellationToken);
                     var runningBalance = await _dbContext.SupplierTransactions
                         .Where(t => t.SupplierId == purchase.SupplierId)
                         .GetLatestBalanceAsync(cancellationToken);

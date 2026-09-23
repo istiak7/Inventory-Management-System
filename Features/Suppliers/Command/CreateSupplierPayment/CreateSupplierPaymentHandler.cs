@@ -4,6 +4,7 @@ using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Suppliers.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,6 +45,11 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Status = "Error",
                     Message = "Payment amount must be greater than 0."
                 };
+
+            // Lock the supplier: two payments (or a payment and a goods receipt) for the same
+            // supplier now take turns, so the due check and the running balance are always current.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<Supplier>(request.SupplierId, cancellationToken);
 
             var remainingDue = await _dbContext.SupplierPurchases
                 .Where(p => p.SupplierId == request.SupplierId && p.Status == PurchaseStatus.Approved)
@@ -149,7 +155,6 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                 }
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 var paymentDate = request.PaymentDate ?? DateTime.Now;
@@ -184,6 +189,49 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                         }, cancellationToken);
                     }
                     allocatedAmount = request.Allocations.Sum(a => a.Amount);
+                }
+
+                // Any part of the payment not given to a chosen invoice pays the oldest open
+                // approved invoices. This keeps the invoice dues equal to the ledger balance,
+                // so the same due can never be paid twice.
+                var unallocated = request.Amount - allocatedAmount;
+                if (unallocated > 0)
+                {
+                    var openPurchases = await _dbContext.SupplierPurchases
+                        .Where(p => p.SupplierId == request.SupplierId
+                                    && p.Status == PurchaseStatus.Approved
+                                    && p.DueAmount > 0)
+                        .OrderBy(p => p.PurchaseDate).ThenBy(p => p.Id)
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var purchase in openPurchases)
+                    {
+                        if (unallocated <= 0) break;
+
+                        // DueAmount is the in-memory value, which already includes the
+                        // chosen allocations above.
+                        var amount = Math.Min(unallocated, purchase.DueAmount);
+                        if (amount <= 0) continue;
+
+                        purchase.ApplyPayment(amount);
+
+                        // Top up the allocation made above for this invoice, if there is one.
+                        var existing = _dbContext.SupplierPurchasePayments.Local
+                            .FirstOrDefault(a => a.SupplierPurchase == purchase && a.SupplierPayment == payment);
+                        if (existing != null)
+                            existing.Amount += amount;
+                        else
+                            await _dbContext.SupplierPurchasePayments.AddAsync(new SupplierPurchasePayment
+                            {
+                                Amount = amount,
+                                AllocationDate = paymentDate,
+                                SupplierPurchase = purchase,
+                                SupplierPayment = payment,
+                            }, cancellationToken);
+
+                        unallocated -= amount;
+                        allocatedAmount += amount;
+                    }
                 }
 
                 var runningBalance = await _dbContext.SupplierTransactions

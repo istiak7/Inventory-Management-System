@@ -13,13 +13,10 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
         // Extra permissions granted directly to this user, on top of the role.
         public List<int> PermissionIds { get; set; } = [];
 
-        private string _Password { get; set; } = null!;
         public required string Username { get; set; }
         public required string Email { get; set; }
-        public required string Password
-        {
-            get => _Password;
-            set => _Password = BCrypt.Net.BCrypt.HashPassword(value);
-        }
+
+        // Plain text here so the validator can check its length. The handler hashes it.
+        public required string Password { get; set; }
     }
 }

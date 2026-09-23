@@ -1,7 +1,9 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Warranty.Shared;
+using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,8 +18,12 @@ namespace Inventory_Management_System.Features.Warranty.Command.RejectWarrantyCl
             RejectWarrantyClaimCommand request,
             CancellationToken cancellationToken)
         {
+            // Lock the claim so two status changes at the same moment cannot both win.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                await _dbContext.LockRowAsync<WarrantyClaim>(request.WarrantyClaimId, cancellationToken);
+
                 var claim = await _dbContext.WarrantyClaims
                     .FirstOrDefaultAsync(
                     c => c.Id == request.WarrantyClaimId,
@@ -47,6 +53,7 @@ namespace Inventory_Management_System.Features.Warranty.Command.RejectWarrantyCl
                 claim.RejectedAt = DateTime.UtcNow;
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 var row = await _dbContext.WarrantyClaims
                     .AsNoTracking()

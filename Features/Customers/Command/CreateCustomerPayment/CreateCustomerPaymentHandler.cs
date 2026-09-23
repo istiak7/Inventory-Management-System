@@ -3,6 +3,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Features.Customers.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,6 +52,11 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Status = "Error",
                     Message = "Payment amount must be greater than 0."
                 };
+
+            // Lock the customer: two payments (or a payment and a sale) for the same customer
+            // now take turns, so the due check and the running balance below are always current.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<Customer>(request.CustomerId, cancellationToken);
 
             var remainingDue = await _dbContext.CustomerSales
                 .Where(s => s.CustomerId == request.CustomerId)
@@ -149,7 +155,6 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                 }
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 var paymentDate = request.PaymentDate ?? DateTime.Now;
@@ -187,6 +192,47 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                         }, cancellationToken);
                     }
                     allocatedAmount = request.Allocations.Sum(a => a.Amount);
+                }
+
+                // Any part of the payment not given to a chosen invoice pays the oldest open
+                // invoices. This keeps the invoice dues equal to the ledger balance, so the same
+                // due can never be paid twice.
+                var unallocated = request.Amount - allocatedAmount;
+                if (unallocated > 0)
+                {
+                    var openSales = await _dbContext.CustomerSales
+                        .Where(s => s.CustomerId == request.CustomerId && s.DueAmount > 0)
+                        .OrderBy(s => s.SaleDate).ThenBy(s => s.Id)
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var sale in openSales)
+                    {
+                        if (unallocated <= 0) break;
+
+                        // DueAmount is the in-memory value, which already includes the
+                        // chosen allocations above.
+                        var amount = Math.Min(unallocated, sale.DueAmount);
+                        if (amount <= 0) continue;
+
+                        sale.ApplyPayment(amount);
+
+                        // Top up the allocation made above for this invoice, if there is one.
+                        var existing = _dbContext.SaleCustomerPayments.Local
+                            .FirstOrDefault(a => a.CustomerSale == sale && a.CustomerPayment == payment);
+                        if (existing != null)
+                            existing.Amount += amount;
+                        else
+                            await _dbContext.SaleCustomerPayments.AddAsync(new SaleCustomerPayment
+                            {
+                                Amount = amount,
+                                AllocationDate = paymentDate,
+                                CustomerSale = sale,
+                                CustomerPayment = payment,
+                            }, cancellationToken);
+
+                        unallocated -= amount;
+                        allocatedAmount += amount;
+                    }
                 }
 
                 var runningBalance = await _dbContext.CustomerTransactions

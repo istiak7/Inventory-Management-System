@@ -1,7 +1,9 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Transfers.Shared.Dtos;
+using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
+using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -15,6 +17,10 @@ namespace Inventory_Management_System.Features.Transfers.Command.RejectStockTran
     {
         public async Task<Result> Handle(RejectStockTransferCommand request, CancellationToken cancellationToken)
         {
+            // Lock the transfer so an approve and a reject at the same moment cannot both win.
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await _dbContext.LockRowAsync<StockTransfer>(request.StockTransferId, cancellationToken);
+
             var transfer = await _dbContext.StockTransfers
                 .Include(t => t.SourceBranch)
                 .Include(t => t.DestinationBranch)
@@ -33,6 +39,7 @@ namespace Inventory_Management_System.Features.Transfers.Command.RejectStockTran
                 transfer.RejectedAt = DateTime.UtcNow;
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 var lineResponses = transfer.StockTransferDetails.Select(line => new StockTransferLineResponse(
                     line.Id, line.ProductVariantId, line.ProductVariant.SKU, line.ProductVariant.Product.ProductName,
