@@ -26,6 +26,9 @@ namespace Inventory_Management_System.Features.OfficeExpense.Queries.GetExpense.
                                  .Where(e => e.ExpenseCategory.Id == e.ExpenseCategoryId)
                                  .Select(e => new ExpenseResponse()
                                  {
+                                     Id = e.Id,
+                                     BranchId = e.BranchId,
+                                     ExpenseCategoryId = e.ExpenseCategoryId,
                                      Expensecategories = e.ExpenseCategory.Name,
                                      ExpenseName = e.Name,
                                      Description = e.Description,

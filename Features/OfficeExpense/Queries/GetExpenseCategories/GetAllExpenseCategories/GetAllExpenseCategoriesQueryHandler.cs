@@ -3,6 +3,7 @@ using Inventory_Management_System.Features.OfficeExpense.Queries.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.OfficeExpense.Queries.GetExpenseCategories.GetAllExpenseCategories
 {
@@ -24,9 +25,10 @@ namespace Inventory_Management_System.Features.OfficeExpense.Queries.GetExpenseC
             try
             {
                 var expenseCategories = await _dbContext.ExpenseCategories
-                    .Where(ec => ec.IsActive == 1)
+                    .Where(ec => ec.IsActive == (int)EntityStatus.Active)
                     .Select(ec => new ExpenseCategoriesResponse
                     {
+                        Id = ec.Id,
                         Name = ec.Name,
                         Description = ec.Description
                     }).ToListAsync(cancellationToken);

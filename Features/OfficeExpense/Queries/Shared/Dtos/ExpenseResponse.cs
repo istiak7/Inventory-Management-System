@@ -2,6 +2,9 @@
 {
     public class ExpenseResponse
     {
+        public int Id { get; set; }
+        public int BranchId { get; set; }
+        public int ExpenseCategoryId { get; set; }
         public string Expensecategories { get; set; } = string.Empty;
         public string ExpenseName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
