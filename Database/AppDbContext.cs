@@ -1,5 +1,4 @@
 using Inventory_Management_System.Entities;
-using Inventory_Management_System.Shared.CurrentUser;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -259,6 +258,8 @@ namespace Inventory_Management_System.Database
         public DbSet<WarrantyClaim> WarrantyClaims { get; set; }
         public DbSet<StockTransfer> StockTransfers { get; set; }
         public DbSet<StockTransferDetails> StockTransferDetails { get; set; }
+        public DbSet<ExpenseCategory> ExpenseCategories { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
         public DbSet<Role> Roles { get; set; }
