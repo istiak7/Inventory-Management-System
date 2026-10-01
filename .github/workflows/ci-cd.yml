@@ -1,0 +1,78 @@
+# CI/CD for the backend (same file name in the frontend repo).
+#
+# CI: every push and pull request -> build, check that no database migration is missing,
+#     and build the Docker image.
+# CD: when CI passes on the Development branch -> log in to the VPS with SSH and run
+#     scripts/deploy.sh, which pulls the code, backs up the database, rebuilds and health-checks.
+#
+# Secrets (Settings > Secrets and variables > Actions), same names in both repos:
+#   SERVER = VPS IP or host name   USER = SSH user   PASS = SSH password
+# See DEPLOY.md, "Automatic deploy (CI/CD)".
+
+name: CI/CD
+
+on:
+  push:
+    branches: [Development-Inventory-Management]
+  pull_request:
+    branches: [Development-Inventory-Management]
+  workflow_dispatch: # "Run workflow" button: redeploy by hand
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Build and check
+    runs-on: ubuntu-latest
+    env:
+      # Only for the design-time EF tools; nothing connects to a database here.
+      ConnectionStrings__DbConnectionString: "Host=localhost;Database=ci;Username=ci;Password=ci"
+      JwtSettings__SecretKey: "ci-only-key-0123456789-abcdefghijklmnopqrstuvwxyz"
+      AllowedOrigins__0: "http://localhost"
+      ASPNETCORE_ENVIRONMENT: Production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Check that no database migration is missing
+        run: |
+          dotnet tool install --global dotnet-ef --version "10.*"
+          dotnet ef migrations has-pending-model-changes
+
+      - name: Build Docker image
+        run: docker build -t inventory-backend-ci .
+
+  deploy:
+    name: Deploy to VPS
+    needs: ci
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/Development-Inventory-Management'
+    runs-on: ubuntu-latest
+    # One deploy of this repo at a time; the server script also waits for the frontend's deploy.
+    concurrency:
+      group: deploy-vps
+      cancel-in-progress: false
+    env:
+      VPS_SERVER: ${{ secrets.SERVER }}
+      VPS_USER: ${{ secrets.USER }}
+      SSHPASS: ${{ secrets.PASS }} # read by "sshpass -e", never printed
+    steps:
+      - name: Deploy
+        run: |
+          if [ -z "$VPS_SERVER" ]; then
+            echo "Deploy is not configured yet: add the SERVER, USER and PASS secrets (see DEPLOY.md)."
+            exit 0
+          fi
+          sudo apt-get update -qq >/dev/null && sudo apt-get install -y -qq sshpass >/dev/null
+          sshpass -e ssh -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 \
+            "$VPS_USER@$VPS_SERVER" \
+            'bash ~/inventory/Inventory-Management-System/scripts/deploy.sh backend'

@@ -12,3 +12,4 @@ appsettings.Development.json
 appsettings.Ashik.json
 appsettings.Istiak.json
 *.user
+backups/
