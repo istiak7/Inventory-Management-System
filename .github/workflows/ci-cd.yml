@@ -75,4 +75,4 @@ jobs:
           sudo apt-get update -qq >/dev/null && sudo apt-get install -y -qq sshpass >/dev/null
           sshpass -e ssh -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 \
             "$VPS_USER@$VPS_SERVER" \
-            'bash ~/inventory/Inventory-Management-System/scripts/deploy.sh backend'
+            'bash ~/Inventory-Management-System/scripts/deploy.sh backend'

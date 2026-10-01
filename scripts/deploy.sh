@@ -2,10 +2,10 @@
 # Deploys the newest code of one repo on the server. Run by GitHub Actions (CI/CD) over SSH,
 # or by hand:
 #
-#   bash ~/inventory/Inventory-Management-System/scripts/deploy.sh backend
-#   bash ~/inventory/Inventory-Management-System/scripts/deploy.sh frontend
+#   bash ~/Inventory-Management-System/scripts/deploy.sh backend
+#   bash ~/Inventory-Management-System/scripts/deploy.sh frontend
 #
-# Expects both repos side by side (see DEPLOY.md):
+# Expects both repos side by side, e.g. in the home folder (see DEPLOY.md):
 #   <folder>/Inventory-Management-System/      <- this repo (has docker-compose.yml and .env)
 #   <folder>/inventory-management-frontend/
 #

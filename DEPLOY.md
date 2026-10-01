@@ -53,19 +53,19 @@ EOF
 Now download both repositories:
 
 ```bash
-mkdir -p ~/inventory && cd ~/inventory
+cd ~
 
 git clone -b Development-Inventory-Management https://github.com/istiak7/Inventory-Management-System.git
 git clone -b Development git@github-frontend:walid123780/inventory-management-frontend.git
 ```
 
-Use exactly this folder (`~/inventory`) and these folder names: the automatic deploy (CI/CD)
-expects them.
+Use exactly these places (your home folder, `~`) and these folder names: the automatic deploy
+(CI/CD) expects them.
 
 You should now have:
 
 ```
-~/inventory/
+~/                                  (your home folder)
   Inventory-Management-System/
   inventory-management-frontend/
 ```
@@ -73,7 +73,7 @@ You should now have:
 ## 3. Create the settings file `.env` (one time)
 
 ```bash
-cd ~/inventory/Inventory-Management-System
+cd ~/Inventory-Management-System
 cp .env.example .env
 nano .env
 ```
@@ -94,7 +94,7 @@ Change **every** value:
 ## 4. Start
 
 ```bash
-cd ~/inventory/Inventory-Management-System
+cd ~/Inventory-Management-System
 docker compose up -d --build
 ```
 
@@ -122,9 +122,9 @@ an admin opens the user, types a **New password**, and saves.
 ## Update to a new version
 
 ```bash
-cd ~/inventory/Inventory-Management-System && git pull
-cd ~/inventory/inventory-management-frontend && git pull
-cd ~/inventory/Inventory-Management-System && docker compose up -d --build
+cd ~/Inventory-Management-System && git pull
+cd ~/inventory-management-frontend && git pull
+cd ~/Inventory-Management-System && docker compose up -d --build
 ```
 
 The data is kept (it lives in the Docker volume `postgres_data`, not in the containers).
@@ -146,7 +146,7 @@ Backend branch: `Development-Inventory-Management`. Frontend branch: `Developmen
 
 ### One-time setup
 
-1. **Server.** Do steps 1–5 above first (both repos in `~/inventory`, `.env`, first start).
+1. **Server.** Do steps 1–5 above first (both repos in your home folder `~`, `.env`, first start).
    The SSH user must be allowed to use Docker (`sudo usermod -aG docker <user>`, then log in
    again) and to log in with a password (`PasswordAuthentication yes` in
    `/etc/ssh/sshd_config`, then `sudo systemctl restart ssh`).
@@ -168,14 +168,14 @@ Backend branch: `Development-Inventory-Management`. Frontend branch: `Developmen
 
 - **See a deploy:** GitHub → the repository → **Actions** tab → the newest "CI/CD" run.
 - **Deploy again by hand:** Actions → CI/CD → **Run workflow**.
-- **Deploy from the server itself:** `bash ~/inventory/Inventory-Management-System/scripts/deploy.sh backend`
+- **Deploy from the server itself:** `bash ~/Inventory-Management-System/scripts/deploy.sh backend`
   (or `frontend`).
 - **Undo a bad change:** revert the commit (`git revert <commit>`) and push. CD deploys the
   reverted code. If the database must go back too, restore the backup that the backend deploy
-  made in `~/inventory/Inventory-Management-System/backups/` (the 10 newest are kept):
+  made in `~/Inventory-Management-System/backups/` (the 10 newest are kept):
 
   ```bash
-  docker exec -i inventory-postgres-db pg_restore -U postgres -d Inventory-Management --clean --if-exists < ~/inventory/Inventory-Management-System/backups/<file>.dump
+  docker exec -i inventory-postgres-db pg_restore -U postgres -d Inventory-Management --clean --if-exists < ~/Inventory-Management-System/backups/<file>.dump
   ```
 
 | Deploy problem | What to do |
