@@ -75,4 +75,13 @@ jobs:
           sudo apt-get update -qq >/dev/null && sudo apt-get install -y -qq sshpass >/dev/null
           sshpass -e ssh -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 \
             "$VPS_USER@$VPS_SERVER" \
-            'bash ~/Inventory-Management-System/scripts/deploy.sh backend'
+            'set -e
+            cd ~/Inventory-Management-System
+            # First deploy on a server cloned before CI/CD existed: get the deploy script.
+            if [ ! -f scripts/deploy.sh ]; then
+              echo "First deploy: updating the backend repo to get scripts/deploy.sh"
+              git fetch origin Development-Inventory-Management
+              git checkout Development-Inventory-Management
+              git merge --ff-only origin/Development-Inventory-Management
+            fi
+            bash scripts/deploy.sh backend'
