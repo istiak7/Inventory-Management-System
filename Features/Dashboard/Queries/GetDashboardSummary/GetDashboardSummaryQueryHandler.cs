@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Dashboard.Shared.Dtos;
 using Inventory_Management_System.Features.Reports.Shared;
 using Inventory_Management_System.Shared;
@@ -26,8 +27,11 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
             {
                 #region Stock: value, counts, categories, alerts
 
-                // Average purchase cost per variant, from what was really received
-                // (the same rule the sale uses for its cost of goods sold).
+                // Stock is valued by the same rule a sale uses for its cost of goods sold
+                // (ProductCostResolver): a serialized unit at the price of the purchase line it
+                // arrived on, anything else at the average cost of what was received. Valuing
+                // serialized stock at the average instead made purchases no longer equal cost of
+                // goods sold plus stock on hand whenever the same item was bought at two prices.
                 var averageCosts = await _dbContext.SupplierPurchaseDetails
                     .AsNoTracking()
                     .Where(d => d.ReceivedQuantity != null && d.ReceivedQuantity > 0)
@@ -43,11 +47,29 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
                         x => x.Quantity == 0 ? 0m : x.Amount / x.Quantity,
                         cancellationToken);
 
+                // In-stock serials per branch and variant, with what each of them cost.
+                var serialCosts = await _dbContext.ProductSerials
+                    .AsNoTracking()
+                    .Where(s => s.Status == SerialStatus.InStock)
+                    .GroupBy(s => new { s.BranchId, s.ProductVariantId })
+                    .Select(g => new
+                    {
+                        g.Key.BranchId,
+                        g.Key.ProductVariantId,
+                        Count = g.Count(),
+                        Cost = g.Sum(s => s.SupplierPurchaseDetails.UnitPrice),
+                    })
+                    .ToDictionaryAsync(
+                        x => (x.BranchId, x.ProductVariantId),
+                        x => (x.Count, x.Cost),
+                        cancellationToken);
+
                 // One row per product at a branch.
                 var stockRows = await _dbContext.Stocks
                     .AsNoTracking()
                     .Select(s => new
                     {
+                        s.BranchId,
                         s.ProductVariantId,
                         s.ProductVariant.SKU,
                         s.ProductVariant.Product.ProductName,
@@ -57,10 +79,18 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
                     })
                     .ToListAsync(cancellationToken);
 
-                decimal ValueOf(int variantId, int quantity) =>
-                    quantity * averageCosts.GetValueOrDefault(variantId);
+                decimal ValueOf(int branchId, int variantId, int quantity)
+                {
+                    var average = averageCosts.GetValueOrDefault(variantId);
+                    if (!serialCosts.TryGetValue((branchId, variantId), out var serials))
+                        return quantity * average;
 
-                var stockValue = GrossProfitMath.Round(stockRows.Sum(r => ValueOf(r.ProductVariantId, r.CurrentStock)));
+                    // Units the serial table does not account for (should be none) still count,
+                    // at the average, so the value never drops below what the stock count implies.
+                    return serials.Cost + Math.Max(0, quantity - serials.Count) * average;
+                }
+
+                var stockValue = GrossProfitMath.Round(stockRows.Sum(r => ValueOf(r.BranchId, r.ProductVariantId, r.CurrentStock)));
 
                 var activeItems = stockRows
                     .Where(r => r.CurrentStock > 0)
@@ -78,7 +108,7 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
                     .GroupBy(r => r.CategoryName)
                     .Select(g => new DashboardCategoryValue(
                         g.Key,
-                        GrossProfitMath.Round(g.Sum(r => ValueOf(r.ProductVariantId, r.CurrentStock)))))
+                        GrossProfitMath.Round(g.Sum(r => ValueOf(r.BranchId, r.ProductVariantId, r.CurrentStock)))))
                     .Where(c => c.Value > 0)
                     .OrderByDescending(c => c.Value)
                     .ToList();
