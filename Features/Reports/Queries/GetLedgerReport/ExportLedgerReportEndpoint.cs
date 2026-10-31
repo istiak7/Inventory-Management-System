@@ -36,8 +36,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                 var summary = report.Summary;
 
                 var bytes = ReportWorkbook.Build(
-                    "Ledger",
-                    "Ledger Report",
+                    "Party Ledger",
+                    "Party Ledger",
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
@@ -69,7 +69,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                     });
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
-                    ReportWorkbook.FileName("Ledger", startDate, endDate));
+                    ReportWorkbook.FileName("Party_Ledger", startDate, endDate));
             }).WithTags("Reports").RequirePermission(Permissions.ReportsView);
         }
     }

@@ -34,7 +34,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetExpenseReport
 
                 var bytes = ReportWorkbook.Build(
                     "Expenses",
-                    "Office Expense Report",
+                    "Office Expenses",
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
@@ -64,7 +64,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetExpenseReport
                     });
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
-                    ReportWorkbook.FileName("Office_Expense", startDate, endDate));
+                    ReportWorkbook.FileName("Office_Expenses", startDate, endDate));
             }).WithTags("Reports").RequirePermission(Permissions.ReportsView);
         }
     }

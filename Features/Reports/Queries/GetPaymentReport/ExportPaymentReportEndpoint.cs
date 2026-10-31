@@ -37,7 +37,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
 
                 var bytes = ReportWorkbook.Build(
                     "Payments",
-                    "Payment Report",
+                    "Payments",
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
@@ -75,7 +75,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
                     });
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
-                    ReportWorkbook.FileName("Payment", startDate, endDate));
+                    ReportWorkbook.FileName("Payments", startDate, endDate));
             }).WithTags("Reports").RequirePermission(Permissions.ReportsView);
         }
     }

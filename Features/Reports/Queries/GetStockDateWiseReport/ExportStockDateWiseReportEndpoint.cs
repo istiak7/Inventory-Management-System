@@ -35,8 +35,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetStockDateWiseR
                 var summary = report.Summary;
 
                 var bytes = ReportWorkbook.Build(
-                    "Stock Date-wise",
-                    "Stock Report (Date-wise)",
+                    "Stock Movement",
+                    "Stock Movement",
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
@@ -75,7 +75,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetStockDateWiseR
                     });
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
-                    ReportWorkbook.FileName("Stock_Datewise", startDate, endDate));
+                    ReportWorkbook.FileName("Stock_Movement", startDate, endDate));
             }).WithTags("Reports").RequirePermission(Permissions.ReportsView);
         }
     }

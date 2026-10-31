@@ -35,8 +35,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
                 var summary = report.Summary;
 
                 var bytes = ReportWorkbook.Build(
-                    "Party Purchase",
-                    "Party Purchase Report",
+                    "Supplier Purchases",
+                    "Supplier Purchases",
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
@@ -74,7 +74,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
                     });
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
-                    ReportWorkbook.FileName("Party_Purchase", startDate, endDate));
+                    ReportWorkbook.FileName("Supplier_Purchases", startDate, endDate));
             }).WithTags("Reports").RequirePermission(Permissions.ReportsView);
         }
 

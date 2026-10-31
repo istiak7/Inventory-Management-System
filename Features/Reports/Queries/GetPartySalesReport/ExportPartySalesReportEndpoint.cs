@@ -34,8 +34,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
                 var summary = report.Summary;
 
                 var bytes = ReportWorkbook.Build(
-                    "Party Sales",
-                    "Party Sales Report",
+                    "Customer Sales",
+                    "Customer Sales",
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
@@ -78,7 +78,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
                     });
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
-                    ReportWorkbook.FileName("Party_Sales", startDate, endDate));
+                    ReportWorkbook.FileName("Customer_Sales", startDate, endDate));
             }).WithTags("Reports").RequirePermission(Permissions.ReportsView);
         }
 
