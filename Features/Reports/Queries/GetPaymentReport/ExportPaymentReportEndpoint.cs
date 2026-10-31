@@ -70,6 +70,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
                         new("Payments", summary.PaymentCount, ReportWorkbook.WholeNumberFormat),
                         new("Total received", summary.TotalReceived, ReportWorkbook.MoneyFormat),
                         new("Total paid", summary.TotalPaid, ReportWorkbook.MoneyFormat),
+                        new("Of which office expenses", summary.TotalExpenses, ReportWorkbook.MoneyFormat),
                         new("Net amount", summary.NetAmount, ReportWorkbook.MoneyFormat),
                     });
 

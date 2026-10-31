@@ -24,8 +24,11 @@ namespace Inventory_Management_System.Features.Reports.Shared.Dtos
     public sealed record PaymentReportSummary(
         long PaymentCount,
         decimal TotalReceived,
+        // Every outflow: supplier payments plus office expenses.
         decimal TotalPaid,
-        decimal NetAmount
+        decimal NetAmount,
+        // The office-expense share of TotalPaid.
+        decimal TotalExpenses
     );
 
     public sealed record PaymentReportResponse(

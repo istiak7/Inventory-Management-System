@@ -26,6 +26,9 @@ namespace Inventory_Management_System.Features.Reports.Shared
         public const string PartiallyAllocated = "PartiallyAllocated";
         public const string Unallocated = "Unallocated";
 
+        /// <summary>An office expense: spent in full when recorded, with no invoice to allocate to.</summary>
+        public const string Expense = "Expense";
+
         public static string For(decimal amount, decimal allocatedAmount)
         {
             if (allocatedAmount <= 0m) return Unallocated;
