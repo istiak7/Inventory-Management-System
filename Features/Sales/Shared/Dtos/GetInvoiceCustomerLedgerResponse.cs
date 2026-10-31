@@ -6,7 +6,8 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         int WarrantyMonths,
         int Quantity,
         decimal UnitPrice,
-        decimal TotalPrice
+        decimal TotalPrice,
+        decimal DiscountPerItem
     );
 
     public sealed record GetInvoiceCustomerLedgerResponse(
@@ -21,6 +22,11 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal TotalAmount,
         decimal PaidAmount,
         decimal DueBeforeAmount,
-        decimal DueAmount
+        decimal DueAmount,
+        // The lines add up to SubTotal; TotalAmount is SubTotal + TaxAmount - DiscountAmount.
+        // Without these the printed receipt's lines did not add up to its total.
+        decimal SubTotal,
+        decimal DiscountAmount,
+        decimal TaxAmount
     );
 }

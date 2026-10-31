@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Inventory_Management_System.Shared;
 
 namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpense
 {
@@ -18,7 +19,7 @@ namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpen
             RuleFor(x => x.ExpenseCategoryId)
                 .GreaterThan(0).WithMessage("Expense Category ID must be greater than zero.");
             RuleFor(x => x.ExpenseDate)
-                .LessThanOrEqualTo(DateTime.Now).WithMessage("Expense date cannot be in the future.");
+                .NotInFuture().WithMessage("Expense date cannot be in the future.");
         }
     }
 }

@@ -19,5 +19,15 @@ namespace Inventory_Management_System.Shared
         public static IRuleBuilderOptions<T, DateTime?> NotInFuture<T>(this IRuleBuilder<T, DateTime?> rule) =>
             rule.Must(d => d is null || d.Value.ToUniversalTime() <= DateTime.UtcNow.AddDays(1))
                 .WithMessage("{PropertyName} cannot be in the future.");
+
+        /// <inheritdoc cref="NotInFuture{T}(IRuleBuilder{T, DateTime?})"/>
+        public static IRuleBuilderOptions<T, DateTime> NotInFuture<T>(this IRuleBuilder<T, DateTime> rule) =>
+            rule.Must(d => d.ToUniversalTime() <= DateTime.UtcNow.AddDays(1))
+                .WithMessage("{PropertyName} cannot be in the future.");
+
+        /// <summary>The method is one the shop actually takes (see <see cref="PaymentMethods"/>).</summary>
+        public static IRuleBuilderOptions<T, string> KnownPaymentMethod<T>(this IRuleBuilder<T, string> rule) =>
+            rule.Must(PaymentMethods.IsKnown)
+                .WithMessage($"Payment method must be one of: {string.Join(", ", PaymentMethods.All)}.");
     }
 }

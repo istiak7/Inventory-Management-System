@@ -3,6 +3,8 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Repository;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpense
 {
@@ -23,6 +25,27 @@ namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpen
         }
         public async Task<Result> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
         {
+            // Checked up front: an unknown category or branch otherwise fails as a foreign-key
+            // error on save and reaches the user as "An error occurred while creating the expense."
+            if (!await _context.ExpenseCategories.AnyAsync(c => c.Id == request.ExpenseCategoryId && c.IsActive == (int)EntityStatus.Active, cancellationToken))
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "The selected expense category does not exist or is no longer active.",
+                    Data = null
+                };
+            if (!await _context.Branches.AnyAsync(b => b.Id == request.BranchId, cancellationToken))
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "The selected warehouse does not exist.",
+                    Data = null
+                };
+
             try
             {
                 var currentUserId = _currentUser.UserId??6;

@@ -55,7 +55,7 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                         t.SaleId != null
                             ? (t.CustomerSale!.InvoiceNumber ?? ("SAL-" + t.SaleId))
                             : t.CustomerPaymentId != null
-                                ? ("PAY-" + t.CustomerPaymentId)
+                                ? ("RCV-" + t.CustomerPaymentId)
                                 : ("TXN-" + t.Id),
                         t.Debit,
                         t.Credit,

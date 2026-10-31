@@ -293,7 +293,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                     t.SaleId != null
                         ? (t.CustomerSale!.InvoiceNumber ?? ("SAL-" + t.SaleId))
                         : t.CustomerPaymentId != null
-                            ? ("PAY-" + t.CustomerPaymentId)
+                            ? ("RCV-" + t.CustomerPaymentId)
                             : ("TXN-" + t.Id),
                     t.SaleId != null
                         ? t.CustomerSale!.Remarks

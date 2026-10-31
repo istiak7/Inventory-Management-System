@@ -26,6 +26,9 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                         CustomerAddress = s.Customer.Address,
                         MobileNumber = s.Customer.PhoneNumber,
                         BranchName = s.Branch.Name,
+                        s.SubTotal,
+                        s.DiscountAmount,
+                        s.TaxAmount,
                         s.TotalAmount,
                         Items = s.SaleDetails
                             .OrderBy(d => d.Id)
@@ -36,6 +39,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                                 Quantity = d.Quantity,
                                 d.UnitPrice,
                                 d.TotalAmount,
+                                DiscountPerItem = d.DiscountPerItem ?? 0,
                             })
                             .ToList(),
                         Allocations = s.SaleCustomerPayments
@@ -86,7 +90,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                         d.WarrantyMonths,
                         d.Quantity,
                         d.UnitPrice,
-                        d.TotalAmount))
+                        d.TotalAmount,
+                        d.DiscountPerItem))
                     .ToList();
 
                 var response = new GetInvoiceCustomerLedgerResponse(
@@ -101,7 +106,10 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                     sale.TotalAmount,
                     allocation.Amount,
                     dueBefore,
-                    dueAfter);
+                    dueAfter,
+                    sale.SubTotal,
+                    sale.DiscountAmount,
+                    sale.TaxAmount);
 
                 return new Result
                 {
