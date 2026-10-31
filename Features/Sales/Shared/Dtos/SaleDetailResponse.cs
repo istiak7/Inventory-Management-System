@@ -21,6 +21,9 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal DueAmount,
         int ItemsCount,
         IReadOnlyList<SaleLineResponse> Items,
-        IReadOnlyList<SalePaymentResponse> Payments
+        IReadOnlyList<SalePaymentResponse> Payments,
+        // Name of the user who entered the sale (CreatedById); null for sales recorded before
+        // audit stamping, or by a user since removed.
+        string? PreparedBy
     );
 }

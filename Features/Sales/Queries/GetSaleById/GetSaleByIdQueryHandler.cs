@@ -38,6 +38,10 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                         s.TotalAmount,
                         s.PaidAmount,
                         s.DueAmount,
+                        PreparedBy = _dbContext.Users
+                            .Where(u => u.Id == s.CreatedById)
+                            .Select(u => u.Name)
+                            .FirstOrDefault(),
                         Lines = s.SaleDetails.Select(d => new
                         {
                             d.Id,
@@ -85,7 +89,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                         l.Quantity, l.UnitPrice, l.DiscountPerItem, l.TotalAmount,
                         l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList(),
                     sale.Payments.Select(p => new SalePaymentResponse(
-                        p.CustomerPaymentId, p.Amount, p.PaymentDate, p.PaymentMethod)).ToList());
+                        p.CustomerPaymentId, p.Amount, p.PaymentDate, p.PaymentMethod)).ToList(),
+                    sale.PreparedBy);
 
                 return new Result
                 {
