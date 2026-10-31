@@ -20,6 +20,16 @@ namespace Inventory_Management_System.Features.Reports.Shared
             IsAll(direction) || IncludesReceived(direction) || IncludesPaid(direction);
     }
 
+    /// <summary>
+    /// Sales and purchases are Cash or Credit. Credit is stored as the "Debit" SaleType /
+    /// PurchaseType, so exports print it under the name the shop uses.
+    /// </summary>
+    public static class ReportPaymentTerms
+    {
+        public static string Label(string? type) =>
+            string.Equals(type, "Debit", StringComparison.OrdinalIgnoreCase) ? "Credit" : type ?? string.Empty;
+    }
+
     public static class ReportPaymentStatuses
     {
         public const string Allocated = "Allocated";

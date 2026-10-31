@@ -39,7 +39,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
-                        ("Sale type", ReportWorkbook.Or(saleType)),
+                        ("Sale type", ReportWorkbook.Or(string.IsNullOrWhiteSpace(saleType) ? null : ReportPaymentTerms.Label(saleType))),
                         ("Invoice", ReportWorkbook.Or(invoiceNumber, "-")),
                         ("Search", ReportWorkbook.Or(search, "-")),
                         ("Rows", rows.Count.ToString()),
@@ -51,7 +51,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
                         new("Customer", r => r.CustomerName),
                         new("Phone", r => r.PhoneNumber),
                         new("Warehouse", r => r.BranchName),
-                        new("Sale type", r => r.SaleType),
+                        new("Sale type", r => ReportPaymentTerms.Label(r.SaleType)),
                         new("Status", r => r.Status),
                         new("Sub total", r => r.SubTotal, ReportWorkbook.MoneyFormat),
                         new("Discount", r => r.DiscountAmount, ReportWorkbook.MoneyFormat),

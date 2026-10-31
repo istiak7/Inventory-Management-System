@@ -40,7 +40,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
                     new[]
                     {
                         ("Date range", ReportWorkbook.DateRangeLabel(startDate, endDate)),
-                        ("Purchase type", ReportWorkbook.Or(purchaseType)),
+                        ("Purchase type", ReportWorkbook.Or(string.IsNullOrWhiteSpace(purchaseType) ? null : ReportPaymentTerms.Label(purchaseType))),
                         ("Status", ReportWorkbook.Or(status)),
                         ("Invoice", ReportWorkbook.Or(invoiceNumber, "-")),
                         ("Search", ReportWorkbook.Or(search, "-")),
@@ -53,7 +53,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
                         new("Supplier", r => r.SupplierName),
                         new("Phone", r => r.PhoneNumber),
                         new("Warehouse", r => r.BranchName),
-                        new("Purchase type", r => r.PurchaseType ?? string.Empty),
+                        new("Purchase type", r => ReportPaymentTerms.Label(r.PurchaseType)),
                         new("Status", r => r.Status),
                         new("Total", r => r.TotalAmount, ReportWorkbook.MoneyFormat),
                         new("Paid", r => r.PaidAmount, ReportWorkbook.MoneyFormat),
