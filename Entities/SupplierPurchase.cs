@@ -10,6 +10,9 @@ namespace Inventory_Management_System.Entities
         public string InvoiceNumber { get; set; } = string.Empty;
         public PurchaseStatus Status { get; set; } = PurchaseStatus.Pending;  
         public PurchaseType? PurchaseType { get; set; }
+        /// <summary>Overall discount agreed with the supplier for the whole invoice.</summary>
+        public decimal DiscountAmount { get; set; }
+        /// <summary>Net payable: the lines, less DiscountAmount.</summary>
         public decimal TotalAmount { get; set; }   
         public decimal PaidAmount { get; set; }  
         public decimal DueAmount { get; set; }      

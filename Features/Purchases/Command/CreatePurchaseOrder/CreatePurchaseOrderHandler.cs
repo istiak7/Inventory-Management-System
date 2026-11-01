@@ -113,9 +113,22 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     });
                 }
 
-                purchase.TotalAmount = totalAmount;
+                if (request.DiscountAmount > totalAmount)
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"DiscountAmount {request.DiscountAmount} exceeds the subtotal {totalAmount}."
+                    };
+
+                // TotalAmount is the net payable, so the supplier ledger, dues and reports all
+                // see the discounted figure.
+                var netAmount = totalAmount - request.DiscountAmount;
+                purchase.DiscountAmount = request.DiscountAmount;
+                purchase.TotalAmount = netAmount;
                 purchase.PaidAmount = 0;
-                purchase.DueAmount = totalAmount;
+                purchase.DueAmount = netAmount;
 
                 await _dbContext.SupplierPurchases.AddAsync(purchase, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);

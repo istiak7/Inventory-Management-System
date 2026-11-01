@@ -29,6 +29,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         decimal TotalAmount,
         decimal PaidAmount,
         decimal DueAmount,
+        decimal DiscountAmount,
         IReadOnlyList<PurchaseOrderDetailLineResponse> Items
     );
 }

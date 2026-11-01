@@ -26,6 +26,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                         SupplierAddress = p.Supplier.Description,
                         MobileNumber = p.Supplier.PhoneNumber,
                         BranchName = p.Branch.Name,
+                        p.DiscountAmount,
                         p.TotalAmount,
                         Items = p.SupplierPurchaseDetails
                             .OrderBy(d => d.Id)
@@ -98,6 +99,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                     allocation.PaymentMethod,
                     purchase.BranchName,
                     items,
+                    purchase.DiscountAmount,
                     purchase.TotalAmount,
                     allocation.Amount,
                     dueBefore,

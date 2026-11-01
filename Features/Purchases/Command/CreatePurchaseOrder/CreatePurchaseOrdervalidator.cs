@@ -12,6 +12,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
 
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one purchase item is required.");
             RuleFor(x => x.PurchaseDate).NotInFuture();
+            RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0).WithMessage("DiscountAmount must be 0 or greater.").Money();
 
             RuleForEach(x => x.Items).ChildRules(item =>
             {

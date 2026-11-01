@@ -69,6 +69,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                         p.TotalAmount,
                         p.PaidAmount,
                         p.DueAmount,
+                        p.DiscountAmount,
                         ItemsCount = p.SupplierPurchaseDetails.Count,
                         Lines = p.SupplierPurchaseDetails.Select(d => new
                         {
@@ -90,7 +91,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                 var items = paged.Items.Select(p => new PurchaseOrderListResponse(
                     p.Id, p.SupplierId, p.SupplierName, p.BranchId, p.BranchName,
                     p.InvoiceNumber, p.Remarks, p.PurchaseDate, p.Status.ToString(), p.PurchaseType?.ToString(),
-                    p.TotalAmount, p.PaidAmount, p.DueAmount, p.ItemsCount,
+                    p.TotalAmount, p.PaidAmount, p.DueAmount, p.DiscountAmount, p.ItemsCount,
                     p.Lines.Select(l => new PurchaseOrderLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized, l.OrderedQuantity, l.ReceivedQuantity,
                         l.UnitPrice, l.TotalAmount, l.WarrantyMonths, l.Status.ToString())).ToList()))

@@ -21,6 +21,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     PurchaseDate = request.PurchaseDate,
                     InvoiceNumber = request.InvoiceNumber,
                     Remarks = request.Remarks,
+                    DiscountAmount = request.DiscountAmount,
                     Items = request.Items
                 };
                 var result = await mediator.Send(command);

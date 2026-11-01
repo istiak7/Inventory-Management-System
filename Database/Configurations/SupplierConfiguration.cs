@@ -31,6 +31,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.PurchaseType).HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.Remarks).HasMaxLength(500);
+            builder.Property(s => s.DiscountAmount).HasPrecision(18, 2);
             builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
             builder.Property(s => s.PaidAmount).HasPrecision(18, 2);
             builder.Property(s => s.DueAmount).HasPrecision(18, 2);

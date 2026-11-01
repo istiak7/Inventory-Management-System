@@ -1445,6 +1445,10 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("CreatedById")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<decimal>("DueAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");

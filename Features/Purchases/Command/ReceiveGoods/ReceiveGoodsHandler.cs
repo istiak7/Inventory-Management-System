@@ -204,9 +204,19 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
             // What the supplier is owed once this receipt is saved: the full order, or only
             // what really arrived when the rest is cancelled.
-            var finalTotal = request.CloseRemaining
-                ? decimal.Round(openLines.Sum(d => ReceivedAfter(d) * d.UnitPrice), 2, MidpointRounding.AwayFromZero)
-                : purchase.TotalAmount;
+            // The overall discount was agreed on the whole order, so a short close scales it
+            // down to the share that actually arrived.
+            var finalDiscount = purchase.DiscountAmount;
+            var finalTotal = purchase.TotalAmount;
+            if (request.CloseRemaining)
+            {
+                var orderedSubTotal = purchase.TotalAmount + purchase.DiscountAmount;
+                var receivedSubTotal = decimal.Round(openLines.Sum(d => ReceivedAfter(d) * d.UnitPrice), 2, MidpointRounding.AwayFromZero);
+                finalDiscount = orderedSubTotal > 0
+                    ? decimal.Round(purchase.DiscountAmount * receivedSubTotal / orderedSubTotal, 2, MidpointRounding.AwayFromZero)
+                    : 0m;
+                finalTotal = receivedSubTotal - finalDiscount;
+            }
             var finalDue = finalTotal - purchase.PaidAmount;
 
             PurchaseType? approvalPaymentType = null;
@@ -344,6 +354,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     foreach (var detail in purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected))
                         detail.CloseShort();
 
+                    purchase.DiscountAmount = finalDiscount;
                     purchase.TotalAmount = finalTotal;
                     purchase.DueAmount = finalTotal - purchase.PaidAmount;
                 }

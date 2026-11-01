@@ -158,9 +158,20 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                 }
 
                 // Nothing is paid before approval, so the whole revised total is still due.
-                purchase.TotalAmount = totalAmount;
+                if (request.DiscountAmount > totalAmount)
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = $"DiscountAmount {request.DiscountAmount} exceeds the subtotal {totalAmount}."
+                    };
+
+                var netAmount = totalAmount - request.DiscountAmount;
+                purchase.DiscountAmount = request.DiscountAmount;
+                purchase.TotalAmount = netAmount;
                 purchase.PaidAmount = 0;
-                purchase.DueAmount = totalAmount;
+                purchase.DueAmount = netAmount;
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);

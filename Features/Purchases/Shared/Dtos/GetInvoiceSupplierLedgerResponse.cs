@@ -18,6 +18,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         string BillType,
         string BranchName,
         IReadOnlyList<InvoiceLineItemResponse> Items,
+        decimal DiscountAmount,
         decimal TotalAmount,
         decimal PaidAmount,
         decimal DueBeforeAmount,

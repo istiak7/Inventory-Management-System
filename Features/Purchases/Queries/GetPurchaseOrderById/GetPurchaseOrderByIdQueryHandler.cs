@@ -33,6 +33,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetPurchaseOrde
                         p.TotalAmount,
                         p.PaidAmount,
                         p.DueAmount,
+                        p.DiscountAmount,
                         p.SupplierPurchaseDetails.Select(d => new PurchaseOrderDetailLineResponse(
                             d.Id,
                             d.ProductVariantId,
