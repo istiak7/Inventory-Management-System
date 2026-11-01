@@ -160,11 +160,8 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                     var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
 
-                    var discountPerItem = item.DiscountPerItem ?? 0;
-                    if (discountPerItem > unitPrice)
-                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"DiscountPerItem {discountPerItem} exceeds the unit price {unitPrice} for '{variant.Product.ProductName}'." };
-
-                    var lineTotal = (unitPrice - discountPerItem) * item.Quantity;
+                    // Discounts are taken once, on the invoice (DiscountAmount), never per line.
+                    var lineTotal = unitPrice * item.Quantity;
                     subTotal += lineTotal;
 
                     // Snapshot what this unit cost us, so gross profit for this sale is fixed
@@ -202,7 +199,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         Quantity = item.Quantity,
                         UnitPrice = unitPrice,
                         UnitCost = unitCost,
-                        DiscountPerItem = item.DiscountPerItem,
                         TotalAmount = lineTotal,
                         WarrantyMonths = warrantyMonths,
                         ProductSerialId = serial?.Id,

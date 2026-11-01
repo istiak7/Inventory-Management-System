@@ -7,7 +7,6 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
 
         public decimal? UnitPrice { get; set; }
 
-        public decimal? DiscountPerItem { get; set; }
         public int? WarrantyMonths { get; set; }
 
         public string? SerialNumber { get; set; }

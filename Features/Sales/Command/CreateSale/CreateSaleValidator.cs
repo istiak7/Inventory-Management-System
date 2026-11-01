@@ -52,10 +52,6 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     .When(i => i.UnitPrice.HasValue)
                     .WithMessage("UnitPrice must be greater than 0.");
                 item.RuleFor(i => i.UnitPrice).Money();
-                item.RuleFor(i => i.DiscountPerItem).GreaterThanOrEqualTo(0)
-                    .When(i => i.DiscountPerItem.HasValue)
-                    .WithMessage("DiscountPerItem must be 0 or greater.");
-                item.RuleFor(i => i.DiscountPerItem).Money();
                 item.RuleFor(i => i.WarrantyMonths).GreaterThanOrEqualTo(0)
                     .When(i => i.WarrantyMonths.HasValue)
                     .WithMessage("WarrantyMonths must be 0 or greater.");
