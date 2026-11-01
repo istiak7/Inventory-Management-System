@@ -39,7 +39,6 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                                 Quantity = d.Quantity,
                                 d.UnitPrice,
                                 d.TotalAmount,
-                                DiscountPerItem = d.DiscountPerItem ?? 0,
                             })
                             .ToList(),
                         Allocations = s.SaleCustomerPayments
@@ -90,8 +89,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                         d.WarrantyMonths,
                         d.Quantity,
                         d.UnitPrice,
-                        d.TotalAmount,
-                        d.DiscountPerItem))
+                        d.TotalAmount))
                     .ToList();
 
                 var response = new GetInvoiceCustomerLedgerResponse(

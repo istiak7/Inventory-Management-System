@@ -12,8 +12,6 @@ namespace Inventory_Management_System.Entities
         // even if the product is later bought in at a different price. Serialized units carry the
         // exact cost of the lot they came from; everything else uses the weighted average.
         public decimal UnitCost { get; set; }
-        /// <summary>Legacy: lines are no longer discounted individually. Kept so older invoices still read correctly.</summary>
-        public decimal? DiscountPerItem { get; set; }    
         public decimal TotalAmount { get; set; }         
         public int? WarrantyMonths { get; set; }         
         public int? ProductSerialId { get; set; } 

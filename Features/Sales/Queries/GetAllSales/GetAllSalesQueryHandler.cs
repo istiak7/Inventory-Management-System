@@ -85,7 +85,6 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                             d.ProductVariant.IsSerialized,
                             d.Quantity,
                             d.UnitPrice,
-                            d.DiscountPerItem,
                             d.TotalAmount,
                             d.WarrantyMonths,
                             d.Status,
@@ -102,7 +101,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                     s.PaidAmount, s.DueAmount, s.ItemsCount,
                     s.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
-                        l.Quantity, l.UnitPrice, l.DiscountPerItem, l.TotalAmount,
+                        l.Quantity, l.UnitPrice, l.TotalAmount,
                         l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList()))
                     .ToList();
 

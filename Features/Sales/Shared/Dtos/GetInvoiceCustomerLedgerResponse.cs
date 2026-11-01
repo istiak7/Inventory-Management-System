@@ -6,8 +6,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         int WarrantyMonths,
         int Quantity,
         decimal UnitPrice,
-        decimal TotalPrice,
-        decimal DiscountPerItem
+        decimal TotalPrice
     );
 
     public sealed record GetInvoiceCustomerLedgerResponse(
