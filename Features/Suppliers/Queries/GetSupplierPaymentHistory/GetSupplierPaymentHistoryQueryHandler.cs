@@ -49,23 +49,32 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierPaym
                         pp.SupplierPayment.SupplierId,
                         pp.SupplierPayment.Supplier.Name,
                         pp.SupplierPayment.Amount,
+                        // Account balance after the whole payment; before = after + money paid + discount waived.
                         (_dbContext.SupplierTransactions
-                            .Where(t => t.SupplierPaymentId == pp.SupplierPaymentId)
+                            .Where(t => t.SupplierPaymentId == pp.SupplierPaymentId && t.TransactionType == "Payment")
                             .Select(t => (decimal?)t.BalanceAfter)
-                            .FirstOrDefault() ?? 0m) + pp.SupplierPayment.Amount,
+                            .FirstOrDefault() ?? 0m)
+                            + pp.SupplierPayment.Amount
+                            + (pp.SupplierPayment.SupplierPurchasePayments.Sum(x => (decimal?)x.Discount) ?? 0m),
                         _dbContext.SupplierTransactions
-                            .Where(t => t.SupplierPaymentId == pp.SupplierPaymentId)
+                            .Where(t => t.SupplierPaymentId == pp.SupplierPaymentId && t.TransactionType == "Payment")
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0m,
-                        pp.SupplierPurchase.TotalAmount,
+                        // Invoice total before any payment-time discount, and the dues around this
+                        // allocation — counting money paid and discount waived at each step.
                         pp.SupplierPurchase.TotalAmount
+                            + (pp.SupplierPurchase.SupplierPurchasePayments.Sum(x => (decimal?)x.Discount) ?? 0m),
+                        pp.SupplierPurchase.TotalAmount
+                            + (pp.SupplierPurchase.SupplierPurchasePayments.Sum(x => (decimal?)x.Discount) ?? 0m)
                             - (pp.SupplierPurchase.SupplierPurchasePayments
                                 .Where(x => x.Id < pp.Id)
-                                .Sum(x => (decimal?)x.Amount) ?? 0m),
+                                .Sum(x => (decimal?)(x.Amount + x.Discount)) ?? 0m),
                         pp.SupplierPurchase.TotalAmount
+                            + (pp.SupplierPurchase.SupplierPurchasePayments.Sum(x => (decimal?)x.Discount) ?? 0m)
                             - (pp.SupplierPurchase.SupplierPurchasePayments
                                 .Where(x => x.Id <= pp.Id)
-                                .Sum(x => (decimal?)x.Amount) ?? 0m)))
+                                .Sum(x => (decimal?)(x.Amount + x.Discount)) ?? 0m),
+                        pp.Discount))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result

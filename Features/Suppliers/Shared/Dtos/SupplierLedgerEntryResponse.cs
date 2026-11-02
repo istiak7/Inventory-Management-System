@@ -11,6 +11,8 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         decimal Credit,
         decimal BalanceAfter,
         IReadOnlyList<string> Invoices,
-        string? Remarks
+        string? Remarks,
+        // Current outstanding due on the invoice, for a Purchase row only (null otherwise).
+        decimal? InvoiceDueAmount
     );
 }

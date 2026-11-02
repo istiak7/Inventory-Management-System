@@ -26,6 +26,8 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         // Without these the printed receipt's lines did not add up to its total.
         decimal SubTotal,
         decimal DiscountAmount,
-        decimal TaxAmount
+        decimal TaxAmount,
+        // Discount waived on this invoice during this very payment (0 when none).
+        decimal DiscountNow
     );
 }

@@ -47,6 +47,23 @@ namespace Inventory_Management_System.Entities
             };
         }
 
+        // A discount given while taking a payment: we waive part of what the customer owes, so it
+        // lowers the receivable balance just like a payment does (a Debit), but it is not money received.
+        public static CustomerTransaction ForDiscount(CustomerPayment payment, Customer customer, decimal amount, decimal runningBalance)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "Discount",
+                TransactionDate = payment.PaymentDate,
+                Debit = amount,
+                Credit = 0m,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerPayment = payment
+            };
+        }
+
         public static CustomerTransaction ForPayment(CustomerPayment payment, Customer customer, decimal runningBalance, CustomerSale? sale = null)
         {
             return new CustomerTransaction
