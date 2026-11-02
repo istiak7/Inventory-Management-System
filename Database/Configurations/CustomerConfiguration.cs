@@ -101,8 +101,9 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SaleCustomerPayment> builder)
         {
-            builder.HasKey(sp => sp.Id); 
+            builder.HasKey(sp => sp.Id);
             builder.Property(sp => sp.Amount).HasPrecision(18, 2);
+            builder.Property(sp => sp.Discount).HasPrecision(18, 2);
 
             builder.HasOne(sp => sp.CustomerSale)
                    .WithMany(s => s.SaleCustomerPayments)

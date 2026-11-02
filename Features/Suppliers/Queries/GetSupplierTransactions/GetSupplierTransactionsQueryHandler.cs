@@ -80,6 +80,16 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                             ? t.SupplierPurchase!.Remarks
                             : t.SupplierPaymentId != null
                                 ? t.SupplierPayment!.Remarks
+                                : null,
+                        // Current due on the related invoice(s), shown under the invoice number so
+                        // no separate column is needed. A Purchase row carries its own invoice's due;
+                        // a Payment/Discount row carries the total current due of the invoice(s) it
+                        // touched (null for an on-account payment with no allocations).
+                        t.SupplierPurchaseId != null
+                            ? (decimal?)t.SupplierPurchase!.DueAmount
+                            : t.SupplierPaymentId != null
+                                ? t.SupplierPayment!.SupplierPurchasePayments
+                                    .Sum(pp => (decimal?)pp.SupplierPurchase.DueAmount)
                                 : null))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 

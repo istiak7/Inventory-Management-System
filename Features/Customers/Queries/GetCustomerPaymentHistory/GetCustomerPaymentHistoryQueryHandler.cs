@@ -48,23 +48,32 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerPaym
                         sp.CustomerPayment.CustomerId,
                         sp.CustomerPayment.Customer.Name,
                         sp.CustomerPayment.Amount,
+                        // Account balance after the whole payment; before = after + money paid + discount waived.
                         (_dbContext.CustomerTransactions
-                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId)
+                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId && t.TransactionType == "Payment")
                             .Select(t => (decimal?)t.BalanceAfter)
-                            .FirstOrDefault() ?? 0m) + sp.CustomerPayment.Amount,
+                            .FirstOrDefault() ?? 0m)
+                            + sp.CustomerPayment.Amount
+                            + (sp.CustomerPayment.SaleCustomerPayments.Sum(x => (decimal?)x.Discount) ?? 0m),
                         _dbContext.CustomerTransactions
-                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId)
+                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId && t.TransactionType == "Payment")
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0m,
-                        sp.CustomerSale.TotalAmount,
+                        // Invoice total before any payment-time discount, and the dues around this
+                        // allocation — counting money paid and discount waived at each step.
                         sp.CustomerSale.TotalAmount
+                            + (sp.CustomerSale.SaleCustomerPayments.Sum(x => (decimal?)x.Discount) ?? 0m),
+                        sp.CustomerSale.TotalAmount
+                            + (sp.CustomerSale.SaleCustomerPayments.Sum(x => (decimal?)x.Discount) ?? 0m)
                             - (sp.CustomerSale.SaleCustomerPayments
                                 .Where(x => x.Id < sp.Id)
-                                .Sum(x => (decimal?)x.Amount) ?? 0m),
+                                .Sum(x => (decimal?)(x.Amount + x.Discount)) ?? 0m),
                         sp.CustomerSale.TotalAmount
+                            + (sp.CustomerSale.SaleCustomerPayments.Sum(x => (decimal?)x.Discount) ?? 0m)
                             - (sp.CustomerSale.SaleCustomerPayments
                                 .Where(x => x.Id <= sp.Id)
-                                .Sum(x => (decimal?)x.Amount) ?? 0m)))
+                                .Sum(x => (decimal?)(x.Amount + x.Discount)) ?? 0m),
+                        sp.Discount))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result

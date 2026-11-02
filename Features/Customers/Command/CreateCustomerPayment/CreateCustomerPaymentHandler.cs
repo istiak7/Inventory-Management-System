@@ -44,13 +44,25 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     Message = "Branch not found."
                 };
 
-            if (request.Amount <= 0)
+            if (request.Amount < 0)
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = "Payment amount must be greater than 0."
+                    Message = "Payment amount cannot be negative."
+                };
+
+            // Total discount waived across the chosen invoices. A payment may carry money, discount,
+            // or both, but something must move.
+            var totalDiscount = request.Allocations.Sum(a => a.Discount);
+            if (request.Amount <= 0 && totalDiscount <= 0)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Enter a payment amount or a discount."
                 };
 
             // Lock the customer: two payments (or a payment and a sale) for the same customer
@@ -63,13 +75,14 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                 .Where(t => t.CustomerId == request.CustomerId)
                 .GetLatestBalanceAsync(cancellationToken);
 
-            if (request.Amount > balance)
+            // Payment and discount together settle part of the balance, so together they cannot exceed it.
+            if (request.Amount + totalDiscount > balance)
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = $"Payment amount exceeds what the customer owes ({balance:0.00})."
+                    Message = $"Payment and discount exceed what the customer owes ({balance:0.00})."
                 };
 
             foreach (var payment in request.Allocations)
@@ -79,13 +92,13 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                      .Select(s => s.DueAmount)
                      .FirstOrDefaultAsync(cancellationToken);
 
-                if (remainingDueForSale - payment.Amount < 0)
+                if (remainingDueForSale - (payment.Amount + payment.Discount) < 0)
                     return new Result
                     {
                         IsSuccess = false,
                         StatusCode = 400,
                         Status = "Error",
-                        Message = $"Allocation amount for invoice {payment.SaleId} exceeds its remaining due amount."
+                        Message = $"Payment and discount for invoice {payment.SaleId} exceed its remaining due amount."
                     };
             }
 
@@ -93,13 +106,22 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
             List<CustomerSale> targetedSales = [];
             if (hasAllocations)
             {
-                if (request.Allocations.Any(a => a.Amount <= 0))
+                if (request.Allocations.Any(a => a.Amount < 0 || a.Discount < 0))
                     return new Result
                     {
                         IsSuccess = false,
                         StatusCode = 400,
                         Status = "Error",
-                        Message = "Each allocation amount must be greater than 0."
+                        Message = "Allocation amounts and discounts cannot be negative."
+                    };
+
+                if (request.Allocations.Any(a => a.Amount + a.Discount <= 0))
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = "Each chosen invoice must have a payment or a discount greater than 0."
                     };
 
                 if (request.Allocations.GroupBy(a => a.SaleId).Any(g => g.Count() > 1))
@@ -145,13 +167,13 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                             Status = "Error",
                             Message = $"Invoice {alloc.SaleId} has no outstanding due."
                         };
-                    if (alloc.Amount > sale.DueAmount)
+                    if (alloc.Amount + alloc.Discount > sale.DueAmount)
                         return new Result
                         {
                             IsSuccess = false,
                             StatusCode = 400,
                             Status = "Error",
-                            Message = $"Allocation for invoice {alloc.SaleId} exceeds its due amount."
+                            Message = $"Payment and discount for invoice {alloc.SaleId} exceed its due amount."
                         };
                 }
             }
@@ -182,11 +204,14 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     foreach (var alloc in request.Allocations)
                     {
                         var sale = targetedSales.First(s => s.Id == alloc.SaleId);
-                        sale.ApplyPayment(alloc.Amount);
+                        // Discount first: it lowers the due, then the payment settles the rest.
+                        if (alloc.Discount > 0) sale.ApplyDiscount(alloc.Discount);
+                        if (alloc.Amount > 0) sale.ApplyPayment(alloc.Amount);
 
                         await _dbContext.SaleCustomerPayments.AddAsync(new SaleCustomerPayment
                         {
                             Amount = alloc.Amount,
+                            Discount = alloc.Discount,
                             AllocationDate = paymentDate,
                             CustomerSale = sale,
                             CustomerPayment = payment,
@@ -239,12 +264,19 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomerP
                     }
                 }
 
-                var runningBalance = await _dbContext.CustomerTransactions
+                var startBalance = await _dbContext.CustomerTransactions
                     .Where(t => t.CustomerId == request.CustomerId)
                     .GetLatestBalanceAsync(cancellationToken);
 
-                runningBalance -= request.Amount;
+                // A discount lowers the receivable just like a payment, so it gets its own ledger row
+                // first; the payment row follows and carries the final running balance.
+                var balanceAfterDiscount = startBalance - totalDiscount;
+                if (totalDiscount > 0)
+                    await _dbContext.CustomerTransactions.AddAsync(
+                        CustomerTransaction.ForDiscount(payment, customer, totalDiscount, balanceAfterDiscount),
+                        cancellationToken);
 
+                var runningBalance = balanceAfterDiscount - request.Amount;
                 var customerTransaction = CustomerTransaction.ForPayment(
                     payment,
                     customer,

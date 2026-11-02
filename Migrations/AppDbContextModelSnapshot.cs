@@ -1061,6 +1061,10 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("CustomerPaymentId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
@@ -1582,6 +1586,10 @@ namespace Inventory_Management_System.Migrations
 
                     b.Property<int?>("CreatedById")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");

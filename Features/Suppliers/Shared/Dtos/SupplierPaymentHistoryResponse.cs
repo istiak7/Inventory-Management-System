@@ -17,6 +17,7 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         decimal BalanceAfter,
         decimal InvoiceTotalAmount,
         decimal InvoiceDueBefore,
-        decimal InvoiceDueAfter
+        decimal InvoiceDueAfter,
+        decimal Discount
     );
 }

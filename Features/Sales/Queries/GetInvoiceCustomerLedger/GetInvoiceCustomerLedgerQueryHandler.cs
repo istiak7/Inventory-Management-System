@@ -47,6 +47,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                             {
                                 sp.Id,
                                 sp.Amount,
+                                sp.Discount,
                                 sp.CustomerPayment.PaymentDate,
                                 sp.CustomerPayment.PaymentMethod,
                             })
@@ -78,9 +79,15 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                         Message = "No payment was found against this invoice on that date."
                     };
 
-                var dueBefore = sale.TotalAmount
-                    - sale.Allocations.Where(a => a.Id < allocation.Id).Sum(a => a.Amount);
-                var dueAfter = dueBefore - allocation.Amount;
+                // Payment-time discounts have since shrunk TotalAmount and grown DiscountAmount, so
+                // rebuild the invoice's original figures: the total before any such discount (so the
+                // dues reconcile) and the discount agreed when the sale was made.
+                var paymentDiscounts = sale.Allocations.Sum(a => a.Discount);
+                var originalTotal = sale.TotalAmount + paymentDiscounts;
+                var originalDiscount = sale.DiscountAmount - paymentDiscounts;
+                var dueBefore = originalTotal
+                    - sale.Allocations.Where(a => a.Id < allocation.Id).Sum(a => a.Amount + a.Discount);
+                var dueAfter = dueBefore - (allocation.Amount + allocation.Discount);
 
                 var items = sale.Items
                     .Select((d, idx) => new InvoiceLineItemResponse(
@@ -101,13 +108,14 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                     allocation.PaymentMethod,
                     sale.BranchName,
                     items,
-                    sale.TotalAmount,
+                    originalTotal,
                     allocation.Amount,
                     dueBefore,
                     dueAfter,
                     sale.SubTotal,
-                    sale.DiscountAmount,
-                    sale.TaxAmount);
+                    originalDiscount,
+                    sale.TaxAmount,
+                    allocation.Discount);
 
                 return new Result
                 {
