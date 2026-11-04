@@ -1265,6 +1265,45 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.RoleMenuAction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MenuActionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuActionId");
+
+                    b.HasIndex("RoleId", "MenuActionId")
+                        .IsUnique();
+
+                    b.ToTable("RoleMenuActions", (string)null);
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.RolePermission", b =>
                 {
                     b.Property<int>("Id")
@@ -1418,6 +1457,42 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("SaleId");
 
                     b.ToTable("SaleDetails");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SeedHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("SeedHistory", (string)null);
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Stock", b =>
@@ -2426,6 +2501,25 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.RoleMenuAction", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.AppMenuAction", "MenuAction")
+                        .WithMany("RoleMenuActions")
+                        .HasForeignKey("MenuActionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.Role", "Role")
+                        .WithMany("RoleMenuActions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MenuAction");
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.RolePermission", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.Permission", "Permission")
@@ -2744,6 +2838,11 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Children");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.AppMenuAction", b =>
+                {
+                    b.Navigation("RoleMenuActions");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.AppModule", b =>
                 {
                     b.Navigation("Submodules");
@@ -2833,6 +2932,8 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Role", b =>
                 {
+                    b.Navigation("RoleMenuActions");
+
                     b.Navigation("RolePermissions");
                 });
 

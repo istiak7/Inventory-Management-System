@@ -29,7 +29,10 @@ namespace Inventory_Management_System.Features.MenuSetup.Shared
         string Icon,
         string Permission,
         bool IsLeaf,
-        IReadOnlyList<NavigationMenu> Children);
+        IReadOnlyList<NavigationMenu> Children,
+        // Component codes of this page's actions the current user's role has (e.g. "create").
+        // The frontend shows a button only when its code is here.
+        IReadOnlyList<string> Actions);
 
     public sealed record NavigationSubmodule(int Id, string Name, IReadOnlyList<NavigationMenu> Menus);
 

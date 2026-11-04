@@ -8,7 +8,7 @@ using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.MenuSetup.Menus.Command.DeleteMenu
 {
-    public class DeleteMenuCommandHandler(AppDbContext _db) : IRequestHandler<DeleteMenuCommand, Result>
+    public class DeleteMenuCommandHandler(AppDbContext _db, MenuActionAccess _access) : IRequestHandler<DeleteMenuCommand, Result>
     {
         public async Task<Result> Handle(DeleteMenuCommand request, CancellationToken cancellationToken)
         {
@@ -26,6 +26,8 @@ namespace Inventory_Management_System.Features.MenuSetup.Menus.Command.DeleteMen
             menu.Delete();
             menu.UpDatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
+            // Who may call which route has changed.
+            _access.Invalidate();
             return MenuSetupResults.Ok(menu.Id, "Menu deleted successfully");
         }
     }

@@ -13,7 +13,9 @@ namespace Inventory_Management_System.Features.OfficeExpense.Command.CreateExpen
                 return Results.Ok(result);
             })
             .WithName("CreateExpenseCategories")
-            .WithTags("OfficeExpense");
+            .WithTags("OfficeExpense")
+            // Logged in; which roles may call it is set in System Setup -> Menu Action.
+            .RequireAuthorization();
 
         }
     }

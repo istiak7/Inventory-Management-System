@@ -7,7 +7,12 @@ namespace Inventory_Management_System.Shared.CurrentUser
     {
         int? UserId { get; }
         string? Role { get; }
+        int? RoleId { get; }
         bool IsAdmin { get; }
+
+        // The fixed "permission" claims in the token (the fallback for routes and menus that no
+        // menu action covers).
+        bool HasPermission(string permission);
 
         // Null = the user can access all branches (admin or system).
         int? BranchId { get; }
@@ -26,7 +31,13 @@ namespace Inventory_Management_System.Shared.CurrentUser
 
         public string? Role => Principal?.FindFirst(ClaimTypes.Role)?.Value;
 
-        public bool IsAdmin => string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase);
+        public int? RoleId =>
+            int.TryParse(Principal?.FindFirst("roleId")?.Value, out var roleId) ? roleId : null;
+
+        public bool IsAdmin => string.Equals(Role, MenuActionAccess.AdminRoleName, StringComparison.OrdinalIgnoreCase);
+
+        public bool HasPermission(string permission) =>
+            Principal?.Claims.Any(c => c.Type == "permission" && c.Value == permission) ?? false;
 
         public int? BranchId =>
             int.TryParse(Principal?.FindFirst("branchId")?.Value, out var branchId) ? branchId : null;

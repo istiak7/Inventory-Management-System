@@ -14,7 +14,9 @@ namespace Inventory_Management_System.Features.OfficeExpense.Queries.GetExpense.
                 return Results.Ok(result);
             })
             .WithName("GetAllExpense")
-            .WithTags("OfficeExpense");
+            .WithTags("OfficeExpense")
+            // Logged in; which roles may call it is set in System Setup -> Menu Action.
+            .RequireAuthorization();
         }
     }
 }

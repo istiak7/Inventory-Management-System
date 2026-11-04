@@ -14,6 +14,9 @@ namespace Inventory_Management_System.Features.MenuSetup.Shared
                     return methods.Select(method => $"{method} {pattern}");
                 })
                 .Where(r => !r.Contains("/swagger") && !r.Contains("/openapi"))
+                // Login, logout, /me and the menu belong to every logged-in user; they cannot be
+                // given to (or taken from) a role, so they are not offered.
+                .Where(r => !MenuActionAccess.AlwaysAllowedRoutes.Contains(r))
                 .Distinct()
                 .OrderBy(r => r.Split(' ', 2)[1])
                 .ThenBy(r => r)

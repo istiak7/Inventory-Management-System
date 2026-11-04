@@ -264,6 +264,8 @@ namespace Inventory_Management_System.Database
         public DbSet<AppSubmodule> AppSubmodules { get; set; }
         public DbSet<AppMenu> AppMenus { get; set; }
         public DbSet<AppMenuAction> AppMenuActions { get; set; }
+        public DbSet<RoleMenuAction> RoleMenuActions { get; set; }
+        public DbSet<SeedHistory> SeedHistory { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }

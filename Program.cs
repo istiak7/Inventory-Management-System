@@ -68,11 +68,10 @@ if (string.IsNullOrWhiteSpace(jwtSettings?.SecretKey) || jwtSettings.SecretKey.L
 
 builder.AddJWTAuthentication();
 
-// Authorization: management endpoints (users, roles) are for admins only.
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-});
+// Authorization: every protected endpoint is checked against System Setup -> Menu Action and the
+// role's granted actions (see Shared/CurrentUser/MenuActionAuthorization.cs). Routes no menu action
+// lists keep their own fixed rule (AdminOnly, RequirePermission, logged in).
+builder.Services.AddMenuActionAuthorization();
 
 builder.Services.AddServices();
 builder.Services.AddRepositories();
@@ -151,7 +150,13 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(db, app.Configuration, app.Environment);
+    // The API routes this build really serves, so the menu action seed never stores a typo.
+    var apiRoutes = ((IEndpointRouteBuilder)app).DataSources
+        .SelectMany(source => source.Endpoints)
+        .SelectMany(MenuActionAccess.RouteKeys)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var seedLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
+    await DbSeeder.SeedAsync(db, app.Configuration, app.Environment, apiRoutes, seedLogger);
 }
 
 app.Run();

@@ -37,7 +37,7 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
             }
 
             var roleExists = await _db.Roles
-                .AnyAsync(r => r.Id == request.RoleId, cancellationToken);
+                .AnyAsync(r => r.Id == request.RoleId && r.IsActive != (int)EntityStatus.Deleted, cancellationToken);
             if (!roleExists)
             {
                 return Fail(400, "Selected role does not exist");

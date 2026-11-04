@@ -1,5 +1,6 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
+using Inventory_Management_System.Features.Roles.Shared;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
 {
     public class CreateRoleCommandHandler(
         AppDbContext _db,
+        MenuActionAccess _access,
         ILogger<CreateRoleCommandHandler> _logger
     ) : IRequestHandler<CreateRoleCommand, Result>
     {
@@ -20,7 +22,7 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
                 return Fail(400, "A role with this name already exists");
             }
 
-            var permissionIds = request.PermissionIds.Distinct().ToList();
+            var permissionIds = (request.PermissionIds ?? []).Distinct().ToList();
             if (permissionIds.Count > 0)
             {
                 permissionIds = await _db.Permissions
@@ -33,7 +35,7 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
             {
                 var role = new Role
                 {
-                    Name = request.Name,
+                    Name = request.Name.Trim(),
                     Description = request.Description,
                     RolePermissions = permissionIds
                         .Select(pid => new RolePermission { PermissionId = pid })
@@ -41,7 +43,9 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
                 };
 
                 await _db.Roles.AddAsync(role, cancellationToken);
+                await RoleMenuActionGrants.ReplaceAsync(_db, role, request.MenuActionIds ?? [], cancellationToken);
                 await _db.SaveChangesAsync(cancellationToken);
+                _access.Invalidate();
 
                 return new Result
                 {

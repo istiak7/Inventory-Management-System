@@ -19,7 +19,7 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
         {
             var user = await _db.Users
                 .Include(u => u.UserPermissions)
-                .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
+                .FirstOrDefaultAsync(u => u.Id == request.Id && u.IsActive != (int)EntityStatus.Deleted, cancellationToken);
 
             if (user is null)
             {
@@ -27,7 +27,7 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
             }
 
             var newRole = await _db.Roles
-                .FirstOrDefaultAsync(r => r.Id == request.RoleId, cancellationToken);
+                .FirstOrDefaultAsync(r => r.Id == request.RoleId && r.IsActive != (int)EntityStatus.Deleted, cancellationToken);
             if (newRole is null)
             {
                 return Fail(400, "Selected role does not exist");

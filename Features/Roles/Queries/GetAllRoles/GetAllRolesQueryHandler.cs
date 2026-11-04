@@ -26,7 +26,13 @@ namespace Inventory_Management_System.Features.Roles.Queries.GetAllRoles
                         r.Description,
                         _db.Users.Count(u => u.RoleId == r.Id && u.IsActive != (int)EntityStatus.Deleted),
                         r.RolePermissions.Select(rp => rp.PermissionId).ToList(),
-                        r.RolePermissions.Count))
+                        r.RolePermissions.Count,
+                        r.RoleMenuActions
+                            .Where(g => g.IsActive == (int)EntityStatus.Active
+                                && g.MenuAction.IsActive == (int)EntityStatus.Active)
+                            .Select(g => g.MenuActionId)
+                            .ToList(),
+                        r.Name == MenuActionAccess.AdminRoleName))
                     .ToListAsync(cancellationToken);
 
                 return new Result

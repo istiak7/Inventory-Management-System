@@ -9,7 +9,12 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
 
-        // Full replacement of the role's permissions.
-        public List<int> PermissionIds { get; set; } = [];
+        // Full replacement of the role's fixed permissions (the fallback for routes no menu
+        // action covers). Null = leave them as they are.
+        public List<int>? PermissionIds { get; set; }
+
+        // Menu actions (System Setup -> Menu Action) every user with this role will get.
+        // Null = leave as they are.
+        public List<int>? MenuActionIds { get; set; }
     }
 }

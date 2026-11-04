@@ -60,5 +60,6 @@ namespace Inventory_Management_System.Entities
         public List<string> ApiRoutes { get; set; } = [];
 
         public AppMenu Menu { get; set; } = null!;
+        public ICollection<RoleMenuAction> RoleMenuActions { get; set; } = [];
     }
 }

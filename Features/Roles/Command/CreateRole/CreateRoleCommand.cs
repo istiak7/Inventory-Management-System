@@ -8,7 +8,11 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
 
-        // Permissions every user with this role will get.
-        public List<int> PermissionIds { get; set; } = [];
+        // Fixed permissions (the fallback for routes no menu action covers).
+        public List<int>? PermissionIds { get; set; }
+
+        // Menu actions (System Setup -> Menu Action) every user with this role will get.
+        // Null = leave as they are.
+        public List<int>? MenuActionIds { get; set; }
     }
 }

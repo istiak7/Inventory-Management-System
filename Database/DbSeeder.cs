@@ -24,6 +24,8 @@ namespace Inventory_Management_System.Database
             AppDbContext db,
             IConfiguration configuration,
             IHostEnvironment environment,
+            IReadOnlySet<string>? knownApiRoutes = null,
+            ILogger? logger = null,
             CancellationToken cancellationToken = default)
         {
             // Apply any pending migrations first so the tables exist.
@@ -35,6 +37,10 @@ namespace Inventory_Management_System.Database
 
             // The first menu tree (System Setup), only while there is none yet.
             await NavigationSeed.SeedAsync(db, cancellationToken);
+
+            // Default menu actions, the Salesman role and existing roles' grants (once only).
+            if (knownApiRoutes is not null && logger is not null)
+                await MenuActionSeed.SeedAsync(db, knownApiRoutes, logger, cancellationToken);
         }
 
         private static async Task SeedPermissionsAsync(AppDbContext db, CancellationToken cancellationToken)

@@ -13,7 +13,9 @@ namespace Inventory_Management_System.Features.OfficeExpense.Command.UpdateExpen
                 return result.IsSuccess ? Results.Ok(result) : Results.BadRequest(result);
             })
             .WithName("UpdateExpenseCategories")
-            .WithTags("OfficeExpense");
+            .WithTags("OfficeExpense")
+            // Logged in; which roles may call it is set in System Setup -> Menu Action.
+            .RequireAuthorization();
         }
     }
 }

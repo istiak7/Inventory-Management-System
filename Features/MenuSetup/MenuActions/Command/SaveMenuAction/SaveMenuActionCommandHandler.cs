@@ -8,7 +8,7 @@ using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.MenuSetup.MenuActions.Command.SaveMenuAction
 {
-    public class SaveMenuActionCommandHandler(AppDbContext _db, EndpointDataSource _endpoints)
+    public class SaveMenuActionCommandHandler(AppDbContext _db, EndpointDataSource _endpoints, MenuActionAccess _access)
         : IRequestHandler<SaveMenuActionCommand, Result>
     {
         public async Task<Result> Handle(SaveMenuActionCommand request, CancellationToken cancellationToken)
@@ -53,6 +53,8 @@ namespace Inventory_Management_System.Features.MenuSetup.MenuActions.Command.Sav
             action.ComponentCode = code;
             action.ApiRoutes = routes;
             await _db.SaveChangesAsync(cancellationToken);
+            // Who may call which route has changed.
+            _access.Invalidate();
 
             var response = new MenuActionResponse(action.Id, action.MenuId, action.Name, action.ComponentCode, action.ApiRoutes);
             return request.Id is null
