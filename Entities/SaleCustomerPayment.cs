@@ -2,9 +2,11 @@ namespace Inventory_Management_System.Entities
 {
     public class SaleCustomerPayment : BaseEntity   
     {
-        public int SaleId { get; set; } 
-        public int CustomerPaymentId { get; set; } 
+        public int SaleId { get; set; }
+        public int CustomerPaymentId { get; set; }
         public decimal Amount { get; set; }
+        /// <summary>Discount waived on this invoice as part of this payment (0 when none).</summary>
+        public decimal Discount { get; set; }
         public DateTime AllocationDate { get; set; } = DateTime.UtcNow;
 
         // Navigation property

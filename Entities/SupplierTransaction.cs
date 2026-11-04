@@ -48,6 +48,23 @@
             };
         }
 
+        // A discount taken while paying: the supplier waives part of what we owe, so it lowers
+        // the payable balance just like a payment does (a Credit), but it is not money paid out.
+        public static SupplierTransaction ForDiscount(SupplierPayment payment, Supplier supplier, decimal amount, decimal runningBalance)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "Discount",
+                TransactionDate = payment.PaymentDate,
+                Debit = 0m,
+                Credit = amount,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPayment = payment
+            };
+        }
+
         public static SupplierTransaction ForPayment(SupplierPayment payment, Supplier supplier, decimal runningBalance, SupplierPurchase? purchase = null)
         {
             return new SupplierTransaction

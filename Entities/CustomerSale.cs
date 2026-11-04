@@ -34,5 +34,19 @@ namespace Inventory_Management_System.Entities
             PaidAmount += amount;
             DueAmount -= amount;
         }
+
+        // A discount given while taking a payment: we waive part of what the customer owes.
+        // It shrinks the net payable (TotalAmount) and the due, and is tracked in DiscountAmount.
+        public void ApplyDiscount(decimal amount)
+        {
+            if (amount <= 0)
+                throw new InvalidOperationException("Discount amount must be positive.");
+            if (amount > DueAmount)
+                throw new InvalidOperationException($"Discount {amount} exceeds the outstanding due {DueAmount}.");
+
+            DiscountAmount += amount;
+            TotalAmount -= amount;
+            DueAmount -= amount;
+        }
     }
 }

@@ -22,6 +22,8 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         decimal TotalAmount,
         decimal PaidAmount,
         decimal DueBeforeAmount,
-        decimal DueAmount
+        decimal DueAmount,
+        // Discount waived on this invoice during this very payment (0 when none).
+        decimal DiscountNow
     );
 }

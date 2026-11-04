@@ -100,8 +100,9 @@ namespace Inventory_Management_System.Database.Configurations
     {
         public void Configure(EntityTypeBuilder<SupplierPurchasePayment> builder)
         {
-            builder.HasKey(pp => pp.Id); 
+            builder.HasKey(pp => pp.Id);
             builder.Property(pp => pp.Amount).HasPrecision(18, 2);
+            builder.Property(pp => pp.Discount).HasPrecision(18, 2);
 
             builder.HasOne(pp => pp.SupplierPurchase)
                    .WithMany(s => s.SupplierPurchasePayments)

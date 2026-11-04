@@ -38,13 +38,25 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     Message = "Branch not found."
                 };
 
-            if (request.Amount <= 0)
+            if (request.Amount < 0)
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = "Payment amount must be greater than 0."
+                    Message = "Payment amount cannot be negative."
+                };
+
+            // Total discount waived across the chosen invoices. A payment may carry money, discount,
+            // or both, but something must move.
+            var totalDiscount = request.Allocations.Sum(a => a.Discount);
+            if (request.Amount <= 0 && totalDiscount <= 0)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Enter a payment amount or a discount."
                 };
 
             // Lock the supplier: two payments (or a payment and a goods receipt) for the same
@@ -56,13 +68,14 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
             var balance = await _dbContext.SupplierTransactions
                 .Where(t => t.SupplierId == request.SupplierId)
                 .GetLatestBalanceAsync(cancellationToken);
-            if (request.Amount > balance)
+            // Payment and discount together settle part of the balance, so together they cannot exceed it.
+            if (request.Amount + totalDiscount > balance)
                 return new Result
                 {
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = $"Payment amount exceeds what is owed to this supplier ({balance:0.00})."
+                    Message = $"Payment and discount exceed what is owed to this supplier ({balance:0.00})."
                 };
 
             foreach (var payment in request.Allocations)
@@ -72,13 +85,13 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                      .Select(p => p.DueAmount)
                      .FirstOrDefaultAsync(cancellationToken);
 
-                if (remainingDueForPurchase - payment.Amount < 0)
+                if (remainingDueForPurchase - (payment.Amount + payment.Discount) < 0)
                     return new Result
                     {
                         IsSuccess = false,
                         StatusCode = 400,
                         Status = "Error",
-                        Message = $"Allocation amount for invoice {payment.PurchaseId} exceeds its remaining due amount."
+                        Message = $"Payment and discount for invoice {payment.PurchaseId} exceed its remaining due amount."
                     };
             }
 
@@ -86,13 +99,22 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
             List<SupplierPurchase> targetedPurchases = [];
             if (hasAllocations)
             {
-                if (request.Allocations.Any(a => a.Amount <= 0))
+                if (request.Allocations.Any(a => a.Amount < 0 || a.Discount < 0))
                     return new Result
                     {
                         IsSuccess = false,
                         StatusCode = 400,
                         Status = "Error",
-                        Message = "Each allocation amount must be greater than 0."
+                        Message = "Allocation amounts and discounts cannot be negative."
+                    };
+
+                if (request.Allocations.Any(a => a.Amount + a.Discount <= 0))
+                    return new Result
+                    {
+                        IsSuccess = false,
+                        StatusCode = 400,
+                        Status = "Error",
+                        Message = "Each chosen invoice must have a payment or a discount greater than 0."
                     };
 
                 if (request.Allocations.GroupBy(a => a.PurchaseId).Any(g => g.Count() > 1))
@@ -146,13 +168,13 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                             Status = "Error",
                             Message = $"Invoice {alloc.PurchaseId} has no outstanding due."
                         };
-                    if (alloc.Amount > purchase.DueAmount)
+                    if (alloc.Amount + alloc.Discount > purchase.DueAmount)
                         return new Result
                         {
                             IsSuccess = false,
                             StatusCode = 400,
                             Status = "Error",
-                            Message = $"Allocation for invoice {alloc.PurchaseId} exceeds its due amount."
+                            Message = $"Payment and discount for invoice {alloc.PurchaseId} exceed its due amount."
                         };
                 }
             }
@@ -180,11 +202,14 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     foreach (var alloc in request.Allocations)
                     {
                         var purchase = targetedPurchases.First(p => p.Id == alloc.PurchaseId);
-                        purchase.ApplyPayment(alloc.Amount);
+                        // Discount first: it lowers the due, then the payment settles the rest.
+                        if (alloc.Discount > 0) purchase.ApplyDiscount(alloc.Discount);
+                        if (alloc.Amount > 0) purchase.ApplyPayment(alloc.Amount);
 
                         await _dbContext.SupplierPurchasePayments.AddAsync(new SupplierPurchasePayment
                         {
                             Amount = alloc.Amount,
+                            Discount = alloc.Discount,
                             AllocationDate = paymentDate,
                             SupplierPurchase = purchase,
                             SupplierPayment = payment,
@@ -240,11 +265,19 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSupplierP
                     }
                 }
 
-                var runningBalance = await _dbContext.SupplierTransactions
+                var startBalance = await _dbContext.SupplierTransactions
                     .Where(t => t.SupplierId == request.SupplierId)
                     .GetLatestBalanceAsync(cancellationToken);
-                runningBalance -= request.Amount;
 
+                // A discount lowers the payable just like a payment, so it gets its own ledger row
+                // first; the payment row follows and carries the final running balance.
+                var balanceAfterDiscount = startBalance - totalDiscount;
+                if (totalDiscount > 0)
+                    await _dbContext.SupplierTransactions.AddAsync(
+                        SupplierTransaction.ForDiscount(payment, supplier, totalDiscount, balanceAfterDiscount),
+                        cancellationToken);
+
+                var runningBalance = balanceAfterDiscount - request.Amount;
                 var supplierTransaction = SupplierTransaction.ForPayment(payment, supplier, runningBalance);
                 await _dbContext.SupplierTransactions.AddAsync(supplierTransaction, cancellationToken);
 
