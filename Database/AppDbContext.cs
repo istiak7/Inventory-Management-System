@@ -259,6 +259,7 @@ namespace Inventory_Management_System.Database
         public DbSet<StockTransfer> StockTransfers { get; set; }
         public DbSet<StockTransferDetails> StockTransferDetails { get; set; }
         public DbSet<ExpenseCategory> ExpenseCategories { get; set; }
+        public DbSet<CompanySetting> CompanySettings { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
