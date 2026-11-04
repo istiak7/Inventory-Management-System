@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Features.Users.Command.Events;
+using Inventory_Management_System.Features.Users.Shared;
 using Inventory_Management_System.Shared;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
 
@@ -11,6 +12,8 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
     public class CreateUserCommandHandler(
         AppDbContext _db,
         IMediator _mediator,
+        ICurrentUser _currentUser,
+        MenuActionAccess _access,
         ILogger<CreateUserCommandHandler> _logger)
     : IRequestHandler<CreateUserCommand, Result>
     {
@@ -29,29 +32,28 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
                 return Fail(400, "A user with this email already exists");
             }
 
-            var nameTaken = await _db.Users
-                .AnyAsync(u => u.Name == username, cancellationToken);
-            if (nameTaken)
+            if (await UserAccessRules.NameTakenAsync(_db, username, null, cancellationToken))
             {
                 return Fail(400, "A user with this user name already exists");
             }
 
-            var roleExists = await _db.Roles
-                .AnyAsync(r => r.Id == request.RoleId && r.IsActive != (int)EntityStatus.Deleted, cancellationToken);
-            if (!roleExists)
+            var role = await UserAccessRules.FindRoleAsync(_db, request.RoleId, cancellationToken);
+            if (role is null)
             {
                 return Fail(400, "Selected role does not exist");
             }
 
-            // Only staff-style users are tied to a branch. Admin keeps BranchId null (all branches).
-            if (request.BranchId.HasValue)
+            var notAllowed = UserAccessRules.CheckAdminRoleChange(_currentUser, null, role);
+            if (notAllowed is not null)
             {
-                var branchExists = await _db.Branches
-                    .AnyAsync(b => b.Id == request.BranchId.Value, cancellationToken);
-                if (!branchExists)
-                {
-                    return Fail(400, "Selected branch does not exist");
-                }
+                return Fail(403, notAllowed);
+            }
+
+            // Only the Admin role keeps BranchId null (all branches); everyone else gets one branch.
+            var branchError = await UserAccessRules.CheckBranchAsync(_db, role, request.BranchId, cancellationToken);
+            if (branchError is not null)
+            {
+                return Fail(400, branchError);
             }
 
             // Keep only permission ids that actually exist, and drop duplicates.
@@ -84,6 +86,7 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
 
                 await _db.Users.AddAsync(user, cancellationToken);
                 await _db.SaveChangesAsync(cancellationToken);
+                _access.InvalidateUser(user.Id);
 
                 await _mediator.Publish(
                     new UserRegistrationEvent(user.Id, request.Username, request.Email),

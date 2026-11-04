@@ -253,11 +253,6 @@ namespace Inventory_Management_System.Database
                 Update("admin", "PUT /update-menu-action/{id:int}"),
                 Delete("admin", "DELETE /delete-menu-action/{id:int}"),
             ],
-            ["/system-health"] =
-            [
-                // Its data (setup status) is open to every logged-in user; this decides the menu.
-                View(""),
-            ],
             ["/company-setup"] =
             [
                 View("admin", "GET /get-company-setting"),

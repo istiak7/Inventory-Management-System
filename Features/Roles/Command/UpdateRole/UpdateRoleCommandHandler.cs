@@ -11,11 +11,10 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
     public class UpdateRoleCommandHandler(
         AppDbContext _db,
         MenuActionAccess _access,
+        ICurrentUser _currentUser,
         ILogger<UpdateRoleCommandHandler> _logger
     ) : IRequestHandler<UpdateRoleCommand, Result>
     {
-        private const string AdminRoleName = "Admin";
-
         public async Task<Result> Handle(UpdateRoleCommand request, CancellationToken cancellationToken)
         {
             var role = await _db.Roles
@@ -31,10 +30,17 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
 
             // Admin rights are tied to the role called "Admin", so renaming it would lock every
             // admin out at once.
-            if (string.Equals(role.Name, AdminRoleName, StringComparison.OrdinalIgnoreCase)
+            if (RoleMenuActionGrants.IsBuiltInAdmin(role)
                 && !string.Equals(request.Name.Trim(), role.Name, StringComparison.Ordinal))
             {
                 return Fail(400, "The Admin role cannot be renamed");
+            }
+
+            var notAllowed = await RoleMenuActionGrants.CheckEditorAsync(
+                _db, _currentUser, _access, role, request.MenuActionIds, cancellationToken);
+            if (notAllowed is not null)
+            {
+                return Fail(403, notAllowed);
             }
 
             var nameTaken = await _db.Roles

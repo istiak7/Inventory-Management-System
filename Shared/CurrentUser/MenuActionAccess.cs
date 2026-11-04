@@ -37,8 +37,47 @@ namespace Inventory_Management_System.Shared.CurrentUser
         private volatile Snapshot? _snapshot;
         private readonly SemaphoreSlim _loadLock = new(1, 1);
 
+        // Each signed-in user's current role, branch and status, read once and kept until the
+        // user is changed (InvalidateUser). Null = the user no longer exists.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<int, UserState?> _users = new();
+
+        public sealed record UserState(int RoleId, int? BranchId, bool IsActive);
+
         // Call after changing menu actions, menus or a role's grants.
-        public void Invalidate() => _snapshot = null;
+        public void Invalidate()
+        {
+            _snapshot = null;
+            _users.Clear();
+        }
+
+        // Call after creating, changing or deleting a user.
+        public void InvalidateUser(int userId) => _users.TryRemove(userId, out _);
+
+        // True while the access token still describes the user as they are now: active, with the
+        // same role and branch. A token from before a role change, a branch move, deactivation or
+        // deletion is refused (401), so the app renews it and gets the user's current access at
+        // once instead of keeping the old one until the token expires.
+        public async Task<bool> IsTokenCurrentAsync(
+            System.Security.Claims.ClaimsPrincipal principal, CancellationToken cancellationToken = default)
+        {
+            if (!int.TryParse(principal.FindFirst("id")?.Value, out var userId)) return false;
+            if (!int.TryParse(principal.FindFirst("roleId")?.Value, out var roleId)) return false;
+            var branchClaim = principal.FindFirst("branchId")?.Value;
+            int? branchId = int.TryParse(branchClaim, out var b) ? b : null;
+
+            if (!_users.TryGetValue(userId, out var state))
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                state = await db.Users.AsNoTracking()
+                    .Where(u => u.Id == userId)
+                    .Select(u => new UserState(u.RoleId, u.BranchId, u.IsActive == (int)EntityStatus.Active))
+                    .FirstOrDefaultAsync(cancellationToken);
+                _users[userId] = state;
+            }
+
+            return state is not null && state.IsActive && state.RoleId == roleId && state.BranchId == branchId;
+        }
 
         // "METHOD /route", the same text the Menu Action page stores (see ApiRouteCatalog).
         public static IEnumerable<string> RouteKeys(Endpoint? endpoint)

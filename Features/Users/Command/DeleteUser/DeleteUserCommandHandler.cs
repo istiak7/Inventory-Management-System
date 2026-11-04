@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Features.Users.Shared;
 using Inventory_Management_System.Features.Users.Shared.Services;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -12,6 +13,7 @@ namespace Inventory_Management_System.Features.Users.Command.DeleteUser
     public class DeleteUserCommandHandler(
         AppDbContext _db,
         ICurrentUser _currentUser,
+        MenuActionAccess _access,
         ILogger<DeleteUserCommandHandler> _logger
     ) : IRequestHandler<DeleteUserCommand, Result>
     {
@@ -26,16 +28,13 @@ namespace Inventory_Management_System.Features.Users.Command.DeleteUser
             if (user.Id == _currentUser.UserId)
                 return Fail(400, "You cannot delete your own account");
 
+            var notAllowed = UserAccessRules.CheckAdminRoleChange(_currentUser, user.Role, null);
+            if (notAllowed is not null)
+                return Fail(403, notAllowed);
+
             // The system must always keep one active admin, or nobody could manage users again.
-            var isAdmin = string.Equals(user.Role.Name, MenuActionAccess.AdminRoleName, StringComparison.OrdinalIgnoreCase);
-            if (isAdmin && user.IsActive == (int)EntityStatus.Active)
-            {
-                var otherActiveAdmins = await _db.Users.CountAsync(u =>
-                    u.Id != user.Id && u.RoleId == user.RoleId && u.IsActive == (int)EntityStatus.Active,
-                    cancellationToken);
-                if (otherActiveAdmins == 0)
-                    return Fail(400, "This is the last active admin. Make another user admin first.");
-            }
+            if (await UserAccessRules.IsLastActiveAdminAsync(_db, user, user.Role, cancellationToken))
+                return Fail(400, UserAccessRules.LastAdminMessage);
 
             try
             {
@@ -44,6 +43,8 @@ namespace Inventory_Management_System.Features.Users.Command.DeleteUser
                 // Signed out everywhere: the refresh tokens stop working at once.
                 await RefreshTokenStore.RevokeAllAsync(_db, user.Id, keepRefreshToken: null, cancellationToken);
                 await _db.SaveChangesAsync(cancellationToken);
+                // Their access token stops working on its next request too.
+                _access.InvalidateUser(user.Id);
 
                 return new Result
                 {

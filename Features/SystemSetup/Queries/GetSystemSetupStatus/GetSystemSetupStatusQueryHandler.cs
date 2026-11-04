@@ -23,7 +23,7 @@ namespace Inventory_Management_System.Features.SystemSetup.Queries.GetSystemSetu
         private const int Deleted = (int)EntityStatus.Deleted;
         private const int Active = (int)EntityStatus.Active;
 
-        // The order here is the order of the setup steps on the System Health page.
+        // The order here is the order of the setup steps (the setup warning and page gates).
         private sealed record Section(
             string Key,
             string Name,

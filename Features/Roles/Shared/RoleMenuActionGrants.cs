@@ -23,6 +23,35 @@ namespace Inventory_Management_System.Features.Roles.Shared
                 .ToListAsync(cancellationToken);
         }
 
+        // Who may open Users & Roles is set in System Setup, so it is not always an admin. A
+        // non-admin may not change the Admin role or their own role, and may only hand out menu
+        // actions their own role already has — otherwise they could give themselves more access.
+        // `role` is null for a new role. Returns the reason when refused.
+        public static async Task<string?> CheckEditorAsync(
+            AppDbContext db,
+            ICurrentUser currentUser,
+            MenuActionAccess access,
+            Role? role,
+            IEnumerable<int>? menuActionIds,
+            CancellationToken cancellationToken)
+        {
+            if (currentUser.IsAdmin) return null;
+            if (role is not null && IsBuiltInAdmin(role)) return "Only an admin can change the Admin role.";
+            if (role is not null && role.Id == currentUser.RoleId) return "You cannot change your own role. Ask an admin.";
+            if (menuActionIds is null) return null;
+
+            var wanted = await ValidIdsAsync(db, menuActionIds, cancellationToken);
+            var current = role is null
+                ? []
+                : (await db.RoleMenuActions.Where(g => g.RoleId == role.Id).Select(g => g.MenuActionId)
+                    .ToListAsync(cancellationToken)).ToHashSet();
+            var own = (await access.GetAsync(cancellationToken)).ActionsOf(currentUser.RoleId);
+
+            return wanted.Any(id => !current.Contains(id) && !own.Contains(id))
+                ? "You can only give a role menu actions that your own role has."
+                : null;
+        }
+
         // Makes the role's grants exactly `menuActionIds` (adds the new ones, removes the rest).
         // The caller saves the changes.
         public static async Task ReplaceAsync(

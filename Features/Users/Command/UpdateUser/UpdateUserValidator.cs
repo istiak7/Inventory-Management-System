@@ -7,7 +7,8 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
         public UpdateUserValidator()
         {
             RuleFor(x => x.Id).GreaterThan(0).WithMessage("User id is required");
-            RuleFor(x => x.Username).NotEmpty().WithMessage("User name is required");
+            RuleFor(x => x.Username).NotEmpty().WithMessage("User name is required")
+                .MaximumLength(50).WithMessage("User name must be at most 50 characters");
             RuleFor(x => x.RoleId).GreaterThan(0).WithMessage("A role is required");
             // 0 = Active, 1 = Inactive. Deleting a user is not done through this endpoint.
             RuleFor(x => x.IsActive).InclusiveBetween(0, 1).WithMessage("Status must be Active (0) or Inactive (1)");

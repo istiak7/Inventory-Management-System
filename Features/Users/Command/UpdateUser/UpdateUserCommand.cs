@@ -12,8 +12,9 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
         // Null = all branches (admin). A value = one branch (staff).
         public int? BranchId { get; set; }
 
-        // Full replacement of the user's direct (extra) permissions.
-        public List<int> PermissionIds { get; set; } = [];
+        // Full replacement of the user's direct (extra) permissions. Null = leave them as they are.
+        // (Legacy: what a user may do now comes from their role's menu actions.)
+        public List<int>? PermissionIds { get; set; }
 
         // Uses EntityStatus: 0 = Active, 1 = InActive, 2 = Deleted.
         public int IsActive { get; set; }

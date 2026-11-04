@@ -10,6 +10,7 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
     public class CreateRoleCommandHandler(
         AppDbContext _db,
         MenuActionAccess _access,
+        ICurrentUser _currentUser,
         ILogger<CreateRoleCommandHandler> _logger
     ) : IRequestHandler<CreateRoleCommand, Result>
     {
@@ -20,6 +21,13 @@ namespace Inventory_Management_System.Features.Roles.Command.CreateRole
             if (nameTaken)
             {
                 return Fail(400, "A role with this name already exists");
+            }
+
+            var notAllowed = await RoleMenuActionGrants.CheckEditorAsync(
+                _db, _currentUser, _access, null, request.MenuActionIds, cancellationToken);
+            if (notAllowed is not null)
+            {
+                return Fail(403, notAllowed);
             }
 
             var permissionIds = (request.PermissionIds ?? []).Distinct().ToList();

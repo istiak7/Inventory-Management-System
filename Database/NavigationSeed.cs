@@ -78,7 +78,6 @@ namespace Inventory_Management_System.Database
                     Page("Menu", "/menu", "ListTree", "admin"),
                     Page("Menu Action", "/menu-action", "MousePointerClick", "admin")),
                 Folder("Configuration", "",
-                    Page("System Health", "/system-health", "HeartPulse"),
                     Page("Company Setup", "/company-setup", "Building2", "admin")),
                 Folder("System", "",
                     Page("Users & Roles", "/users", "ShieldCheck", "admin"),

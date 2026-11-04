@@ -3,6 +3,7 @@ using Inventory_Management_System.Features.Users.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.Users.Queries.GetUserById
 {
@@ -17,7 +18,7 @@ namespace Inventory_Management_System.Features.Users.Queries.GetUserById
             {
                 var user = await _db.Users
                     .AsNoTracking()
-                    .Where(u => u.Id == request.Id)
+                    .Where(u => u.Id == request.Id && u.IsActive != (int)EntityStatus.Deleted)
                     .Select(u => new
                     {
                         u.Id,
