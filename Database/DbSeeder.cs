@@ -32,6 +32,9 @@ namespace Inventory_Management_System.Database
             await SeedPermissionsAsync(db, cancellationToken);
             var adminRoleId = await SeedRolesAsync(db, cancellationToken);
             await SeedAdminUserAsync(db, adminRoleId, configuration, environment, cancellationToken);
+
+            // The first menu tree (System Setup), only while there is none yet.
+            await NavigationSeed.SeedAsync(db, cancellationToken);
         }
 
         private static async Task SeedPermissionsAsync(AppDbContext db, CancellationToken cancellationToken)

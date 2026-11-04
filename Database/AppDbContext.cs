@@ -260,6 +260,10 @@ namespace Inventory_Management_System.Database
         public DbSet<StockTransferDetails> StockTransferDetails { get; set; }
         public DbSet<ExpenseCategory> ExpenseCategories { get; set; }
         public DbSet<CompanySetting> CompanySettings { get; set; }
+        public DbSet<AppModule> AppModules { get; set; }
+        public DbSet<AppSubmodule> AppSubmodules { get; set; }
+        public DbSet<AppMenu> AppMenus { get; set; }
+        public DbSet<AppMenuAction> AppMenuActions { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
