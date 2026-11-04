@@ -29,8 +29,10 @@ So you open **one** address, and the database is never open to the network.
 
 Both repositories must be **next to each other** in the same folder:
 
-The frontend repository is **private**, so the server needs a read-only key to download it
-(one time):
+The frontend repository is **private**. The automatic deploy (CI/CD) does not need anything on
+the server for it: the GitHub job sends its own short-lived, read-only token and the server
+downloads over HTTPS with it. The key below is only needed for the **first clone** and for
+running `scripts/deploy.sh frontend` **by hand** on the server (one time):
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/frontend_deploy_key -N "" -C "vps-frontend-deploy"
@@ -181,6 +183,7 @@ Backend branch: `Development-Inventory-Management`. Frontend branch: `Developmen
 | Deploy problem | What to do |
 |---|---|
 | `Permission denied` | Wrong `USER` / `PASS`, or password login is off on the server (step 1). |
+| `git@github.com: Permission denied (publickey)` while getting the frontend code | The server's `scripts/deploy.sh` is older than the HTTPS-token deploy. Push the backend first (or `git pull` in `~/Inventory-Management-System` on the server), then re-run the frontend job. For a deploy **by hand**, the server needs the deploy key from step 2 and the frontend remote must be `git@github-frontend:...` (`git remote -v`). |
 | `Not possible to fast-forward` | Someone changed files on the server inside the repo. Look with `git status` there and undo those changes. |
 | `NOT healthy after 2 minutes` | The job prints the backend logs. Fix the cause and push again. |
 
