@@ -64,6 +64,39 @@ namespace Inventory_Management_System.Entities
             };
         }
 
+        // A voided sale: takes the sale's (net) amount back off what the customer owes.
+        public static CustomerTransaction ForVoid(CustomerSale sale, Customer customer, DateTime voidDate, decimal runningBalance)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "Void",
+                TransactionDate = voidDate,
+                Debit = sale.TotalAmount,
+                Credit = 0m,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerSale = sale
+            };
+        }
+
+        // Money handed back for a voided sale: undoes the payments the sale had received.
+        public static CustomerTransaction ForRefund(CustomerPayment refund, Customer customer, decimal amount, decimal runningBalance, CustomerSale sale)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "Refund",
+                TransactionDate = refund.PaymentDate,
+                Debit = 0m,
+                Credit = amount,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerPayment = refund,
+                CustomerSale = sale
+            };
+        }
+
         public static CustomerTransaction ForPayment(CustomerPayment payment, Customer customer, decimal runningBalance, CustomerSale? sale = null)
         {
             return new CustomerTransaction

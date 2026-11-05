@@ -24,14 +24,18 @@ namespace Inventory_Management_System.Entities.Common
         Debit
     }
 
+    // Voided = the sale was cancelled after the fact: its stock came back, its serials are
+    // sellable again and any money taken was refunded. The record stays for audit.
     public enum SaleStatus
     {
-        Completed
+        Completed,
+        Voided
     }
 
     public enum SaleLineStatus
     {
-        Completed
+        Completed,
+        Voided
     }
 
     // How a sale is settled. Cash is paid in full at the point of sale; Debit books the whole

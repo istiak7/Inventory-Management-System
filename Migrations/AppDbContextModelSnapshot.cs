@@ -580,6 +580,13 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("UpdatedById")
                         .HasColumnType("integer");
 
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("VoidedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BranchId");
@@ -1450,7 +1457,9 @@ namespace Inventory_Management_System.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProductSerialId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_SaleDetails_ProductSerialId")
+                        .HasFilter("\"Status\" <> 'Voided'");
 
                     b.HasIndex("ProductVariantId");
 
@@ -2561,8 +2570,8 @@ namespace Inventory_Management_System.Migrations
             modelBuilder.Entity("Inventory_Management_System.Entities.SaleDetails", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.ProductSerial", "ProductSerial")
-                        .WithOne("SaleDetails")
-                        .HasForeignKey("Inventory_Management_System.Entities.SaleDetails", "ProductSerialId");
+                        .WithMany()
+                        .HasForeignKey("ProductSerialId");
 
                     b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
                         .WithMany("SaleDetails")
@@ -2905,11 +2914,6 @@ namespace Inventory_Management_System.Migrations
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductCategories", b =>
                 {
                     b.Navigation("ProductSubCategories");
-                });
-
-            modelBuilder.Entity("Inventory_Management_System.Entities.ProductSerial", b =>
-                {
-                    b.Navigation("SaleDetails");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductSubCategories", b =>

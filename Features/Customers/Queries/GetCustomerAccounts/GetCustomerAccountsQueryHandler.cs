@@ -29,8 +29,11 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerAcco
                         c.Id,
                         c.Name,
                         c.Group,
-                        c.CustomerTransactions.Where(t => t.TransactionType == "Sale").Sum(t => (decimal?)t.Credit) ?? 0m,
-                        c.CustomerTransactions.Where(t => t.TransactionType == "Payment").Sum(t => (decimal?)t.Debit) ?? 0m,
+                        // A voided sale takes itself back off sales, and its refund off payments.
+                        (c.CustomerTransactions.Where(t => t.TransactionType == "Sale").Sum(t => (decimal?)t.Credit) ?? 0m)
+                            - (c.CustomerTransactions.Where(t => t.TransactionType == "Void").Sum(t => (decimal?)t.Debit) ?? 0m),
+                        (c.CustomerTransactions.Where(t => t.TransactionType == "Payment").Sum(t => (decimal?)t.Debit) ?? 0m)
+                            - (c.CustomerTransactions.Where(t => t.TransactionType == "Refund").Sum(t => (decimal?)t.Credit) ?? 0m),
                         (c.CustomerTransactions.Sum(t => (decimal?)t.Credit) ?? 0m)
                             - (c.CustomerTransactions.Sum(t => (decimal?)t.Debit) ?? 0m),
                         c.CustomerTransactions

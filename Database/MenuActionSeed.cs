@@ -114,6 +114,8 @@ namespace Inventory_Management_System.Database
                     "GET /get-customer-by-phone", Customers, Branches),
                 // Money and stock are committed when a sale is made; only its remark can change.
                 Step("Update Remarks", "update", "sales.manage", "PUT /update-sale-remarks/{id:int}"),
+                // Cancels the sale: stock back, serials sellable, money refunded. Kept for audit.
+                Step("Void Sale", "void", "sales.manage", "POST /void-sale/{id:int}"),
             ],
             ["/customers"] =
             [
@@ -159,6 +161,8 @@ namespace Inventory_Management_System.Database
                 Step("Process Claim", "process", "warranty.manage", "POST /start-warranty-repair/{id:int}",
                     "POST /resolve-warranty-claim/{id:int}", "POST /reject-warranty-claim/{id:int}",
                     "POST /deliver-warranty-claim/{id:int}"),
+                Update("warranty.manage", "PUT /update-warranty-claim/{id:int}"),
+                Delete("warranty.manage", "DELETE /delete-warranty-claim/{id:int}"),
             ],
             ["/inventory"] =
             [
@@ -183,6 +187,9 @@ namespace Inventory_Management_System.Database
                 View("transfers.view", "GET /get-all-stock-transfers", "GET /get-stock-transfer-by-id/{id:int}", Branches),
                 Step("Approve", "approve", "transfers.manage", "POST /approve-stock-transfer/{id:int}"),
                 Step("Reject", "reject", "transfers.manage", "POST /reject-stock-transfer/{id:int}"),
+                Update("transfers.manage", "PUT /update-stock-transfer/{id:int}", ProductSearch, Branches,
+                    "GET /get-stock-by-variant-and-branch", "GET /get-branch-stock/{branchId:int}/variant/{productVariantId:int}"),
+                Delete("transfers.manage", "DELETE /delete-stock-transfer/{id:int}"),
             ],
             ["/reports/ledger"] =
             [

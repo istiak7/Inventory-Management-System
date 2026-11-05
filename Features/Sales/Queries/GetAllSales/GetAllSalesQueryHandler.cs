@@ -75,6 +75,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         s.TotalAmount,
                         s.PaidAmount,
                         s.DueAmount,
+                        s.VoidedAt,
+                        s.VoidReason,
                         ItemsCount = s.SaleDetails.Count,
                         Lines = s.SaleDetails.Select(d => new
                         {
@@ -102,7 +104,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                     s.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.TotalAmount,
-                        l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList()))
+                        l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList(),
+                    s.VoidedAt, s.VoidReason))
                     .ToList();
 
                 var pagedResult = new PagedResult<SaleListResponse>

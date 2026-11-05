@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Warranty.Shared
@@ -26,7 +27,7 @@ namespace Inventory_Management_System.Features.Warranty.Shared
         {
             var ownLineId = await dbContext.SaleDetails
                 .AsNoTracking()
-                .Where(d => d.ProductSerialId == productSerialId)
+                .Where(d => d.ProductSerialId == productSerialId && d.Status != SaleLineStatus.Voided)
                 .Select(d => (int?)d.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 

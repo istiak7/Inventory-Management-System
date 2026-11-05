@@ -18,6 +18,10 @@ namespace Inventory_Management_System.Entities
         public decimal DueAmount { get; set; }  
         public string? Remarks { get; set; }
 
+        // Set when the sale is voided (see SaleStatus.Voided); who voided it is UpdatedById.
+        public DateTime? VoidedAt { get; set; }
+        public string? VoidReason { get; set; }
+
         // Navigation property
         public required Customer Customer { get; set; }
         public required Branch Branch { get; set; }

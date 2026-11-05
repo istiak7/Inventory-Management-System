@@ -158,7 +158,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
         {
             var query = _dbContext.CustomerSales
                 .AsNoTracking()
-                .Where(s => s.IsActive != (int)EntityStatus.Deleted);
+                .Where(s => s.IsActive != (int)EntityStatus.Deleted && s.Status != SaleStatus.Voided);
 
             var range = ReportDateRange.From(request.StartDate, request.EndDate);
 

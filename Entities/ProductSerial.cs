@@ -19,6 +19,5 @@ namespace Inventory_Management_System.Entities
         public required SupplierPurchaseDetails SupplierPurchaseDetails { get; set; }
         public required Branch Branch { get; set; }
         public StockTransferDetails? StockTransferDetails { get; set; }
-        public SaleDetails? SaleDetails { get; set; } 
     }
 }

@@ -33,6 +33,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.SaleType).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(s => s.Remarks).HasMaxLength(500);   
+            builder.Property(s => s.VoidReason).HasMaxLength(500);
             builder.Property(s => s.SubTotal).HasPrecision(18, 2);
             builder.Property(s => s.DiscountAmount).HasPrecision(18, 2);
             builder.Property(s => s.TaxAmount).HasPrecision(18, 2);
@@ -73,6 +74,17 @@ namespace Inventory_Management_System.Database.Configurations
                    .WithMany(v => v.SaleDetails)
                    .HasForeignKey(d => d.ProductVariantId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            // A unit is on at most one live sale line. A voided line keeps its serial for the
+            // record, but no longer blocks the unit from being sold again.
+            builder.HasOne(d => d.ProductSerial)
+                   .WithMany()
+                   .HasForeignKey(d => d.ProductSerialId)
+                   .OnDelete(DeleteBehavior.ClientSetNull);
+            builder.HasIndex(d => d.ProductSerialId)
+                   .IsUnique()
+                   .HasDatabaseName("IX_SaleDetails_ProductSerialId")
+                   .HasFilter("\"Status\" <> 'Voided'");
         }
     }
 

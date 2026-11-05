@@ -24,6 +24,9 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         IReadOnlyList<SalePaymentResponse> Payments,
         // Name of the user who entered the sale (CreatedById); null for sales recorded before
         // audit stamping, or by a user since removed.
-        string? PreparedBy
+        string? PreparedBy,
+        // Set when the sale was voided (Status "Voided").
+        DateTime? VoidedAt = null,
+        string? VoidReason = null
     );
 }

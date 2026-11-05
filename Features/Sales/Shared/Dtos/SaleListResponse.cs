@@ -19,6 +19,8 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal PaidAmount,
         decimal DueAmount,
         int ItemsCount,
-        IReadOnlyList<SaleLineResponse> Items
+        IReadOnlyList<SaleLineResponse> Items,
+        DateTime? VoidedAt = null,
+        string? VoidReason = null
     );
 }
