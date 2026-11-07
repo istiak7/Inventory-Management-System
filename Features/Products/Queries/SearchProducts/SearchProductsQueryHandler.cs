@@ -45,12 +45,6 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 if (request.IsSerialized is bool isSerialized)
                     query = query.Where(v => v.IsSerialized == isSerialized);
 
-                if (request.SubCategoryId is int subCategoryId)
-                    query = query.Where(v => v.Product.ProductSubCategoryId == subCategoryId);
-
-                if (request.BrandId is int brandId)
-                    query = query.Where(v => v.Product.BrandId == brandId);
-
                 if (request.MinPrice is decimal minPrice)
                     query = query.Where(v => v.SellingPrice >= minPrice);
 
