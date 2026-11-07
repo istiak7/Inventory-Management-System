@@ -15,11 +15,21 @@ namespace Inventory_Management_System.Features.Categories.Shared.Repository
         public async Task<PagedResult<SubCategoryResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
             CancellationToken cancellationToken = default
         )
         {
-            return await _context.ProductSubCategories
-                .AsNoTracking()
+            var query = _context.ProductSubCategories.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = $"%{search.Trim()}%";
+                query = query.Where(s =>
+                    EF.Functions.ILike(s.SubCategoryName, term) ||
+                    EF.Functions.ILike(s.Code, term));
+            }
+
+            return await query
                 .OrderBy(s => s.Id)
                 .Select(s => new SubCategoryResponse(
                     s.Id,

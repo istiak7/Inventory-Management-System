@@ -3,5 +3,11 @@ using MediatR;
 
 namespace Inventory_Management_System.Features.Products.Queries.GetAllProducts
 {
-    public sealed record GetAllProductsQuery(int PageNumber = 1, int PageSize = 20) : IRequest<Result>;
+    public sealed record GetAllProductsQuery(
+        int PageNumber = 1,
+        int PageSize = 20,
+        string? Search = null,
+        int? SubCategoryId = null,
+        int? BrandId = null
+    ) : IRequest<Result>;
 }

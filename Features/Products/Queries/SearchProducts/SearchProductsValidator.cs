@@ -24,6 +24,18 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 .GreaterThan(0).When(x => x.ProductId.HasValue)
                 .WithMessage("A valid product id is required.");
 
+            RuleFor(x => x.VariantId)
+                .GreaterThan(0).When(x => x.VariantId.HasValue)
+                .WithMessage("A valid variant id is required.");
+
+            RuleFor(x => x.SubCategoryId)
+                .GreaterThan(0).When(x => x.SubCategoryId.HasValue)
+                .WithMessage("A valid sub-category id is required.");
+
+            RuleFor(x => x.BrandId)
+                .GreaterThan(0).When(x => x.BrandId.HasValue)
+                .WithMessage("A valid brand id is required.");
+
             RuleFor(x => x.BranchId)
                 .GreaterThan(0).When(x => x.BranchId.HasValue)
                 .WithMessage("A valid branch id is required.");

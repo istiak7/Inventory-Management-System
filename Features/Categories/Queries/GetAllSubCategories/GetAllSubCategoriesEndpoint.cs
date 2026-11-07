@@ -7,9 +7,13 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllSubCateg
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("/get-all-sub-categories", async (IMediator mediator, int pageNumber = 1, int pageSize = 20) =>
+            app.MapGet("/get-all-sub-categories", async (
+                IMediator mediator,
+                int pageNumber = 1,
+                int pageSize = 20,
+                string? search = null) =>
             {
-                var result = await mediator.Send(new GetAllSubCategoriesQuery(pageNumber, pageSize));
+                var result = await mediator.Send(new GetAllSubCategoriesQuery(pageNumber, pageSize, search));
                 return Results.Ok(result);
             }).WithTags("SubCategory").RequirePermission(Permissions.ProductsView);
         }

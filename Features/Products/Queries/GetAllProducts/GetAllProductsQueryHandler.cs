@@ -16,6 +16,9 @@ namespace Inventory_Management_System.Features.Products.Queries.GetAllProducts
                 var pagedResult = await _productRepository.GetAllPagedAsync(
                     request.PageNumber,
                     request.PageSize,
+                    request.Search,
+                    request.SubCategoryId,
+                    request.BrandId,
                     cancellationToken);
 
                 return new Result

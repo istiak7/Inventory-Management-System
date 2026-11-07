@@ -11,6 +11,9 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 IMediator mediator,
                 string? term = null,
                 int? productId = null,
+                int? variantId = null,
+                int? subCategoryId = null,
+                int? brandId = null,
                 int? branchId = null,
                 bool? isSerialized = null,
                 decimal? minPrice = null,
@@ -19,7 +22,17 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 int pageSize = 20) =>
             {
                 var result = await mediator.Send(new SearchProductsQuery(
-                    term, productId, branchId, isSerialized, minPrice, maxPrice, pageNumber, pageSize));
+                    Term: term,
+                    ProductId: productId,
+                    VariantId: variantId,
+                    SubCategoryId: subCategoryId,
+                    BrandId: brandId,
+                    BranchId: branchId,
+                    IsSerialized: isSerialized,
+                    MinPrice: minPrice,
+                    MaxPrice: maxPrice,
+                    PageNumber: pageNumber,
+                    PageSize: pageSize));
 
                 return Results.Ok(result);
             })

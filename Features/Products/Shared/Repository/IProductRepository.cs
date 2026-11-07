@@ -10,6 +10,9 @@ namespace Inventory_Management_System.Features.Products.Shared.Repository
         Task<PagedResult<ProductResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
+            int? subCategoryId = null,
+            int? brandId = null,
             CancellationToken cancellationToken = default
         );
         Task<PagedResult<ProductResponse>> GetBySubCategoryIdPagedAsync(

@@ -18,6 +18,7 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetAllBrands
                 var pagedResult = await _brandRepository.GetAllPagedAsync(
                     request.PageNumber,
                     request.PageSize,
+                    request.Search,
                     cancellationToken);
 
                 return new Result

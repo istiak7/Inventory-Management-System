@@ -10,6 +10,7 @@ namespace Inventory_Management_System.Features.Brands.Shared.Repository
         Task<PagedResult<BrandResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
             CancellationToken cancellationToken = default
         );
     }

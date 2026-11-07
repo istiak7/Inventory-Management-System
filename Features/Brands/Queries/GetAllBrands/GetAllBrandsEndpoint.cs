@@ -7,9 +7,13 @@ namespace Inventory_Management_System.Features.Brands.Queries.GetAllBrands
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("/get-all-brands", async (IMediator mediator, int pageNumber = 1, int pageSize = 20) =>
+            app.MapGet("/get-all-brands", async (
+                IMediator mediator,
+                int pageNumber = 1,
+                int pageSize = 20,
+                string? search = null) =>
             {
-                var result = await mediator.Send(new GetAllBrandsQuery(pageNumber, pageSize));
+                var result = await mediator.Send(new GetAllBrandsQuery(pageNumber, pageSize, search));
                 return Results.Ok(result);
             }).WithTags("Brand").RequirePermission(Permissions.ProductsView);
         }

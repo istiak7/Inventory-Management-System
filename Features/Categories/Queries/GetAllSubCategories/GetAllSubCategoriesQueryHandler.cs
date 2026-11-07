@@ -18,6 +18,7 @@ namespace Inventory_Management_System.Features.Categories.Queries.GetAllSubCateg
                 var pagedResult = await _subCategoryRepository.GetAllPagedAsync(
                     request.PageNumber,
                     request.PageSize,
+                    request.Search,
                     cancellationToken);
 
                 return new Result

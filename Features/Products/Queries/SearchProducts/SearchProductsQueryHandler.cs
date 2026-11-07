@@ -29,6 +29,15 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 if (request.ProductId is int productId)
                     query = query.Where(v => v.ProductId == productId);
 
+                if (request.VariantId is int variantId)
+                    query = query.Where(v => v.Id == variantId);
+
+                if (request.SubCategoryId is int subCategoryId)
+                    query = query.Where(v => v.Product.ProductSubCategoryId == subCategoryId);
+
+                if (request.BrandId is int brandId)
+                    query = query.Where(v => v.Product.BrandId == brandId);
+
                 var branchId = request.BranchId;
                 if (branchId is not null)
                     query = query.Where(v => v.Stocks.Any(s => s.BranchId == branchId));

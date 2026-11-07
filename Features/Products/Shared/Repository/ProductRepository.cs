@@ -15,9 +15,28 @@ namespace Inventory_Management_System.Features.Products.Shared.Repository
         public Task<PagedResult<ProductResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
+            int? subCategoryId = null,
+            int? brandId = null,
             CancellationToken cancellationToken = default
         )
-            => Project(_context.Products).ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
+        {
+            var source = _context.Products.AsQueryable();
+
+            if (subCategoryId is int sc)
+                source = source.Where(p => p.ProductSubCategoryId == sc);
+
+            if (brandId is int b)
+                source = source.Where(p => p.BrandId == b);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = $"%{search.Trim()}%";
+                source = source.Where(p => EF.Functions.ILike(p.ProductName, term));
+            }
+
+            return Project(source).ToPagedResultAsync(pageNumber, pageSize, cancellationToken);
+        }
 
         public Task<PagedResult<ProductResponse>> GetBySubCategoryIdPagedAsync(
             int subCategoryId,

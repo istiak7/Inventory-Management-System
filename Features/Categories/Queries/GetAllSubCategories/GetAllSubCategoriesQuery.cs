@@ -3,5 +3,9 @@ using MediatR;
 
 namespace Inventory_Management_System.Features.Categories.Queries.GetAllSubCategories
 {
-    public sealed record GetAllSubCategoriesQuery(int PageNumber = 1, int PageSize = 20) : IRequest<Result>;
+    public sealed record GetAllSubCategoriesQuery(
+        int PageNumber = 1,
+        int PageSize = 20,
+        string? Search = null
+    ) : IRequest<Result>;
 }

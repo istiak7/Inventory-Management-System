@@ -15,11 +15,19 @@ namespace Inventory_Management_System.Features.Brands.Shared.Repository
         public async Task<PagedResult<BrandResponse>> GetAllPagedAsync(
             int pageNumber,
             int pageSize,
+            string? search = null,
             CancellationToken cancellationToken = default
         )
         {
-            return await _context.Brands
-                .AsNoTracking()
+            var query = _context.Brands.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = $"%{search.Trim()}%";
+                query = query.Where(b => EF.Functions.ILike(b.Name, term));
+            }
+
+            return await query
                 .OrderBy(b => b.Id)
                 .Select(b => new BrandResponse(
                     b.Id,
