@@ -88,7 +88,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                             d.Quantity,
                             d.UnitPrice,
                             d.TotalAmount,
-                            d.WarrantyMonths,
+                            d.WarrantyDays,
                             d.Status,
                             SerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null
                         }).ToList()
@@ -104,7 +104,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                     s.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.TotalAmount,
-                        l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList(),
+                        l.WarrantyDays, l.Status.ToString(), l.SerialNumber)).ToList(),
                     s.VoidedAt, s.VoidReason))
                     .ToList();
 

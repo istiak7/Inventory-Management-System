@@ -11,6 +11,8 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
         decimal? MinPrice = null,
         decimal? MaxPrice = null,
         int PageNumber = 1,
-        int PageSize = 20
+        int PageSize = 20,
+        int? SubCategoryId = null,
+        int? BrandId = null
     ) : IRequest<Result>;
 }

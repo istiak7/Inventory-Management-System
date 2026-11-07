@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Warranty.Shared.Dtos
         int SaleDetailsId,
         string InvoiceNumber,
         DateTime SaleDate,
-        int WarrantyMonths,
+        int WarrantyDays,
         DateTime WarrantyExpiryDate,
         string DefectDescription,
         string? AccessoriesReceived,

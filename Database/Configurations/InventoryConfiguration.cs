@@ -64,7 +64,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.SerialNumber).IsRequired().HasMaxLength(100);
             builder.HasIndex(s => s.SerialNumber).IsUnique();
             builder.Property(s => s.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
-            builder.Property(s => s.WarrantyMonths).IsRequired();
+            builder.Property(s => s.WarrantyDays).IsRequired();
 
             builder.HasOne(s => s.ProductVariant)
                    .WithMany(v => v.ProductSerials)

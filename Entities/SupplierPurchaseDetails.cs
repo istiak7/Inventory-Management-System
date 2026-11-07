@@ -10,7 +10,7 @@ namespace Inventory_Management_System.Entities
         public int? ReceivedQuantity { get; set; }      
         public decimal UnitPrice { get; set; }        
         public decimal TotalAmount { get; set; }        
-        public int WarrantyMonths { get; set; }        
+        public int WarrantyDays { get; set; }        
         public LineStatus Status { get; set; } = LineStatus.Pending;
 
         // Navigation property

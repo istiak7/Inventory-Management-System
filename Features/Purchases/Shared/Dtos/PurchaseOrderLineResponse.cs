@@ -10,7 +10,9 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         int? ReceivedQuantity,
         decimal UnitPrice,
         decimal TotalAmount,
-        int WarrantyMonths,
-        string Status
+        int WarrantyDays,
+        string Status,
+        // Serials entered on the order that have not been received yet.
+        IReadOnlyList<string> PendingSerialNumbers
     );
 }

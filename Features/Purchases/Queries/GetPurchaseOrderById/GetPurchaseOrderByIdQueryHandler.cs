@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
@@ -44,9 +45,10 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetPurchaseOrde
                             d.ReceivedQuantity,
                             d.UnitPrice,
                             d.TotalAmount,
-                            d.WarrantyMonths,
+                            d.WarrantyDays,
                             d.Status.ToString(),
-                            d.ProductSerials.Select(s => s.SerialNumber).ToList()
+                            d.ProductSerials.Where(s => s.Status != SerialStatus.Ordered).OrderBy(s => s.Id).Select(s => s.SerialNumber).ToList(),
+                            d.ProductSerials.Where(s => s.Status == SerialStatus.Ordered).OrderBy(s => s.Id).Select(s => s.SerialNumber).ToList()
                         )).ToList()
                     ))
                     .FirstOrDefaultAsync(cancellationToken);

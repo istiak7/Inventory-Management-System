@@ -10,7 +10,7 @@ namespace Inventory_Management_System.Features.Warranty.Shared.Dtos
         int BranchId,
         string BranchName,
         DateTime? SoldDate,
-        int WarrantyMonths,
+        int WarrantyDays,
         DateTime? WarrantyExpiryDate,
         bool IsUnderWarranty,
         int DaysRemaining,

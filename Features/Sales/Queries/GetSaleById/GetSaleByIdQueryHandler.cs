@@ -54,7 +54,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                             d.Quantity,
                             d.UnitPrice,
                             d.TotalAmount,
-                            d.WarrantyMonths,
+                            d.WarrantyDays,
                             d.Status,
                             SerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null
                         }).ToList(),
@@ -88,7 +88,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                     sale.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.TotalAmount,
-                        l.WarrantyMonths, l.Status.ToString(), l.SerialNumber)).ToList(),
+                        l.WarrantyDays, l.Status.ToString(), l.SerialNumber)).ToList(),
                     sale.Payments.Select(p => new SalePaymentResponse(
                         p.CustomerPaymentId, p.Amount, p.PaymentDate, p.PaymentMethod)).ToList(),
                     sale.PreparedBy,

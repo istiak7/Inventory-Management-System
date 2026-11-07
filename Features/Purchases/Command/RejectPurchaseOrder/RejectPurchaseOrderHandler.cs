@@ -1,3 +1,4 @@
+using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
@@ -40,6 +41,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.RejectPurchaseO
                 purchase.DueAmount = 0;
                 foreach (var detail in purchase.SupplierPurchaseDetails)
                     detail.Reject();
+                // The goods will never arrive, so their pre-entered serials are freed.
+                await PurchaseSerials.ReleaseAsync(_dbContext, purchase.SupplierPurchaseDetails.Select(d => d.Id), cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);

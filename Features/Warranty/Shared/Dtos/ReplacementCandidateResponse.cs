@@ -9,6 +9,6 @@ namespace Inventory_Management_System.Features.Warranty.Shared.Dtos
         int BranchId,
         string BranchName,
         DateTime ReceivedDate,
-        int WarrantyMonths
+        int WarrantyDays
     );
 }

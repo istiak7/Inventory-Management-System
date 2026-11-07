@@ -51,7 +51,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.GetReplacementCa
                         s.BranchId,
                         s.Branch.Name,
                         s.ReceivedDate,
-                        s.WarrantyMonths))
+                        s.WarrantyDays))
                     .ToListAsync(cancellationToken);
 
                 return new Result

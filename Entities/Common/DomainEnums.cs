@@ -51,7 +51,10 @@ namespace Inventory_Management_System.Entities.Common
         InStock,
         Sold,
         RmaReturned,
-        Defective
+        Defective,
+        // Serial entered on a purchase order that has not been received yet. It reserves the
+        // number (the unique index) but is not stock: approval turns it into InStock.
+        Ordered
     }
 
     public enum WarrantyClaimStatus

@@ -1,6 +1,7 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LockExtensions;
@@ -112,6 +113,23 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                     };
             }
 
+            var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+            var variants = await _dbContext.ProductVariants
+                .Include(v => v.Product)
+                .Where(v => variantIds.Contains(v.Id))
+                .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+            // This order's own pending serials are replaced below, so they do not count as taken.
+            var serialError = await PurchaseSerials.ValidateAsync(_dbContext, request.Items, variants, purchase.Id, cancellationToken);
+            if (serialError != null)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = serialError
+                };
+
             try
             {
                 purchase.SupplierId = request.SupplierId;
@@ -124,13 +142,19 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
 
                 // Nothing has been received yet, so the old lines carry no stock or serials and
                 // can simply be replaced by what was submitted.
+                // Their pending (Ordered) serials go first: the serial row references the line.
+                // Flushed now so the same numbers can be re-reserved on the new lines below.
+                await PurchaseSerials.ReleaseAsync(_dbContext, purchase.SupplierPurchaseDetails.Select(d => d.Id), cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
                 _dbContext.SupplierPurchaseDetails.RemoveRange(purchase.SupplierPurchaseDetails);
                 purchase.SupplierPurchaseDetails.Clear();
 
                 decimal totalAmount = 0;
+                var serialsByLine = new List<(SupplierPurchaseDetails Detail, List<string> Serials)>();
                 foreach (var item in request.Items)
                 {
-                    var variant = await _dbContext.ProductVariants.FirstOrDefaultAsync(v => v.Id == item.ProductVariantId, cancellationToken);
+                    var variant = variants.GetValueOrDefault(item.ProductVariantId);
                     if (variant == null)
                         return new Result
                         {
@@ -143,18 +167,21 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                     var lineTotal = item.Quantity * item.UnitPrice;
                     totalAmount += lineTotal;
 
-                    purchase.SupplierPurchaseDetails.Add(new SupplierPurchaseDetails
+                    var detail = new SupplierPurchaseDetails
                     {
                         ProductVariantId = item.ProductVariantId,
                         OrderedQuantity = item.Quantity,
                         ReceivedQuantity = null,
                         UnitPrice = item.UnitPrice,
                         TotalAmount = lineTotal,
-                        WarrantyMonths = item.WarrantyMonths,
+                        WarrantyDays = item.WarrantyDays,
                         Status = LineStatus.Pending,
                         SupplierPurchase = purchase,
                         ProductVariant = variant,
-                    });
+                    };
+                    purchase.SupplierPurchaseDetails.Add(detail);
+                    if (variant.IsSerialized)
+                        serialsByLine.Add((detail, PurchaseSerials.Clean(item.SerialNumbers)));
                 }
 
                 // Nothing is paid before approval, so the whole revised total is still due.
@@ -172,6 +199,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                 purchase.TotalAmount = netAmount;
                 purchase.PaidAmount = 0;
                 purchase.DueAmount = netAmount;
+
+                foreach (var (detail, serials) in serialsByLine)
+                    await PurchaseSerials.ReserveAsync(_dbContext, purchase, detail, serials, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
@@ -205,7 +235,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                     IsSuccess = false,
                     StatusCode = 409,
                     Status = "Error",
-                    Message = "That invoice number was taken by another purchase order a moment ago."
+                    Message = "An invoice number or serial number on this order was taken by another user a moment ago. Check them and try again."
                 };
             }
             catch (Exception ex)

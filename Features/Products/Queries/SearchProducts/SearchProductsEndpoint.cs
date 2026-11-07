@@ -13,13 +13,16 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 int? productId = null,
                 int? branchId = null,
                 bool? isSerialized = null,
+                int? subCategoryId = null,
+                int? brandId = null,
                 decimal? minPrice = null,
                 decimal? maxPrice = null,
                 int pageNumber = 1,
                 int pageSize = 20) =>
             {
                 var result = await mediator.Send(new SearchProductsQuery(
-                    term, productId, branchId, isSerialized, minPrice, maxPrice, pageNumber, pageSize));
+                    term, productId, branchId, isSerialized, minPrice, maxPrice, pageNumber, pageSize,
+                    subCategoryId, brandId));
 
                 return Results.Ok(result);
             })

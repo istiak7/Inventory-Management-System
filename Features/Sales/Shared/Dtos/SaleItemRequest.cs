@@ -7,7 +7,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
 
         public decimal? UnitPrice { get; set; }
 
-        public int? WarrantyMonths { get; set; }
+        public int? WarrantyDays { get; set; }
 
         public string? SerialNumber { get; set; }
     }

@@ -158,7 +158,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
 
                     var unitPrice = decimal.Round(item.UnitPrice ?? variant.SellingPrice, 2, MidpointRounding.AwayFromZero);
 
-                    var warrantyMonths = serial?.WarrantyMonths ?? item.WarrantyMonths;
+                    var warrantyDays = serial?.WarrantyDays ?? item.WarrantyDays;
 
                     // Discounts are taken once, on the invoice (DiscountAmount), never per line.
                     var lineTotal = unitPrice * item.Quantity;
@@ -200,7 +200,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                         UnitPrice = unitPrice,
                         UnitCost = unitCost,
                         TotalAmount = lineTotal,
-                        WarrantyMonths = warrantyMonths,
+                        WarrantyDays = warrantyDays,
                         ProductSerialId = serial?.Id,
                         Status = SaleLineStatus.Completed,
                         CustomerSale = sale,
@@ -209,7 +209,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     });
 
                     itemResponses.Add(new SaleItemResponse(
-                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, warrantyMonths, serial?.SerialNumber));
+                        variant.Id, variant.Product.ProductName, item.Quantity, unitPrice, lineTotal, warrantyDays, serial?.SerialNumber));
                 }
 
                 if (request.DiscountAmount > subTotal)

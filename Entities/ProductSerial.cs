@@ -10,7 +10,7 @@ namespace Inventory_Management_System.Entities
         public int? StockTransferDetailsId { get; set; }
         public required string SerialNumber { get; set; }   
         public SerialStatus Status { get; set; } = SerialStatus.InStock;
-        public int WarrantyMonths { get; set; }          
+        public int WarrantyDays { get; set; }          
         public DateTime ReceivedDate { get; set; } = DateTime.UtcNow;
         public DateTime? SoldDate { get; set; } = null;
 

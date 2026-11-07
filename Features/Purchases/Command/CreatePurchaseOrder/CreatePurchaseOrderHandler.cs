@@ -1,6 +1,7 @@
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
+using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -61,6 +62,22 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     };
             }
 
+            var variantIds = request.Items.Select(i => i.ProductVariantId).Distinct().ToList();
+            var variants = await _dbContext.ProductVariants
+                .Include(v => v.Product)
+                .Where(v => variantIds.Contains(v.Id))
+                .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+            var serialError = await PurchaseSerials.ValidateAsync(_dbContext, request.Items, variants, null, cancellationToken);
+            if (serialError != null)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = serialError
+                };
+
             // A transaction so the number lock in DocumentNumbers holds until the order is saved.
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
@@ -84,9 +101,10 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                 };
 
                 decimal totalAmount = 0;
+                var serialsByLine = new List<(SupplierPurchaseDetails Detail, List<string> Serials)>();
                 foreach (var item in request.Items)
                 {
-                    var variant = await _dbContext.ProductVariants.FirstOrDefaultAsync(v => v.Id == item.ProductVariantId, cancellationToken);
+                    var variant = variants.GetValueOrDefault(item.ProductVariantId);
                     if (variant == null)
                         return new Result
                         {
@@ -99,18 +117,21 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     var lineTotal = item.Quantity * item.UnitPrice;
                     totalAmount += lineTotal;
 
-                    purchase.SupplierPurchaseDetails.Add(new SupplierPurchaseDetails
+                    var detail = new SupplierPurchaseDetails
                     {
                         ProductVariantId = item.ProductVariantId,
                         OrderedQuantity = item.Quantity,
                         ReceivedQuantity = null,
                         UnitPrice = item.UnitPrice,
                         TotalAmount = lineTotal,
-                        WarrantyMonths = item.WarrantyMonths,
+                        WarrantyDays = item.WarrantyDays,
                         Status = LineStatus.Pending,
                         SupplierPurchase = purchase,
                         ProductVariant = variant,
-                    });
+                    };
+                    purchase.SupplierPurchaseDetails.Add(detail);
+                    if (variant.IsSerialized)
+                        serialsByLine.Add((detail, PurchaseSerials.Clean(item.SerialNumbers)));
                 }
 
                 if (request.DiscountAmount > totalAmount)
@@ -131,6 +152,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                 purchase.DueAmount = netAmount;
 
                 await _dbContext.SupplierPurchases.AddAsync(purchase, cancellationToken);
+                foreach (var (detail, serials) in serialsByLine)
+                    await PurchaseSerials.ReserveAsync(_dbContext, purchase, detail, serials, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -165,7 +188,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.CreatePurchaseO
                     IsSuccess = false,
                     StatusCode = 409,
                     Status = "Error",
-                    Message = "That invoice number was taken by another purchase order a moment ago. Leave it blank to have one generated."
+                    Message = constraint != null && constraint.Contains("SerialNumber")
+                        ? "One of these serial numbers was saved by another user a moment ago. Check the serial numbers and try again."
+                        : "That invoice number was taken by another purchase order a moment ago. Leave it blank to have one generated."
                 };
             }
             catch (Exception ex)

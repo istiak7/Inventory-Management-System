@@ -33,7 +33,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                             .Select(d => new
                             {
                                 ProductDescription = d.ProductVariant.Product.ProductName,
-                                d.WarrantyMonths,
+                                d.WarrantyDays,
                                 Quantity = d.OrderedQuantity,
                                 d.UnitPrice,
                                 d.TotalAmount,
@@ -91,7 +91,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                     .Select((d, idx) => new InvoiceLineItemResponse(
                         idx + 1,
                         d.ProductDescription,
-                        d.WarrantyMonths,
+                        d.WarrantyDays,
                         d.Quantity,
                         d.UnitPrice,
                         d.TotalAmount))

@@ -3,7 +3,7 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
     public sealed record InvoiceLineItemResponse(
         int SN,
         string ProductDescription,
-        int WarrantyMonths,
+        int WarrantyDays,
         int Quantity,
         decimal UnitPrice,
         decimal TotalPrice
