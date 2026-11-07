@@ -9,7 +9,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         int Quantity,
         decimal UnitPrice,
         decimal TotalAmount,
-        int? WarrantyMonths,
+        int? WarrantyDays,
         string Status,
         string? SerialNumber
     );

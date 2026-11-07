@@ -1,3 +1,4 @@
+using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Entities;
@@ -63,6 +64,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.DeletePurchaseO
                 {
                     detail.Delete();
                 }
+                // Pre-entered serials were never stock; remove them so the numbers can be reused.
+                await PurchaseSerials.ReleaseAsync(_dbContext, purchase.SupplierPurchaseDetails.Select(d => d.Id), cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);

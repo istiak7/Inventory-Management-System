@@ -1086,7 +1086,7 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("UpdatedById")
                         .HasColumnType("integer");
 
-                    b.Property<int>("WarrantyMonths")
+                    b.Property<int>("WarrantyDays")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1451,7 +1451,7 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("UpdatedById")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("WarrantyMonths")
+                    b.Property<int?>("WarrantyDays")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -1905,7 +1905,7 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("UpdatedById")
                         .HasColumnType("integer");
 
-                    b.Property<int>("WarrantyMonths")
+                    b.Property<int>("WarrantyDays")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");

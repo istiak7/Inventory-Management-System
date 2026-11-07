@@ -13,7 +13,7 @@ namespace Inventory_Management_System.Entities
         // exact cost of the lot they came from; everything else uses the weighted average.
         public decimal UnitCost { get; set; }
         public decimal TotalAmount { get; set; }         
-        public int? WarrantyMonths { get; set; }         
+        public int? WarrantyDays { get; set; }         
         public int? ProductSerialId { get; set; } 
         public SaleLineStatus Status { get; set; } = SaleLineStatus.Completed;
 

@@ -5,7 +5,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
     public sealed record AvailableSerialResponse(
         int ProductSerialId,
         string SerialNumber,
-        int WarrantyMonths,
+        int WarrantyDays,
         DateTime ReceivedDate
     );
 }

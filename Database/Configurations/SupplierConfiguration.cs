@@ -58,7 +58,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(d => d.OrderedQuantity).IsRequired();
             builder.Property(d => d.UnitPrice).HasPrecision(18, 2);
             builder.Property(d => d.TotalAmount).HasPrecision(18, 2);
-            builder.Property(d => d.WarrantyMonths).IsRequired();
+            builder.Property(d => d.WarrantyDays).IsRequired();
             builder.Property(d => d.Status).IsRequired().HasConversion<string>().HasMaxLength(20);
             builder.Property(d => d.PurchaseId).IsRequired();
 

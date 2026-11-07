@@ -39,7 +39,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAvailableSerials
                     .Select(s => new AvailableSerialResponse(
                         s.Id,
                         s.SerialNumber,
-                        s.WarrantyMonths,
+                        s.WarrantyDays,
                         s.ReceivedDate))
                     .ToListAsync(cancellationToken);
 

@@ -16,6 +16,8 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 int? brandId = null,
                 int? branchId = null,
                 bool? isSerialized = null,
+                int? subCategoryId = null,
+                int? brandId = null,
                 decimal? minPrice = null,
                 decimal? maxPrice = null,
                 int pageNumber = 1,

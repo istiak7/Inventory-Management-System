@@ -40,6 +40,14 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                 .GreaterThan(0).When(x => x.BranchId.HasValue)
                 .WithMessage("A valid branch id is required.");
 
+            RuleFor(x => x.SubCategoryId)
+                .GreaterThan(0).When(x => x.SubCategoryId.HasValue)
+                .WithMessage("A valid sub-category id is required.");
+
+            RuleFor(x => x.BrandId)
+                .GreaterThan(0).When(x => x.BrandId.HasValue)
+                .WithMessage("A valid brand id is required.");
+
             RuleFor(x => x.MinPrice)
                 .GreaterThanOrEqualTo(0).When(x => x.MinPrice.HasValue)
                 .WithMessage("Minimum price must be 0 or greater.");

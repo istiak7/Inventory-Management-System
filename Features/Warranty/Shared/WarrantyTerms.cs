@@ -6,9 +6,9 @@ namespace Inventory_Management_System.Features.Warranty.Shared
 {
     public static class WarrantyTerms
     {
-        public static DateTime? ExpiryFor(DateTime? soldDate, int? warrantyMonths) =>
-            soldDate.HasValue && warrantyMonths is > 0
-                ? soldDate.Value.AddMonths(warrantyMonths.Value)
+        public static DateTime? ExpiryFor(DateTime? soldDate, int? warrantyDays) =>
+            soldDate.HasValue && warrantyDays is > 0
+                ? soldDate.Value.AddDays(warrantyDays.Value)
                 : null;
 
         public static bool IsUnderWarranty(DateTime? expiry, DateTime asOf) =>

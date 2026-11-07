@@ -66,7 +66,18 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     Message = "The same line is listed twice in this receipt."
                 };
 
-            var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials)>();
+            // Serials entered when the order was raised (status Ordered), per line. Approval turns
+            // these into stock; nobody types them again.
+            var lineIds = purchase.SupplierPurchaseDetails.Select(d => d.Id).ToList();
+            var pendingByLine = (await _dbContext.ProductSerials
+                    .IgnoreQueryFilters()
+                    .Where(s => lineIds.Contains(s.SupplierPurchaseDetailsId) && s.Status == SerialStatus.Ordered)
+                    .OrderBy(s => s.Id)
+                    .ToListAsync(cancellationToken))
+                .GroupBy(s => s.SupplierPurchaseDetailsId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var plan = new List<(SupplierPurchaseDetails Detail, int Qty, List<string> Serials, List<ProductSerial> Activate)>();
             var allSerials = new List<string>();
 
             foreach (var line in request.Lines)
@@ -100,8 +111,61 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 // More than was ordered can never be received on a line.
                 var remaining = detail.OrderedQuantity - (detail.ReceivedQuantity ?? 0);
 
-                if (detail.ProductVariant.IsSerialized)
+                if (detail.ProductVariant.IsSerialized && pendingByLine.TryGetValue(detail.Id, out var pending))
                 {
+                    // Pre-entered serials: the caller says which of them arrived (all of them by
+                    // default), or just a quantity, in which case the oldest ones are taken.
+                    var requested = PurchaseSerials.Clean(line.SerialNumbers);
+                    List<ProductSerial> activate;
+                    if (requested.Count > 0)
+                    {
+                        var unknown = requested.Where(r => pending.All(p => p.SerialNumber != r)).ToList();
+                        if (unknown.Count > 0)
+                            return new Result
+                            {
+                                IsSuccess = false,
+                                StatusCode = 400,
+                                Status = "Error",
+                                Message = $"Line {line.SupplierPurchaseDetailsId}: these serial numbers are not on this purchase order: {string.Join(", ", unknown)}."
+                            };
+                        activate = pending.Where(p => requested.Contains(p.SerialNumber)).ToList();
+                    }
+                    else
+                    {
+                        var qty = line.ReceivedQuantity ?? pending.Count;
+                        if (qty <= 0)
+                            return new Result
+                            {
+                                IsSuccess = false,
+                                StatusCode = 400,
+                                Status = "Error",
+                                Message = $"A received quantity greater than 0 is required for line {line.SupplierPurchaseDetailsId}."
+                            };
+                        if (qty > pending.Count)
+                            return new Result
+                            {
+                                IsSuccess = false,
+                                StatusCode = 400,
+                                Status = "Error",
+                                Message = $"Line {line.SupplierPurchaseDetailsId}: {qty} received, but only {pending.Count} serial number(s) are waiting."
+                            };
+                        activate = pending.Take(qty).ToList();
+                    }
+
+                    if (activate.Count > remaining)
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = $"Line {line.SupplierPurchaseDetailsId}: {activate.Count} received, but only {remaining} still to receive."
+                        };
+
+                    plan.Add((detail, activate.Count, [], activate));
+                }
+                else if (detail.ProductVariant.IsSerialized)
+                {
+                    // An order raised before serials moved to order entry: typed in here, as before.
                     var serials = (line.SerialNumbers ?? [])
                         .Select(s => s?.Trim() ?? string.Empty)
                         .Where(s => s.Length > 0)
@@ -126,7 +190,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         };
 
                     allSerials.AddRange(serials);
-                    plan.Add((detail, serials.Count, serials));
+                    plan.Add((detail, serials.Count, serials, []));
                 }
                 else
                 {
@@ -149,7 +213,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                             Message = $"Line {line.SupplierPurchaseDetailsId}: {qty} received, but only {remaining} still to receive."
                         };
 
-                    plan.Add((detail, qty, []));
+                    plan.Add((detail, qty, [], []));
                 }
             }
 
@@ -302,9 +366,18 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 
                 var lineResults = new List<ReceivedLineResponse>();
 
-                foreach (var (detail, qty, serials) in plan)
+                foreach (var (detail, qty, serials, activate) in plan)
                 {
                     var variant = detail.ProductVariant;
+
+                    foreach (var serial in activate)
+                    {
+                        serial.Status = SerialStatus.InStock;
+                        serial.BranchId = purchase.BranchId;
+                        serial.WarrantyDays = detail.WarrantyDays;
+                        serial.ReceivedDate = now;
+                        serialsCreated++;
+                    }
 
                     foreach (var sn in serials)
                     {
@@ -315,7 +388,7 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                             BranchId = purchase.BranchId,
                             SerialNumber = sn,
                             Status = SerialStatus.InStock,
-                            WarrantyMonths = detail.WarrantyMonths,
+                            WarrantyDays = detail.WarrantyDays,
                             ReceivedDate = now,
                             ProductVariant = variant,
                             SupplierPurchaseDetails = detail,
@@ -353,6 +426,11 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 {
                     foreach (var detail in purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected))
                         detail.CloseShort();
+
+                    // The rest will never arrive, so its pre-entered serials are freed.
+                    var activated = plan.SelectMany(p => p.Activate).ToHashSet();
+                    _dbContext.ProductSerials.RemoveRange(
+                        pendingByLine.Values.SelectMany(v => v).Where(s => !activated.Contains(s)));
 
                     purchase.DiscountAmount = finalDiscount;
                     purchase.TotalAmount = finalTotal;

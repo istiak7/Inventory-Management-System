@@ -23,14 +23,15 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
             {
                 var serial = await _dbContext.ProductSerials
                     .AsNoTracking()
-                    .Where(s => s.SerialNumber == serialNumber)
+                    // A serial still waiting on a purchase order is not a real unit yet.
+                    .Where(s => s.SerialNumber == serialNumber && s.Status != SerialStatus.Ordered)
                     .Select(s => new
                     {
                         s.Id,
                         s.SerialNumber,
                         s.Status,
                         s.SoldDate,
-                        s.WarrantyMonths,
+                        s.WarrantyDays,
                         s.BranchId,
                         BranchName = s.Branch.Name,
                         s.ProductVariantId,
@@ -62,7 +63,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
                         serial.Id, serial.SerialNumber, serial.Status.ToString(),
                         serial.ProductVariantId, serial.Sku, serial.ProductName,
                         serial.BranchId, serial.BranchName,
-                        null, serial.WarrantyMonths, null, false, 0,
+                        null, serial.WarrantyDays, null, false, 0,
                         false, "This unit has not been sold, so there is no warranty to claim against.",
                         null, claims);
 
@@ -76,7 +77,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
                     {
                         d.Id,
                         d.SaleId,
-                        d.WarrantyMonths,
+                        d.WarrantyDays,
                         d.ProductSerialId,
                         OriginalSerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null,
                         d.CustomerSale.InvoiceNumber,
@@ -87,8 +88,8 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
                     })
                     .FirstAsync(cancellationToken);
 
-                var warrantyMonths = line.WarrantyMonths ?? serial.WarrantyMonths;
-                var expiry = WarrantyTerms.ExpiryFor(serial.SoldDate, warrantyMonths);
+                var warrantyDays = line.WarrantyDays ?? serial.WarrantyDays;
+                var expiry = WarrantyTerms.ExpiryFor(serial.SoldDate, warrantyDays);
                 var now = DateTime.UtcNow;
                 var underWarranty = WarrantyTerms.IsUnderWarranty(expiry, now);
 
@@ -105,7 +106,7 @@ namespace Inventory_Management_System.Features.Warranty.Queries.LookupSerialWarr
                     serial.Id, serial.SerialNumber, serial.Status.ToString(),
                     serial.ProductVariantId, serial.Sku, serial.ProductName,
                     serial.BranchId, serial.BranchName,
-                    serial.SoldDate, warrantyMonths, expiry, underWarranty,
+                    serial.SoldDate, warrantyDays, expiry, underWarranty,
                     WarrantyTerms.DaysRemaining(expiry, now),
                     canOpenClaim, message, sale, claims);
 

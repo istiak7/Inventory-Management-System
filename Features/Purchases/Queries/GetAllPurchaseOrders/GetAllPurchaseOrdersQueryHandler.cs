@@ -82,8 +82,13 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                             d.ReceivedQuantity,
                             d.UnitPrice,
                             d.TotalAmount,
-                            d.WarrantyMonths,
-                            d.Status
+                            d.WarrantyDays,
+                            d.Status,
+                            PendingSerialNumbers = d.ProductSerials
+                                .Where(s => s.Status == SerialStatus.Ordered)
+                                .OrderBy(s => s.Id)
+                                .Select(s => s.SerialNumber)
+                                .ToList()
                         }).ToList()
                     })
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
@@ -94,7 +99,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
                     p.TotalAmount, p.PaidAmount, p.DueAmount, p.DiscountAmount, p.ItemsCount,
                     p.Lines.Select(l => new PurchaseOrderLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized, l.OrderedQuantity, l.ReceivedQuantity,
-                        l.UnitPrice, l.TotalAmount, l.WarrantyMonths, l.Status.ToString())).ToList()))
+                        l.UnitPrice, l.TotalAmount, l.WarrantyDays, l.Status.ToString(), l.PendingSerialNumbers)).ToList()))
                     .ToList();
 
                 var pagedResult = new PagedResult<PurchaseOrderListResponse>

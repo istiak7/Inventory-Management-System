@@ -70,8 +70,8 @@ namespace Inventory_Management_System.Features.Warranty.Command.CreateWarrantyCl
                     d => d.Id == saleDetailsId,
                     cancellationToken);
 
-                var warrantyMonths = saleDetail.WarrantyMonths ?? serial.WarrantyMonths;
-                var expiry = WarrantyTerms.ExpiryFor(serial.SoldDate, warrantyMonths);
+                var warrantyDays = saleDetail.WarrantyDays ?? serial.WarrantyDays;
+                var expiry = WarrantyTerms.ExpiryFor(serial.SoldDate, warrantyDays);
 
                 if (expiry == null)
                     return new Result

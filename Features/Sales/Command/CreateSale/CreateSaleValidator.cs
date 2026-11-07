@@ -52,9 +52,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     .When(i => i.UnitPrice.HasValue)
                     .WithMessage("UnitPrice must be greater than 0.");
                 item.RuleFor(i => i.UnitPrice).Money();
-                item.RuleFor(i => i.WarrantyMonths).GreaterThanOrEqualTo(0)
-                    .When(i => i.WarrantyMonths.HasValue)
-                    .WithMessage("WarrantyMonths must be 0 or greater.");
+                item.RuleFor(i => i.WarrantyDays).GreaterThanOrEqualTo(0)
+                    .When(i => i.WarrantyDays.HasValue)
+                    .WithMessage("WarrantyDays must be 0 or greater.");
                 item.RuleFor(i => i.SerialNumber).MaximumLength(100)
                     .When(i => i.SerialNumber != null)
                     .WithMessage("SerialNumber must be 100 characters or fewer.");
