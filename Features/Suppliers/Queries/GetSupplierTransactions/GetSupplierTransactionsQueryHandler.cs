@@ -3,6 +3,7 @@ using Inventory_Management_System.Features.Suppliers.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.PaginationExtensions;
 using MediatR;
+using Inventory_Management_System.Shared.Extensions.QueryableFilterExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTransactions
@@ -46,11 +47,9 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                     query = query.Where(t => t.TransactionType == request.TransactionType);
                 }
 
-                if (request.StartDate.HasValue)
-                    query = query.Where(t => t.TransactionDate >= request.StartDate.Value.Date);
-
-                if (request.EndDate.HasValue)
-                    query = query.Where(t => t.TransactionDate < request.EndDate.Value.Date.AddDays(1));
+                // Days are the shop's (Dhaka) calendar days, not UTC ones: a payment at 01:00 local
+                // time belongs to that day, which in UTC is still the day before.
+                query = query.WhereDateRange(t => t.TransactionDate, request.StartDate, request.EndDate);
 
                 var pagedResult = await query
                     .OrderByDescending(t => t.Id)
