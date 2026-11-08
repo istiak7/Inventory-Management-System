@@ -23,7 +23,12 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         decimal PaidAmount,
         decimal DueBeforeAmount,
         decimal DueAmount,
-        // Discount waived on this invoice during this very payment (0 when none).
-        decimal DiscountNow
+        // Discount waived on this invoice during this very payment (0 when none). On the invoice
+        // itself: every discount taken at payment time so far.
+        decimal DiscountNow,
+        // "Invoice" (the purchase invoice) or "Receipt" (one payment against it).
+        string DocumentType,
+        // Paid | Partial | Due — as of the document (after the payment, on a receipt).
+        string PaymentStatus
     );
 }

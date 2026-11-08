@@ -1,4 +1,5 @@
 using Inventory_Management_System.Database;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Purchases.Shared.Dtos;
 using Inventory_Management_System.Shared;
 using MediatR;
@@ -26,8 +27,13 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                         SupplierAddress = p.Supplier.Description,
                         MobileNumber = p.Supplier.PhoneNumber,
                         BranchName = p.Branch.Name,
+                        p.PurchaseDate,
+                        p.Status,
+                        p.PurchaseType,
                         p.DiscountAmount,
                         p.TotalAmount,
+                        p.PaidAmount,
+                        p.DueAmount,
                         Items = p.SupplierPurchaseDetails
                             .OrderBy(d => d.Id)
                             .Select(d => new
@@ -62,9 +68,71 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                         Message = "Purchase invoice not found for this supplier."
                     };
 
+                // Payment-time discounts have since shrunk TotalAmount and grown DiscountAmount, so
+                // rebuild the invoice's original figures: the total before any such discount (so the
+                // dues reconcile) and the discount agreed when the order was placed.
+                var paymentDiscounts = purchase.Allocations.Sum(a => a.Discount);
+                var originalTotal = purchase.TotalAmount + paymentDiscounts;
+                var originalDiscount = purchase.DiscountAmount - paymentDiscounts;
+
+                var items = purchase.Items
+                    .Select((d, idx) => new InvoiceLineItemResponse(
+                        idx + 1,
+                        d.ProductDescription,
+                        d.WarrantyDays,
+                        d.Quantity,
+                        d.UnitPrice,
+                        d.TotalAmount))
+                    .ToList();
+
+                // No payment date: the purchase invoice itself. It exists from the moment the purchase
+                // is approved (goods in stock, supplier ledger posted) and does not depend on any
+                // payment — a 100% credit purchase has one too, showing the whole amount as due.
+                if (request.Date is null)
+                {
+                    if (purchase.Status != PurchaseStatus.Approved)
+                        return new Result
+                        {
+                            IsSuccess = false,
+                            StatusCode = 400,
+                            Status = "Error",
+                            Message = purchase.Status == PurchaseStatus.Rejected
+                                ? "This purchase order was rejected, so it has no invoice."
+                                : "The invoice is issued when the purchase order is approved."
+                        };
+
+                    var invoice = new GetInvoiceSupplierLedgerResponse(
+                        purchase.InvoiceNumber,
+                        purchase.PurchaseDate,
+                        purchase.SupplierName,
+                        purchase.SupplierAddress,
+                        purchase.MobileNumber,
+                        BillTypeOf(purchase.PurchaseType),
+                        purchase.BranchName,
+                        items,
+                        originalDiscount,
+                        originalTotal,
+                        purchase.PaidAmount,
+                        originalTotal,
+                        purchase.DueAmount,
+                        paymentDiscounts,
+                        "Invoice",
+                        PaymentStatusOf(purchase.PaidAmount, purchase.DueAmount));
+
+                    return new Result
+                    {
+                        IsSuccess = true,
+                        StatusCode = 200,
+                        Status = "Success",
+                        Message = "Invoice retrieved successfully",
+                        Data = invoice
+                    };
+                }
+
+                var paymentDate = request.Date.Value.ToUniversalTime();
                 var allocation = purchase.Allocations
                     // Within one second: a date sent back by the browser loses the sub-second part.
-                    .Where(a => Math.Abs((a.PaymentDate - request.Date.ToUniversalTime()).TotalSeconds) < 1)
+                    .Where(a => Math.Abs((a.PaymentDate - paymentDate).TotalSeconds) < 1)
                     .OrderByDescending(a => a.Id)
                     .FirstOrDefault();
 
@@ -77,25 +145,10 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                         Message = "No payment was found against this invoice on that date."
                     };
 
-                // Payment-time discounts have since shrunk TotalAmount and grown DiscountAmount, so
-                // rebuild the invoice's original figures: the total before any such discount (so the
-                // dues reconcile) and the discount agreed when the order was placed.
-                var paymentDiscounts = purchase.Allocations.Sum(a => a.Discount);
-                var originalTotal = purchase.TotalAmount + paymentDiscounts;
-                var originalDiscount = purchase.DiscountAmount - paymentDiscounts;
                 var dueBefore = originalTotal
                     - purchase.Allocations.Where(a => a.Id < allocation.Id).Sum(a => a.Amount + a.Discount);
                 var dueAfter = dueBefore - (allocation.Amount + allocation.Discount);
-
-                var items = purchase.Items
-                    .Select((d, idx) => new InvoiceLineItemResponse(
-                        idx + 1,
-                        d.ProductDescription,
-                        d.WarrantyDays,
-                        d.Quantity,
-                        d.UnitPrice,
-                        d.TotalAmount))
-                    .ToList();
+                var paidThrough = purchase.Allocations.Where(a => a.Id <= allocation.Id).Sum(a => a.Amount);
 
                 var response = new GetInvoiceSupplierLedgerResponse(
                     purchase.InvoiceNumber,
@@ -111,7 +164,9 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                     allocation.Amount,
                     dueBefore,
                     dueAfter,
-                    allocation.Discount);
+                    allocation.Discount,
+                    "Receipt",
+                    PaymentStatusOf(paidThrough, dueAfter));
 
                 return new Result
                 {
@@ -135,5 +190,18 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                 };
             }
         }
+
+        // How the invoice was billed, as the screens show it: a Debit purchase reads "Credit".
+        private static string BillTypeOf(PurchaseType? type) => type switch
+        {
+            PurchaseType.Cash => "Cash",
+            PurchaseType.Debit => "Credit",
+            _ => "—",
+        };
+
+        // Nothing owed is Paid; something paid with something still owed is Partial; nothing paid
+        // and something owed is Due.
+        private static string PaymentStatusOf(decimal paid, decimal due) =>
+            due <= 0 ? "Paid" : paid > 0 ? "Partial" : "Due";
     }
 }

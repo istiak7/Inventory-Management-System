@@ -11,7 +11,7 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetInvoiceSuppl
                 IMediator mediator,
                 string invoiceNumber,
                 int supplierId,
-                DateTime date) =>
+                DateTime? date = null) =>
             {
                 var result = await mediator.Send(new GetInvoiceSupplierLedgerQuery(invoiceNumber, supplierId, date));
                 return Results.Ok(result);
