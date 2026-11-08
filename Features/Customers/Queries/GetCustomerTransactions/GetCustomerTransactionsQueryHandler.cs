@@ -72,7 +72,8 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                             ? t.CustomerSale!.Remarks
                             : t.CustomerPaymentId != null
                                 ? t.CustomerPayment!.Remarks
-                                : null))
+                                : null,
+                        t.SaleId))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result
