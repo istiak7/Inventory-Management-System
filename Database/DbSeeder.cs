@@ -40,7 +40,11 @@ namespace Inventory_Management_System.Database
 
             // Default menu actions, the Salesman role and existing roles' grants (once only).
             if (knownApiRoutes is not null && logger is not null)
+            {
                 await MenuActionSeed.SeedAsync(db, knownApiRoutes, logger, cancellationToken);
+                // API routes added since, appended to existing pages' actions (once each).
+                await MenuActionSeed.AddRoutesAsync(db, knownApiRoutes, logger, cancellationToken);
+            }
         }
 
         private static async Task SeedPermissionsAsync(AppDbContext db, CancellationToken cancellationToken)

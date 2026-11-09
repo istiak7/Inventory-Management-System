@@ -35,6 +35,17 @@ namespace Inventory_Management_System.Database
         private const string Customers = "GET /get-all-customers";
         private const string Suppliers = "GET /get-all-suppliers";
         private const string ProductSearch = "GET /search-products";
+        // The sale's printable delivery challan, opened from Sale Details beside the invoice.
+        private const string SaleChallan = "GET /get-sale-challan/{id:int}";
+
+        // API routes added after MenuActionDefaults.v1 had already run. That seed never runs
+        // again, so on an existing database each batch appends its routes to the page's existing
+        // action instead (once, recorded in SeedHistory) — whoever could already open that action
+        // can use the new route, and nobody else. Defaults above carry them for new databases.
+        private static readonly (string SeedName, string MenuRoute, string ActionCode, string[] ApiRoutes)[] RouteAdditions =
+        [
+            ("MenuActionRoutes.SaleChallan", "/sales", "view", [SaleChallan]),
+        ];
 
         private static readonly Dictionary<string, ActionDef[]> Defaults = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -109,7 +120,8 @@ namespace Inventory_Management_System.Database
             ],
             ["/sales"] =
             [
-                View("sales.view", "GET /get-all-sales", "GET /get-sale/{id:int}", "GET /get-invoice-customer-ledger", Branches),
+                View("sales.view", "GET /get-all-sales", "GET /get-sale/{id:int}", "GET /get-invoice-customer-ledger",
+                    SaleChallan, Branches),
                 Create("sales.manage", "POST /create-sale", ProductSearch, "GET /get-available-serials",
                     "GET /get-customer-by-phone", Customers, Branches),
                 // Money and stock are committed when a sale is made; only its remark can change.
@@ -390,6 +402,45 @@ namespace Inventory_Management_System.Database
             db.SeedHistory.Add(new SeedHistory { Name = SeedName, CreatedAt = DateTime.UtcNow });
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Menu action seed: {Count} default actions created", created.Count);
+        }
+
+        // Applies RouteAdditions: appends each batch's API routes to the existing action of its
+        // page. Runs after SeedAsync, so on a new database the routes are already present (from
+        // Defaults) and the batch only records itself.
+        public static async Task AddRoutesAsync(
+            AppDbContext db,
+            IReadOnlySet<string> knownRoutes,
+            ILogger logger,
+            CancellationToken cancellationToken)
+        {
+            const int active = (int)EntityStatus.Active;
+
+            foreach (var (seedName, menuRoute, actionCode, apiRoutes) in RouteAdditions)
+            {
+                if (await db.SeedHistory.AnyAsync(s => s.Name == seedName, cancellationToken)) continue;
+
+                var actions = await db.AppMenuActions
+                    .Where(a => a.IsActive == active
+                                && a.ComponentCode == actionCode
+                                && a.Menu.IsActive == active
+                                && a.Menu.FrontendRoute == menuRoute)
+                    .ToListAsync(cancellationToken);
+
+                var routes = apiRoutes.Where(knownRoutes.Contains).ToList();
+                foreach (var action in actions)
+                {
+                    var missing = routes.Where(r => !action.ApiRoutes.Contains(r)).ToList();
+                    if (missing.Count == 0) continue;
+                    // A new list so EF sees the text[] column change.
+                    action.ApiRoutes = [.. action.ApiRoutes, .. missing];
+                    action.UpDatedAt = DateTime.UtcNow;
+                }
+
+                db.SeedHistory.Add(new SeedHistory { Name = seedName, CreatedAt = DateTime.UtcNow });
+                await db.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("Menu action seed {SeedName}: routes added to {Count} action(s) on {MenuRoute}",
+                    seedName, actions.Count, menuRoute);
+            }
         }
     }
 }
