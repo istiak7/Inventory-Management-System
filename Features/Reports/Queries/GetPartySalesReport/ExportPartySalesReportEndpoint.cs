@@ -20,7 +20,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
                 string? invoiceNumber = null,
                 string? search = null,
                 string? sortBy = null,
-                bool sortDescending = true) =>
+                bool sortDescending = true,
+                string? columns = null) =>
             {
                 var result = await mediator.Send(new GetPartySalesReportQuery(
                     1, ReportPaging.MaxExportPageSize, startDate, endDate, customerId, branchId,
@@ -75,7 +76,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartySalesRepo
                         new("Total paid", summary.TotalPaid, ReportWorkbook.MoneyFormat),
                         new("Total due", summary.TotalDue, ReportWorkbook.MoneyFormat),
                         new("Return adjustments", summary.ReturnAdjustmentAmount, ReportWorkbook.MoneyFormat),
-                    });
+                    },
+                    columns);
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
                     ReportWorkbook.FileName("Customer_Sales", startDate, endDate));

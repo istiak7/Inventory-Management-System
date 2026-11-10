@@ -22,7 +22,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
                 int? branchId = null,
                 string? search = null,
                 string? sortBy = null,
-                bool sortDescending = true) =>
+                bool sortDescending = true,
+                string? columns = null) =>
             {
                 var result = await mediator.Send(new GetPaymentReportQuery(
                     1, ReportPaging.MaxExportPageSize, startDate, endDate, partyType, partyId, direction,
@@ -72,7 +73,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
                         new("Total paid", summary.TotalPaid, ReportWorkbook.MoneyFormat),
                         new("Of which office expenses", summary.TotalExpenses, ReportWorkbook.MoneyFormat),
                         new("Net amount", summary.NetAmount, ReportWorkbook.MoneyFormat),
-                    });
+                    },
+                    columns);
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
                     ReportWorkbook.FileName("Payments", startDate, endDate));

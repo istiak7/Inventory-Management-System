@@ -21,7 +21,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
                 string? invoiceNumber = null,
                 string? search = null,
                 string? sortBy = null,
-                bool sortDescending = true) =>
+                bool sortDescending = true,
+                string? columns = null) =>
             {
                 var result = await mediator.Send(new GetPartyPurchaseReportQuery(
                     1, ReportPaging.MaxExportPageSize, startDate, endDate, supplierId, branchId,
@@ -71,7 +72,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
                         new("Total paid", summary.TotalPaid, ReportWorkbook.MoneyFormat),
                         new("Total due", summary.TotalDue, ReportWorkbook.MoneyFormat),
                         new("Return adjustments", summary.ReturnAdjustmentAmount, ReportWorkbook.MoneyFormat),
-                    });
+                    },
+                    columns);
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
                     ReportWorkbook.FileName("Supplier_Purchases", startDate, endDate));

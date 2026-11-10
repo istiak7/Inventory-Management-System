@@ -61,6 +61,7 @@ namespace Inventory_Management_System.Database
                         Page("All Transfers", "/transfers", "", "transfers.view"))),
                 Folder("Insights", "",
                     Folder("Reports", "BarChart3",
+                        Page("Report Center", "/reports", "", "reports.view"),
                         Page("Party Ledger", "/reports/ledger", "", "reports.view"),
                         Page("Customer Sales", "/reports/party-sales", "", "reports.view"),
                         Page("Supplier Purchases", "/reports/party-purchase", "", "reports.view"),

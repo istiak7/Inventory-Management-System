@@ -57,9 +57,21 @@ namespace Inventory_Management_System.Database
         // page's actions if it has none, and grants the listed actions to the Salesman role.
         // Other roles get nothing until an admin ticks the actions in Users & Roles; Admin always
         // has everything.
+        // InsertBefore puts the new menu in front of its sibling instead of after it.
+        // ShareWithRolesOn: every role that already holds an action on one of these pages also gets
+        // the SalesmanCodes actions, so a hub page (Report Center) appears for whoever already
+        // uses the pages it links to.
         private sealed record PageAddition(
             string SeedName, string Route, string Name, string SiblingRoute, string Permission,
-            ActionDef[] Actions, string[] SalesmanCodes);
+            ActionDef[] Actions, string[] SalesmanCodes,
+            bool InsertBefore = false, string[]? ShareWithRolesOn = null);
+
+        // The report pages the Report Center links to.
+        private static readonly string[] ReportPages =
+        [
+            "/reports/ledger", "/reports/party-sales", "/reports/party-purchase",
+            "/reports/payments", "/reports/expenses", "/reports/stock",
+        ];
 
         private static readonly PageAddition[] PageAdditions =
         [
@@ -76,6 +88,13 @@ namespace Inventory_Management_System.Database
                     QuotationById, ProductSearch, "GET /get-available-serials", Branches),
             ],
             ["view", "create", "update", "print", "status", "convert"]),
+            // The Reports home page. It calls no API of its own (each report keeps its own
+            // actions), so its View action only decides whether the page and its menu show.
+            new("MenuPage.ReportCenter", "/reports", "Report Center", "/reports/ledger", "reports.view",
+            [
+                View("reports.view"),
+            ],
+            [], InsertBefore: true, ShareWithRolesOn: ReportPages),
         ];
 
         private static readonly Dictionary<string, ActionDef[]> Defaults = new(StringComparer.OrdinalIgnoreCase)
@@ -233,6 +252,10 @@ namespace Inventory_Management_System.Database
                 Update("transfers.manage", "PUT /update-stock-transfer/{id:int}", ProductSearch, Branches,
                     "GET /get-stock-by-variant-and-branch", "GET /get-branch-stock/{branchId:int}/variant/{productVariantId:int}"),
                 Delete("transfers.manage", "DELETE /delete-stock-transfer/{id:int}"),
+            ],
+            ["/reports"] =
+            [
+                View("reports.view"),
             ],
             ["/reports/ledger"] =
             [
@@ -464,9 +487,10 @@ namespace Inventory_Management_System.Database
                         continue;
                     }
 
+                    var order = page.InsertBefore ? sibling.MenuOrder : sibling.MenuOrder + 1;
                     var later = await db.AppMenus
                         .Where(m => m.SubmoduleId == sibling.SubmoduleId && m.ParentId == sibling.ParentId
-                                    && m.MenuOrder > sibling.MenuOrder)
+                                    && m.MenuOrder >= order)
                         .ToListAsync(cancellationToken);
                     foreach (var m in later) m.MenuOrder++;
 
@@ -476,7 +500,7 @@ namespace Inventory_Management_System.Database
                         FrontendRoute = page.Route,
                         Permission = page.Permission,
                         IsLeaf = true,
-                        MenuOrder = sibling.MenuOrder + 1,
+                        MenuOrder = order,
                         SubmoduleId = sibling.SubmoduleId,
                         ParentId = sibling.ParentId,
                         CreatedAt = DateTime.UtcNow,
@@ -507,6 +531,39 @@ namespace Inventory_Management_System.Database
                 {
                     foreach (var action in created.Where(a => page.SalesmanCodes.Contains(a.ComponentCode)))
                         db.RoleMenuActions.Add(new RoleMenuAction { RoleId = salesman.Id, MenuAction = action });
+                }
+
+                if (page.ShareWithRolesOn is { Length: > 0 } sharedPages)
+                {
+                    // On a new database the actions came from Defaults, so look at the menu's own.
+                    var pageActions = created.Count > 0
+                        ? created
+                        : menu.Actions.Where(a => a.IsActive == active).ToList();
+                    var toGrant = pageActions.Where(a => page.SalesmanCodes.Length == 0
+                                                         ? a.ComponentCode == "view"
+                                                         : page.SalesmanCodes.Contains(a.ComponentCode))
+                                             .ToList();
+
+                    var roleIds = await db.RoleMenuActions
+                        .Where(g => g.IsActive == active
+                                    && g.MenuAction.IsActive == active
+                                    && g.MenuAction.Menu.IsActive == active
+                                    && sharedPages.Contains(g.MenuAction.Menu.FrontendRoute))
+                        .Select(g => g.RoleId)
+                        .Distinct()
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var action in toGrant)
+                    {
+                        var already = action.Id == 0
+                            ? []
+                            : await db.RoleMenuActions
+                                .Where(g => g.MenuActionId == action.Id)
+                                .Select(g => g.RoleId)
+                                .ToListAsync(cancellationToken);
+                        foreach (var roleId in roleIds.Except(already))
+                            db.RoleMenuActions.Add(new RoleMenuAction { RoleId = roleId, MenuAction = action });
+                    }
                 }
 
                 db.SeedHistory.Add(new SeedHistory { Name = page.SeedName, CreatedAt = DateTime.UtcNow });

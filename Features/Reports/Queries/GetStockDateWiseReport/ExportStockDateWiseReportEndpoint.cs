@@ -21,7 +21,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetStockDateWiseR
                 int? subCategoryId = null,
                 string? search = null,
                 string? sortBy = null,
-                bool sortDescending = false) =>
+                bool sortDescending = false,
+                string? columns = null) =>
             {
                 var result = await mediator.Send(new GetStockDateWiseReportQuery(
                     1, ReportPaging.MaxExportPageSize, startDate, endDate, branchId, productVariantId,
@@ -72,7 +73,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetStockDateWiseR
                         new("Stock out", summary.StockOutQuantity, ReportWorkbook.WholeNumberFormat),
                         new("Adjustment", summary.AdjustmentQuantity, ReportWorkbook.WholeNumberFormat),
                         new("Closing stock", summary.ClosingStock, ReportWorkbook.WholeNumberFormat),
-                    });
+                    },
+                    columns);
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
                     ReportWorkbook.FileName("Stock_Movement", startDate, endDate));

@@ -19,7 +19,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetExpenseReport
                 int? branchId = null,
                 string? search = null,
                 string? sortBy = null,
-                bool sortDescending = true) =>
+                bool sortDescending = true,
+                string? columns = null) =>
             {
                 var result = await mediator.Send(new GetExpenseReportQuery(
                     1, ReportPaging.MaxExportPageSize, startDate, endDate, categoryId, paymentMethod,
@@ -61,7 +62,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetExpenseReport
                         new("Expenses", summary.ExpenseCount, ReportWorkbook.WholeNumberFormat),
                         new("Total spent", summary.TotalAmount, ReportWorkbook.MoneyFormat),
                         new("Average expense", summary.AverageAmount, ReportWorkbook.MoneyFormat),
-                    });
+                    },
+                    columns);
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
                     ReportWorkbook.FileName("Office_Expenses", startDate, endDate));

@@ -37,8 +37,11 @@ namespace Inventory_Management_System.Features.Reports.Shared.Export
             IReadOnlyList<(string Label, string Value)> filters,
             IReadOnlyList<ReportColumn<T>> columns,
             IReadOnlyList<T> rows,
-            IReadOnlyList<ReportTotal> totals)
+            IReadOnlyList<ReportTotal> totals,
+            string? columnKeys = null)
         {
+            columns = SelectColumns(columns, columnKeys);
+
             using var workbook = new XLWorkbook();
             var sheet = workbook.Worksheets.Add(sheetName);
 
@@ -124,6 +127,37 @@ namespace Inventory_Management_System.Features.Reports.Shared.Export
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
             return stream.ToArray();
+        }
+
+        /// <summary>
+        /// The key a client uses to pick a column: its heading in lower case with everything but
+        /// letters and digits removed, e.g. "Sub total" -> "subtotal", "Party type" -> "partytype".
+        /// </summary>
+        public static string ColumnKey(string header) =>
+            new(header.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+
+        /// <summary>
+        /// The columns the user chose on screen (Customize Report Columns), in their order.
+        /// <paramref name="columnKeys"/> is a comma-separated list of <see cref="ColumnKey"/>s.
+        /// Unknown keys are ignored; nothing given, or nothing that matches, keeps every column,
+        /// so an old client or a typo never produces an empty sheet.
+        /// </summary>
+        public static IReadOnlyList<ReportColumn<T>> SelectColumns<T>(
+            IReadOnlyList<ReportColumn<T>> columns, string? columnKeys)
+        {
+            if (string.IsNullOrWhiteSpace(columnKeys)) return columns;
+
+            var byKey = new Dictionary<string, ReportColumn<T>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var column in columns) byKey.TryAdd(ColumnKey(column.Header), column);
+
+            var picked = columnKeys
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(key => byKey.GetValueOrDefault(key))
+                .OfType<ReportColumn<T>>()
+                .ToList();
+
+            return picked.Count > 0 ? picked : columns;
         }
 
         /// <summary>

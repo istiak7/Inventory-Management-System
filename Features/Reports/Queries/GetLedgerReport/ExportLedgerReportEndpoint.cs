@@ -18,7 +18,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                 DateTime? endDate = null,
                 string? transactionType = null,
                 string? search = null,
-                int? branchId = null) =>
+                int? branchId = null,
+                string? columns = null) =>
             {
                 // Same query, same handler, same filters as the on-screen report — only the page
                 // size differs. That is what keeps the sheet from ever drifting from the table.
@@ -66,7 +67,8 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetLedgerReport
                         new("Total credit", summary.TotalCredit, ReportWorkbook.MoneyFormat),
                         new("Closing balance", ReportWorkbook.AmountOrNotApplicable(summary.ClosingBalance), ReportWorkbook.MoneyFormat),
                         new("Transactions", summary.TransactionCount, ReportWorkbook.WholeNumberFormat),
-                    });
+                    },
+                    columns);
 
                 return Results.File(bytes, ReportWorkbook.ContentType,
                     ReportWorkbook.FileName("Party_Ledger", startDate, endDate));
