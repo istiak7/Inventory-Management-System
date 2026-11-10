@@ -46,6 +46,8 @@ namespace Inventory_Management_System.Entities
         public required string Sku { get; set; }
         // Unit of measurement printed on the quotation, e.g. "Pcs", "Box", "Set".
         public string Uom { get; set; } = "Pcs";
+        // Warranty as printed on the quotation, free text, e.g. "3 Years", "Life Time", "N/A".
+        public string? Warranty { get; set; }
 
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }

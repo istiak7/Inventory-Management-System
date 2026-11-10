@@ -6,6 +6,7 @@ namespace Inventory_Management_System.Features.Quotations.Shared.Dtos
         string ProductName,
         string Sku,
         string Uom,
+        string? Warranty,
         bool IsSerialized,
         int Quantity,
         decimal UnitPrice,

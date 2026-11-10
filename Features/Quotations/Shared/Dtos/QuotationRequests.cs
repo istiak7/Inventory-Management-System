@@ -25,6 +25,8 @@ namespace Inventory_Management_System.Features.Quotations.Shared.Dtos
         public decimal DiscountAmount { get; set; }
         // Unit of measurement, e.g. "Pcs". Defaults to "Pcs".
         public string? Uom { get; set; }
+        // Warranty text printed on the quotation, e.g. "3 Years". Optional.
+        public string? Warranty { get; set; }
     }
 
     public class ChangeQuotationStatusRequest

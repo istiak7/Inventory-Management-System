@@ -48,7 +48,7 @@ namespace Inventory_Management_System.Features.Quotations.Queries.GetQuotationBy
                         Lines = x.QuotationDetails
                             .OrderBy(d => d.Id)
                             .Select(d => new QuotationLineResponse(
-                                d.Id, d.ProductVariantId, d.ProductName, d.Sku, d.Uom,
+                                d.Id, d.ProductVariantId, d.ProductName, d.Sku, d.Uom, d.Warranty,
                                 d.ProductVariant.IsSerialized,
                                 d.Quantity, d.UnitPrice, d.DiscountAmount, d.TotalAmount))
                             .ToList(),

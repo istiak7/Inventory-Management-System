@@ -44,6 +44,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(d => d.ProductName).IsRequired().HasMaxLength(250);
             builder.Property(d => d.Sku).IsRequired().HasMaxLength(100);
             builder.Property(d => d.Uom).IsRequired().HasMaxLength(20);
+            builder.Property(d => d.Warranty).HasMaxLength(100);
             builder.Property(d => d.UnitPrice).HasPrecision(18, 2);
             builder.Property(d => d.DiscountAmount).HasPrecision(18, 2);
             builder.Property(d => d.TotalAmount).HasPrecision(18, 2);

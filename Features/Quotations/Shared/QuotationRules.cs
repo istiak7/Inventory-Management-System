@@ -110,6 +110,7 @@ namespace Inventory_Management_System.Features.Quotations.Shared
                     ProductName = variant.Product.ProductName,
                     Sku = variant.SKU,
                     Uom = string.IsNullOrWhiteSpace(item.Uom) ? DefaultUom : item.Uom.Trim(),
+                    Warranty = string.IsNullOrWhiteSpace(item.Warranty) ? null : item.Warranty.Trim(),
                     Quantity = item.Quantity,
                     UnitPrice = unitPrice,
                     DiscountAmount = item.DiscountAmount,

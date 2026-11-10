@@ -38,6 +38,7 @@ namespace Inventory_Management_System.Features.Quotations.Shared
                 item.RuleFor(i => i.DiscountAmount).GreaterThanOrEqualTo(0)
                     .WithMessage("Line discount must be 0 or greater.").Money();
                 item.RuleFor(i => i.Uom).MaximumLength(20).WithMessage("UoM must be 20 characters or fewer.");
+                item.RuleFor(i => i.Warranty).MaximumLength(100).WithMessage("Warranty must be 100 characters or fewer.");
             });
         }
     }

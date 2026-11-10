@@ -1376,6 +1376,10 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("UpdatedById")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Warranty")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProductVariantId");
