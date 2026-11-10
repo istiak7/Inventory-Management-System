@@ -85,6 +85,19 @@ namespace Inventory_Management_System.Entities.Common
         DamageOut
     }
 
+    // Draft and Sent are open offers. Once ValidUntil has passed they read as Expired (see
+    // QuotationRules.EffectiveStatus) without a job having to update them. Converted is set
+    // only by turning an Accepted quotation into a sale, and is final.
+    public enum QuotationStatus
+    {
+        Draft,
+        Sent,
+        Accepted,
+        Rejected,
+        Expired,
+        Converted
+    }
+
     public enum TransferStatus
     {
         Draft,

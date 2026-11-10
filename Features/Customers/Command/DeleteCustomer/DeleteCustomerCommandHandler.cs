@@ -26,6 +26,8 @@ namespace Inventory_Management_System.Features.Customers.Command.DeleteCustomer
                 return Fail(400, "This customer has payments, so it is kept for the account history.");
             if (await _db.WarrantyClaims.IgnoreQueryFilters().AnyAsync(x => x.CustomerId == id, cancellationToken))
                 return Fail(400, "This customer has warranty claims, so it is kept.");
+            if (await _db.Quotations.AnyAsync(x => x.CustomerId == id, cancellationToken))
+                return Fail(400, "This customer has price quotations, so it is kept.");
             if (await _db.CustomerTransactions.IgnoreQueryFilters().AnyAsync(x => x.CustomerId == id && x.TransactionType != "Opening", cancellationToken))
                 return Fail(400, "This customer has ledger entries, so it is kept for the account history.");
 

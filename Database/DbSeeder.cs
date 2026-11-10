@@ -44,6 +44,8 @@ namespace Inventory_Management_System.Database
                 await MenuActionSeed.SeedAsync(db, knownApiRoutes, logger, cancellationToken);
                 // API routes added since, appended to existing pages' actions (once each).
                 await MenuActionSeed.AddRoutesAsync(db, knownApiRoutes, logger, cancellationToken);
+                // Pages added since (menu row if missing, its actions, Salesman's grants), once each.
+                await MenuActionSeed.AddPagesAsync(db, knownApiRoutes, logger, cancellationToken);
             }
         }
 

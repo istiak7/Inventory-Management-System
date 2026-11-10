@@ -71,6 +71,21 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
             await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Converting a quotation: lock it first (document before stock, see RowLockExtensions)
+                // so a repeated or double-clicked conversion waits here, then sees it is already
+                // converted and stops before any stock or money moves.
+                Quotation? quotation = null;
+                if (request.QuotationId is int quotationId)
+                {
+                    await _dbContext.LockRowAsync<Quotation>(quotationId, cancellationToken);
+                    quotation = await _dbContext.Quotations
+                        .FirstOrDefaultAsync(q => q.Id == quotationId, cancellationToken);
+
+                    var quotationError = await CheckQuotationAsync(quotation, request, cancellationToken);
+                    if (quotationError != null)
+                        return quotationError;
+                }
+
                 // Two tills selling the same item now wait for each other here, so the
                 // stock check below always sees the latest quantity and cannot oversell.
                 await _dbContext.LockStocksAsync(
@@ -289,6 +304,14 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     await _dbContext.CustomerTransactions.AddAsync(customerTransaction, cancellationToken);
                 }
 
+                if (quotation != null)
+                {
+                    // Linked through the navigation, so EF fills ConvertedSaleId with the new sale's id.
+                    quotation.ConvertedSale = sale;
+                    quotation.ConvertedAt = DateTime.UtcNow;
+                    quotation.Status = QuotationStatus.Converted;
+                }
+
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -313,6 +336,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 {
                     "IX_SaleDetails_ProductSerialId" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "One of those serial numbers was sold on another sale a moment ago. Re-scan the unit and try again." },
                     "IX_CustomerSales_InvoiceNumber" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "That invoice number was taken by another sale a moment ago. Leave it blank to have one generated." },
+                    "IX_Quotations_ConvertedSaleId" => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "This quotation has already been converted into an invoice." },
                     _ => new Result { IsSuccess = false, StatusCode = 409, Status = "Error", Message = "This sale clashed with another one saved at the same moment. Nothing was recorded — please try again." },
                 };
             }
@@ -391,6 +415,40 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     ? (winner, null)
                     : (null, new Result { IsSuccess = false, StatusCode = 500, Status = "Error", Message = "Could not register the customer for this sale." });
             }
+        }
+
+        // A quotation can become a sale once, only when Accepted, and only for its own customer.
+        private async Task<Result?> CheckQuotationAsync(
+            Quotation? quotation,
+            CreateSaleCommand request,
+            CancellationToken cancellationToken)
+        {
+            if (quotation == null)
+                return new Result { IsSuccess = false, StatusCode = 404, Status = "Error", Message = "Quotation not found." };
+
+            if (quotation.ConvertedSaleId is int saleId)
+            {
+                var invoice = await _dbContext.CustomerSales.IgnoreQueryFilters()
+                    .Where(s => s.Id == saleId)
+                    .Select(s => s.InvoiceNumber)
+                    .FirstOrDefaultAsync(cancellationToken);
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 409,
+                    Status = "Error",
+                    Message = $"Quotation {quotation.QuotationNumber} was already converted into invoice {invoice}.",
+                    Data = new { SaleId = saleId, InvoiceNumber = invoice }
+                };
+            }
+
+            if (quotation.Status != QuotationStatus.Accepted)
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Only an Accepted quotation can be converted. Quotation {quotation.QuotationNumber} is {quotation.Status}." };
+
+            if (request.CustomerId != quotation.CustomerId)
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = "The invoice must be for the quotation's customer." };
+
+            return null;
         }
 
         private static bool IsUniqueViolation(DbUpdateException ex) =>

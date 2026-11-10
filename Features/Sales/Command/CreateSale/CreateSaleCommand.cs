@@ -21,5 +21,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
         public decimal TaxAmount { get; set; }
         public string? PaymentType { get; set; }
         public SalePaymentRequest? Payment { get; set; }
+
+        // Set only by convert-quotation-to-sale: the Accepted quotation this sale is made from.
+        // Not part of CreateSaleRequest, so /create-sale cannot convert a quotation.
+        public int? QuotationId { get; set; }
     }
 }

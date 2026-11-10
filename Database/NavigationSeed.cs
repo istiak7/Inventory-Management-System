@@ -39,6 +39,7 @@ namespace Inventory_Management_System.Database
                         Page("Supplier Ledger", "/suppliers/ledger", "", "suppliers.view")),
                     Folder("Sales", "Receipt",
                         Page("Sales", "/sales", "", "sales.view"),
+                        Page("Price Quotation", "/quotations", "", "sales.view"),
                         Page("Customers", "/customers", "", "customers.view"),
                         Page("Customer Ledger", "/customers/ledger", "", "customers.view")),
                     Folder("Accounts", "Wallet",

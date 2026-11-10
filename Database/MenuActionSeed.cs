@@ -47,6 +47,37 @@ namespace Inventory_Management_System.Database
             ("MenuActionRoutes.SaleChallan", "/sales", "view", [SaleChallan]),
         ];
 
+        // Price Quotation's API routes (Features/Quotations).
+        private const string QuotationList = "GET /get-all-quotations";
+        private const string QuotationById = "GET /get-quotation/{id:int}";
+
+        // Pages added after MenuActionDefaults.v1. Each runs once (SeedHistory name), on new and
+        // existing databases alike: it creates the menu row beside its sibling page when the menu
+        // tree has none (existing databases; NavigationSeed already made it on new ones), adds the
+        // page's actions if it has none, and grants the listed actions to the Salesman role.
+        // Other roles get nothing until an admin ticks the actions in Users & Roles; Admin always
+        // has everything.
+        private sealed record PageAddition(
+            string SeedName, string Route, string Name, string SiblingRoute, string Permission,
+            ActionDef[] Actions, string[] SalesmanCodes);
+
+        private static readonly PageAddition[] PageAdditions =
+        [
+            new("MenuPage.PriceQuotation", "/quotations", "Price Quotation", "/sales", "sales.view",
+            [
+                View("sales.view", QuotationList, QuotationById, Customers),
+                Create("sales.manage", "POST /create-quotation", ProductSearch, Customers),
+                Update("sales.manage", "PUT /update-quotation/{id:int}", QuotationById, ProductSearch, Customers),
+                Delete("sales.manage", "DELETE /delete-quotation/{id:int}"),
+                Step("Print / Download", "print", "sales.view", QuotationById),
+                Step("Change Status", "status", "sales.manage", "POST /change-quotation-status/{id:int}"),
+                // Makes the sale, so it also needs what the New Sale form reads.
+                Step("Convert to Invoice", "convert", "sales.manage", "POST /convert-quotation-to-sale/{id:int}",
+                    QuotationById, ProductSearch, "GET /get-available-serials", Branches),
+            ],
+            ["view", "create", "update", "print", "status", "convert"]),
+        ];
+
         private static readonly Dictionary<string, ActionDef[]> Defaults = new(StringComparer.OrdinalIgnoreCase)
         {
             // ---------------------------------------------------------------- Inventory module
@@ -402,6 +433,87 @@ namespace Inventory_Management_System.Database
             db.SeedHistory.Add(new SeedHistory { Name = SeedName, CreatedAt = DateTime.UtcNow });
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Menu action seed: {Count} default actions created", created.Count);
+        }
+
+        // Applies PageAdditions (see there). Runs after SeedAsync.
+        public static async Task AddPagesAsync(
+            AppDbContext db,
+            IReadOnlySet<string> knownRoutes,
+            ILogger logger,
+            CancellationToken cancellationToken)
+        {
+            const int active = (int)EntityStatus.Active;
+
+            foreach (var page in PageAdditions)
+            {
+                if (await db.SeedHistory.AnyAsync(s => s.Name == page.SeedName, cancellationToken)) continue;
+
+                var menu = await db.AppMenus
+                    .Include(m => m.Actions)
+                    .FirstOrDefaultAsync(m => m.IsActive == active && m.FrontendRoute == page.Route, cancellationToken);
+
+                if (menu == null)
+                {
+                    // Put it right after its sibling (e.g. under Sales, after "Sales").
+                    var sibling = await db.AppMenus
+                        .FirstOrDefaultAsync(m => m.IsActive == active && m.FrontendRoute == page.SiblingRoute, cancellationToken);
+                    if (sibling == null)
+                    {
+                        logger.LogWarning("Menu page seed {SeedName}: sibling page {Sibling} not found, menu not added",
+                            page.SeedName, page.SiblingRoute);
+                        continue;
+                    }
+
+                    var later = await db.AppMenus
+                        .Where(m => m.SubmoduleId == sibling.SubmoduleId && m.ParentId == sibling.ParentId
+                                    && m.MenuOrder > sibling.MenuOrder)
+                        .ToListAsync(cancellationToken);
+                    foreach (var m in later) m.MenuOrder++;
+
+                    menu = new AppMenu
+                    {
+                        Name = page.Name,
+                        FrontendRoute = page.Route,
+                        Permission = page.Permission,
+                        IsLeaf = true,
+                        MenuOrder = sibling.MenuOrder + 1,
+                        SubmoduleId = sibling.SubmoduleId,
+                        ParentId = sibling.ParentId,
+                        CreatedAt = DateTime.UtcNow,
+                    };
+                    db.AppMenus.Add(menu);
+                }
+
+                var created = new List<AppMenuAction>();
+                if (!menu.Actions.Any(a => a.IsActive == active))
+                {
+                    foreach (var def in page.Actions)
+                    {
+                        var action = new AppMenuAction
+                        {
+                            Menu = menu,
+                            Name = def.Name,
+                            ComponentCode = def.Code,
+                            ApiRoutes = def.Routes.Where(knownRoutes.Contains).Distinct().ToList(),
+                            CreatedAt = DateTime.UtcNow,
+                        };
+                        db.AppMenuActions.Add(action);
+                        created.Add(action);
+                    }
+                }
+
+                var salesman = await db.Roles.FirstOrDefaultAsync(r => r.Name == SalesmanRoleName, cancellationToken);
+                if (salesman != null)
+                {
+                    foreach (var action in created.Where(a => page.SalesmanCodes.Contains(a.ComponentCode)))
+                        db.RoleMenuActions.Add(new RoleMenuAction { RoleId = salesman.Id, MenuAction = action });
+                }
+
+                db.SeedHistory.Add(new SeedHistory { Name = page.SeedName, CreatedAt = DateTime.UtcNow });
+                await db.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("Menu page seed {SeedName}: {Count} action(s) added on {Route}",
+                    page.SeedName, created.Count, page.Route);
+            }
         }
 
         // Applies RouteAdditions: appends each batch's API routes to the existing action of its
