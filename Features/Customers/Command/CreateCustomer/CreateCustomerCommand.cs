@@ -13,5 +13,7 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
         public string Address { get; set; } = string.Empty;
         public string NID { get; set; } = string.Empty;
         public decimal OpeningBalance { get; set; }
+        // "Credit Customer / Supplier": also create (or link) a supplier with this phone number.
+        public bool IsCreditParty { get; set; }
     }
 }

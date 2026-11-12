@@ -11,6 +11,7 @@ namespace Inventory_Management_System.Shared.Extensions.LockExtensions
     //  - Call inside a transaction. The lock is held until commit or rollback.
     //  - Lock BEFORE loading the rows with EF, so the load reads the latest committed values.
     //  - Lock in this order to avoid deadlocks: document -> stock -> customer/supplier.
+    //    When both are needed (cross-ledger settlement), the customer before the supplier.
     public static class RowLockExtensions
     {
         // Locks one row of the table behind entity T by its Id.

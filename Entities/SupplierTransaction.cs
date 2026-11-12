@@ -65,6 +65,25 @@
             };
         }
 
+        // A cross-ledger settlement (see PartySettlement): what this party owes us as a customer
+        // pays off what we owe them. A positive amount lowers the payable like a payment;
+        // a negative amount (a reversal, when a settled sale is voided) puts it back.
+        public static SupplierTransaction ForAdjustment(SupplierPayment payment, Supplier supplier, decimal amount, decimal runningBalance, SupplierPurchase? purchase = null)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "Adjustment",
+                TransactionDate = payment.PaymentDate,
+                Debit = amount < 0 ? -amount : 0m,
+                Credit = amount > 0 ? amount : 0m,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPayment = payment,
+                SupplierPurchase = purchase
+            };
+        }
+
         public static SupplierTransaction ForPayment(SupplierPayment payment, Supplier supplier, decimal runningBalance, SupplierPurchase? purchase = null)
         {
             return new SupplierTransaction

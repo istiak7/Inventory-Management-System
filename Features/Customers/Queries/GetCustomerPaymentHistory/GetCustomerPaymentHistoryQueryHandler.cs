@@ -50,13 +50,13 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerPaym
                         sp.CustomerPayment.Amount,
                         // Account balance after the whole payment; before = after + money paid + discount waived.
                         (_dbContext.CustomerTransactions
-                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId && t.TransactionType == "Payment")
+                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId && (t.TransactionType == "Payment" || t.TransactionType == "Adjustment"))
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0m)
                             + sp.CustomerPayment.Amount
                             + (sp.CustomerPayment.SaleCustomerPayments.Sum(x => (decimal?)x.Discount) ?? 0m),
                         _dbContext.CustomerTransactions
-                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId && t.TransactionType == "Payment")
+                            .Where(t => t.CustomerPaymentId == sp.CustomerPaymentId && (t.TransactionType == "Payment" || t.TransactionType == "Adjustment"))
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0m,
                         // Invoice total before any payment-time discount, and the dues around this

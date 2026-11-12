@@ -47,6 +47,10 @@ namespace Inventory_Management_System.Database
                 // Pages added since (menu row if missing, its actions, Salesman's grants), once each.
                 await MenuActionSeed.AddPagesAsync(db, knownApiRoutes, logger, cancellationToken);
             }
+
+            // Existing suppliers get their linked customer rows (once only).
+            if (logger is not null)
+                await PartyLinkSeed.SeedAsync(db, logger, cancellationToken);
         }
 
         private static async Task SeedPermissionsAsync(AppDbContext db, CancellationToken cancellationToken)

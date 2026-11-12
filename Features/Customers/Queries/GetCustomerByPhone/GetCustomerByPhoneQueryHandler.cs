@@ -46,7 +46,9 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerByPh
                             .OrderByDescending(t => t.Id)
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0,
-                        c.CreatedAt))
+                        c.CreatedAt,
+                        c.SupplierId,
+                        c.SupplierId != null))
                     .FirstOrDefaultAsync(cancellationToken);
 
                 return new Result

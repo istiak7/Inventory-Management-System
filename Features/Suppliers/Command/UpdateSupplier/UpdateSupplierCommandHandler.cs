@@ -4,6 +4,9 @@ using Inventory_Management_System.Features.Suppliers.Shared.Repository;
 using Microsoft.EntityFrameworkCore;
 using Inventory_Management_System.Shared;
 using MediatR;
+using Inventory_Management_System.Features.Customers.Shared;
+using Inventory_Management_System.Features.Parties.Shared;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.Suppliers.Command.UpdateSupplier
 {
@@ -27,6 +30,29 @@ namespace Inventory_Management_System.Features.Suppliers.Command.UpdateSupplier
                     Message = $"Supplier with id {request.Id} was not found."
                 };
             }
+
+            var phoneNumber = CustomerPhoneNumber.Normalize(request.PhoneNumber);
+            if (await _dbContext.Suppliers.AnyAsync(s => s.PhoneNumber == phoneNumber && s.Id != supplier.Id
+                                                    && s.IsActive != (int)EntityStatus.Deleted, cancellationToken))
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Another supplier already has this phone number."
+                };
+
+            // The linked customer row gets the same contact details, so its phone must be free too.
+            var linkedCustomer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.SupplierId == supplier.Id, cancellationToken);
+            if (linkedCustomer != null
+                && await _dbContext.Customers.AnyAsync(c => c.PhoneNumber == phoneNumber && c.Id != linkedCustomer.Id, cancellationToken))
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "Another customer already has this phone number."
+                };
 
             // Changing the opening balance after purchases or payments would make every running
             // balance after it wrong, so it is only allowed while the ledger is still empty.
@@ -62,9 +88,13 @@ namespace Inventory_Management_System.Features.Suppliers.Command.UpdateSupplier
                 supplier.Group = request.Group;
                 supplier.Name = request.Name;
                 supplier.Description = request.Description;
-                supplier.PhoneNumber = request.PhoneNumber;
-                supplier.Email = request.Email;
-                supplier.NID = request.NID;
+                supplier.PhoneNumber = phoneNumber;
+                supplier.Email = request.Email?.Trim() ?? string.Empty;
+                supplier.NID = request.NID ?? string.Empty;
+                supplier.Address = request.Address?.Trim() ?? string.Empty;
+
+                if (linkedCustomer != null)
+                    PartyLink.CopyContact(supplier, linkedCustomer);
 
                 await _supplierRepository.UpdateAsync(supplier, cancellationToken);
                 await _supplierRepository.SaveChangesAsync(cancellationToken);

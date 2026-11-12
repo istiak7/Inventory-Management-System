@@ -14,8 +14,13 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.Description).HasMaxLength(500);
             builder.Property(s => s.PhoneNumber).HasMaxLength(20);
             builder.Property(s => s.Email).HasMaxLength(100).IsRequired();
-            builder.HasIndex(s => s.Email).IsUnique();
+            // Unique only when filled in: a supplier made from a customer often has no email.
+            builder.HasIndex(s => s.Email).IsUnique().HasFilter("\"Email\" <> ''");
             builder.Property(s => s.NID).HasMaxLength(20);
+            builder.Property(s => s.Address).HasMaxLength(250).HasDefaultValue(string.Empty);
+            // Not unique in the database because older suppliers may share a number;
+            // create/update refuse a phone number another supplier already has.
+            builder.HasIndex(s => s.PhoneNumber);
             builder.Property(s => s.OpeningBalance).IsRequired().HasPrecision(18, 2);
         }
     }

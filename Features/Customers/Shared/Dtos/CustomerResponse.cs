@@ -11,6 +11,9 @@ namespace Inventory_Management_System.Features.Customers.Shared.Dtos
         string NID,
         decimal OpeningBalance,
         decimal CurrentBalance,
-        DateTime CreatedAt
+        DateTime CreatedAt,
+        // Also a supplier (credit customer / supplier party), linked by phone number.
+        int? SupplierId = null,
+        bool IsCreditParty = false
     );
 }

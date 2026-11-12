@@ -50,7 +50,9 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Repository
                                 .Select(t => (decimal?)t.BalanceAfter)
                                 .FirstOrDefault() ?? 0m,
 
-                            supplier.CreatedAt);
+                            supplier.CreatedAt,
+                            supplier.Address,
+                            supplier.Customer == null ? (int?)null : supplier.Customer.Id);
 
             return await query
                 .AsNoTracking()

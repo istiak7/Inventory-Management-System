@@ -97,6 +97,25 @@ namespace Inventory_Management_System.Entities
             };
         }
 
+        // A cross-ledger settlement (see PartySettlement): what we owe this party as a supplier
+        // pays off what they owe us. A positive amount lowers the receivable like a payment;
+        // a negative amount (a reversal, when a settled sale is voided) puts it back.
+        public static CustomerTransaction ForAdjustment(CustomerPayment payment, Customer customer, decimal amount, decimal runningBalance, CustomerSale? sale = null)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "Adjustment",
+                TransactionDate = payment.PaymentDate,
+                Debit = amount > 0 ? amount : 0m,
+                Credit = amount < 0 ? -amount : 0m,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerPayment = payment,
+                CustomerSale = sale
+            };
+        }
+
         public static CustomerTransaction ForPayment(CustomerPayment payment, Customer customer, decimal runningBalance, CustomerSale? sale = null)
         {
             return new CustomerTransaction

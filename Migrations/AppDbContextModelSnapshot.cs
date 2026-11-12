@@ -437,6 +437,9 @@ namespace Inventory_Management_System.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<int?>("SupplierId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -446,6 +449,9 @@ namespace Inventory_Management_System.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierId")
                         .IsUnique();
 
                     b.ToTable("Customers");
@@ -891,6 +897,78 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("BranchId", "ProductVariantId", "TransactionDate");
 
                     b.ToTable("InventoryTransactions");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PartySettlement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CustomerPaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ReversalOfId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SettlementDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SourcePurchaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SourceSaleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SupplierPaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("CustomerPaymentId")
+                        .IsUnique();
+
+                    b.HasIndex("ReversalOfId");
+
+                    b.HasIndex("SourcePurchaseId");
+
+                    b.HasIndex("SourceSaleId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("SupplierPaymentId")
+                        .IsUnique();
+
+                    b.ToTable("PartySettlements");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Permission", b =>
@@ -1826,6 +1904,13 @@ namespace Inventory_Management_System.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasDefaultValue("");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1878,7 +1963,10 @@ namespace Inventory_Management_System.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"Email\" <> ''");
+
+                    b.HasIndex("PhoneNumber");
 
                     b.ToTable("Suppliers");
                 });
@@ -2479,6 +2567,16 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Module");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.Customer", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
+                        .WithOne("Customer")
+                        .HasForeignKey("Inventory_Management_System.Entities.Customer", "SupplierId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.CustomerPayment", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
@@ -2591,6 +2689,62 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("ProductVariant");
 
                     b.Navigation("SupplierPurchaseDetails");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PartySettlement", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.CustomerPayment", "CustomerPayment")
+                        .WithMany()
+                        .HasForeignKey("CustomerPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.PartySettlement", "ReversalOf")
+                        .WithMany()
+                        .HasForeignKey("ReversalOfId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SourcePurchase")
+                        .WithMany()
+                        .HasForeignKey("SourcePurchaseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Inventory_Management_System.Entities.CustomerSale", "SourceSale")
+                        .WithMany()
+                        .HasForeignKey("SourceSaleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPayment", "SupplierPayment")
+                        .WithMany()
+                        .HasForeignKey("SupplierPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("CustomerPayment");
+
+                    b.Navigation("ReversalOf");
+
+                    b.Navigation("SourcePurchase");
+
+                    b.Navigation("SourceSale");
+
+                    b.Navigation("Supplier");
+
+                    b.Navigation("SupplierPayment");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Product", b =>
@@ -3148,6 +3302,8 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Supplier", b =>
                 {
+                    b.Navigation("Customer");
+
                     b.Navigation("SupplierPayments");
 
                     b.Navigation("SupplierPurchases");

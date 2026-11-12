@@ -2,6 +2,7 @@ using Inventory_Management_System.Database;
 using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Customers.Shared;
+using Inventory_Management_System.Features.Parties.Shared;
 using Inventory_Management_System.Features.Sales.Shared;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
@@ -97,6 +98,15 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                 if (resolved.Error != null)
                     return resolved.Error;
                 var customer = resolved.Customer!;
+
+                // "Credit Customer / Supplier" ticked for a new customer: this party also sells to
+                // us, so it gets a linked supplier row (same phone number) for cross-ledger settlement.
+                if (request.Customer?.IsCreditParty == true && customer.SupplierId == null)
+                {
+                    var (_, linkError) = await new PartyLink(_dbContext).EnsureSupplierForCustomerAsync(customer, cancellationToken);
+                    if (linkError != null)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = linkError };
+                }
 
                 var saleDate = request.SaleDate ?? DateTime.UtcNow;
 
@@ -304,6 +314,10 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     await _dbContext.CustomerTransactions.AddAsync(customerTransaction, cancellationToken);
                 }
 
+                // A credit sale to a party that is also our supplier: what we owe them pays
+                // this sale first (FIFO against our open bills to them).
+                var settlement = await new CrossLedgerSettlement(_dbContext).SettleSaleAsync(sale, customer, cancellationToken);
+
                 if (quotation != null)
                 {
                     // Linked through the navigation, so EF fills ConvertedSaleId with the new sale's id.
@@ -324,7 +338,9 @@ namespace Inventory_Management_System.Features.Sales.Command.CreateSale
                     payment == null ? null : new SalePaymentResponse(payment.Id, payment.Amount, payment.PaymentDate, payment.PaymentMethod)
                 );
 
-                return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = "Sale created successfully", Data = response };
+                return new Result { IsSuccess = true, StatusCode = 201, Status = "Success", Message = settlement == null
+                    ? "Sale created successfully"
+                    : $"Sale created. {settlement.Amount:0.00} was settled against what we owe this party as a supplier.", Data = response };
             }
             catch (DbUpdateException ex) when (IsUniqueViolation(ex))
             {

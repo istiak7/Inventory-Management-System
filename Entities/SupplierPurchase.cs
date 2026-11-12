@@ -39,6 +39,18 @@ namespace Inventory_Management_System.Entities
             DueAmount -= amount;
         }
 
+        // Undoes part of an earlier payment (a reversed cross-ledger settlement): the bill is due again.
+        public void ReversePayment(decimal amount)
+        {
+            if (amount <= 0)
+                throw new InvalidOperationException("Reversal amount must be positive.");
+            if (amount > PaidAmount)
+                throw new InvalidOperationException($"Reversal {amount} exceeds the paid amount {PaidAmount}.");
+
+            PaidAmount -= amount;
+            DueAmount += amount;
+        }
+
         // A discount given while taking a payment: the supplier waives part of what we owe.
         // It shrinks the net payable (TotalAmount) and the due, and is tracked in DiscountAmount.
         public void ApplyDiscount(decimal amount)

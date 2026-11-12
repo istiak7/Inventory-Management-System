@@ -11,6 +11,13 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         string PhoneNumber,
         string Email,
         string Address,
-        decimal OpeningBalance
+        decimal OpeningBalance,
+        // Cross-ledger view. Payable = what we owe this supplier (this ledger);
+        // Receivable = what they owe us on the linked customer ledger (0 when not linked);
+        // NetBalance = Receivable - Payable: positive = they owe us (green), negative = we owe them (red).
+        decimal Receivable,
+        decimal Payable,
+        decimal NetBalance,
+        int? CustomerId
     );
 }

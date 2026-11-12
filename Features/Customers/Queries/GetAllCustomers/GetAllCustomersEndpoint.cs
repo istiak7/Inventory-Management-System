@@ -11,9 +11,10 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetAllCustomers
                 IMediator mediator,
                 int pageNumber = 1,
                 int pageSize = 20,
-                string? search = null) =>
+                string? search = null,
+                bool creditFirst = false) =>
             {
-                var result = await mediator.Send(new GetAllCustomersQuery(pageNumber, pageSize, search));
+                var result = await mediator.Send(new GetAllCustomersQuery(pageNumber, pageSize, search, creditFirst));
                 return Results.Ok(result);
             }).WithTags("Customer").RequirePermission(Permissions.CustomersView);
         }

@@ -26,8 +26,11 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetAllCustomers
                         EF.Functions.ILike(c.PhoneNumber, term));
                 }
 
-                var pagedResult = await query
-                    .OrderBy(c => c.Name)
+                var ordered = request.CreditFirst
+                    ? query.OrderByDescending(c => c.SupplierId != null).ThenBy(c => c.Name)
+                    : query.OrderBy(c => c.Name);
+
+                var pagedResult = await ordered
                     .Select(c => new CustomerResponse(
                         c.Id,
                         c.Group,
@@ -42,7 +45,9 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetAllCustomers
                             .OrderByDescending(t => t.Id)
                             .Select(t => (decimal?)t.BalanceAfter)
                             .FirstOrDefault() ?? 0,
-                        c.CreatedAt))
+                        c.CreatedAt,
+                        c.SupplierId,
+                        c.SupplierId != null))
                     .ToPagedResultAsync(request.PageNumber, request.PageSize, cancellationToken);
 
                 return new Result

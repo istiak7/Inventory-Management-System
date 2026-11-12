@@ -9,5 +9,7 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         public string Email { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string NID { get; set; } = string.Empty;
+        // "Is Credit Customer / Supplier?" — also create (or link) a supplier with this phone number.
+        public bool IsCreditParty { get; set; }
     }
 }

@@ -8,7 +8,11 @@
         public required string PhoneNumber { get; set; }
         public string Email { get; set; } = string.Empty;
         public string NID { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
         public decimal OpeningBalance { get; set; }
+
+        // The customer row of the same party (same phone number), when there is one.
+        public Customer? Customer { get; set; }
 
         // Navigation property
         public ICollection<SupplierPurchase> SupplierPurchases { get; set; } = [];

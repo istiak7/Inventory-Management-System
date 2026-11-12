@@ -18,6 +18,32 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(c => c.NID).HasMaxLength(20);
             builder.Property(c => c.OpeningBalance).IsRequired().HasPrecision(18, 2);
             builder.HasIndex(c => c.PhoneNumber).IsUnique();
+
+            // One supplier row per customer at most. Deleting the supplier only unlinks.
+            builder.HasOne(c => c.Supplier)
+                   .WithOne(s => s.Customer)
+                   .HasForeignKey<Customer>(c => c.SupplierId)
+                   .OnDelete(DeleteBehavior.SetNull);
+        }
+    }
+
+    public class PartySettlementConfiguration : IEntityTypeConfiguration<PartySettlement>
+    {
+        public void Configure(EntityTypeBuilder<PartySettlement> builder)
+        {
+            builder.HasKey(p => p.Id);
+            builder.Property(p => p.Amount).HasPrecision(18, 2);
+
+            builder.HasOne(p => p.Customer).WithMany().HasForeignKey(p => p.CustomerId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(p => p.Supplier).WithMany().HasForeignKey(p => p.SupplierId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(p => p.CustomerPayment).WithMany().HasForeignKey(p => p.CustomerPaymentId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(p => p.SupplierPayment).WithMany().HasForeignKey(p => p.SupplierPaymentId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(p => p.SourceSale).WithMany().HasForeignKey(p => p.SourceSaleId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(p => p.SourcePurchase).WithMany().HasForeignKey(p => p.SourcePurchaseId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(p => p.ReversalOf).WithMany().HasForeignKey(p => p.ReversalOfId).OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(p => p.CustomerPaymentId).IsUnique();
+            builder.HasIndex(p => p.SupplierPaymentId).IsUnique();
         }
     }
 

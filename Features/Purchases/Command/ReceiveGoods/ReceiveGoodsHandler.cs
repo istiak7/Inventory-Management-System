@@ -9,6 +9,7 @@ using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using static Inventory_Management_System.Entities.Common.EntityConstant;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Inventory_Management_System.Features.Parties.Shared;
 
 namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
 {
@@ -449,6 +450,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                 {
                     purchase.PurchaseType = approvalPaymentType;
 
+                    // When this supplier is also a customer, its customer row is locked first
+                    // (customer before supplier, the same order a sale uses) for the settlement below.
+                    var linkedCustomerId = await _dbContext.Customers
+                        .Where(c => c.SupplierId == purchase.SupplierId)
+                        .Select(c => (int?)c.Id)
+                        .FirstOrDefaultAsync(cancellationToken);
+                    if (linkedCustomerId is int customerId)
+                        await _dbContext.LockRowAsync<Customer>(customerId, cancellationToken);
+
                     await _dbContext.LockRowAsync<Supplier>(purchase.SupplierId, cancellationToken);
                     var runningBalance = await _dbContext.SupplierTransactions
                         .Where(t => t.SupplierId == purchase.SupplierId)
@@ -492,6 +502,10 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                         var paymentTxn = SupplierTransaction.ForPayment(payment, purchase.Supplier, runningBalance, purchase);
                         await _dbContext.SupplierTransactions.AddAsync(paymentTxn, cancellationToken);
                     }
+
+                    // A credit purchase from a party that is also our customer: what they owe us
+                    // pays this bill (FIFO against their open sales). A cash order has nothing due.
+                    await new CrossLedgerSettlement(_dbContext).SettlePurchaseAsync(purchase, purchase.Supplier, cancellationToken);
                 }
 
                 await _dbContext.SaveChangesAsync(cancellationToken);

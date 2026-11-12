@@ -4,6 +4,7 @@ using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Inventory_Management_System.Features.Parties.Shared;
 
 namespace Inventory_Management_System.Features.Customers.Command.UpdateCustomer
 {
@@ -56,6 +57,24 @@ namespace Inventory_Management_System.Features.Customers.Command.UpdateCustomer
                 customer.Address = request.Address;
                 customer.NID = request.NID;
                 customer.UpDatedAt = DateTime.UtcNow;
+
+                if (request.IsCreditParty == false)
+                    customer.SupplierId = null;
+                else if (request.IsCreditParty == true && customer.SupplierId == null)
+                {
+                    var (_, linkError) = await new PartyLink(_db).EnsureSupplierForCustomerAsync(customer, cancellationToken);
+                    if (linkError != null)
+                        return Fail(400, linkError);
+                }
+
+                // Keep the linked supplier's contact details the same as the customer's.
+                if (customer.SupplierId is int supplierId)
+                {
+                    if (await _db.Suppliers.AnyAsync(s => s.PhoneNumber == phoneNumber && s.Id != supplierId, cancellationToken))
+                        return Fail(400, "Another supplier already has this phone number.");
+                    var supplier = await _db.Suppliers.FirstAsync(s => s.Id == supplierId, cancellationToken);
+                    PartyLink.CopyContact(customer, supplier);
+                }
 
                 await _db.SaveChangesAsync(cancellationToken);
 

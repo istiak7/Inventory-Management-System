@@ -358,6 +358,10 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
         {
             var query = _dbContext.CustomerPayments.AsNoTracking();
 
+            // Cross-ledger settlements move no cash; they show only when "Adjustment" is chosen.
+            if (!string.Equals(request.PaymentMethod?.Trim(), PartySettlement.PaymentMethod, StringComparison.OrdinalIgnoreCase))
+                query = query.Where(p => p.PaymentMethod != PartySettlement.PaymentMethod);
+
             var range = ReportDateRange.From(request.StartDate, request.EndDate);
 
             if (range.Start is DateTime start)
@@ -405,6 +409,10 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPaymentReport
         private IQueryable<SupplierPayment> BuildSupplierQuery(GetPaymentReportQuery request)
         {
             var query = _dbContext.SupplierPayments.AsNoTracking();
+
+            // Cross-ledger settlements move no cash; they show only when "Adjustment" is chosen.
+            if (!string.Equals(request.PaymentMethod?.Trim(), PartySettlement.PaymentMethod, StringComparison.OrdinalIgnoreCase))
+                query = query.Where(p => p.PaymentMethod != PartySettlement.PaymentMethod);
 
             var range = ReportDateRange.From(request.StartDate, request.EndDate);
 

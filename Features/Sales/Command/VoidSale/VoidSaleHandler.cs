@@ -6,6 +6,7 @@ using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using Inventory_Management_System.Shared.Extensions.LockExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Inventory_Management_System.Features.Parties.Shared;
 
 namespace Inventory_Management_System.Features.Sales.Command.VoidSale
 {
@@ -124,7 +125,14 @@ namespace Inventory_Management_System.Features.Sales.Command.VoidSale
                 await _dbContext.CustomerTransactions.AddAsync(
                     CustomerTransaction.ForVoid(sale, sale.Customer, now, balance), cancellationToken);
 
-                var refunded = sale.PaidAmount;
+                // Any part of this sale settled against what we owe the party as a supplier is
+                // undone first: those supplier bills become due again. That part is not cash,
+                // so only the rest is refunded.
+                var (reversed, balanceAfterReversal) = await new CrossLedgerSettlement(_dbContext)
+                    .ReverseForVoidedSaleAsync(sale, balance, now, cancellationToken);
+                balance = balanceAfterReversal;
+
+                var refunded = sale.PaidAmount - reversed;
                 if (refunded > 0)
                 {
                     var refund = new CustomerPayment
@@ -168,9 +176,10 @@ namespace Inventory_Management_System.Features.Sales.Command.VoidSale
                     IsSuccess = true,
                     StatusCode = 200,
                     Status = "Success",
-                    Message = refunded > 0
-                        ? $"Sale {sale.InvoiceNumber} voided. Stock returned and {refunded:0.00} refunded."
-                        : $"Sale {sale.InvoiceNumber} voided. Stock returned.",
+                    Message = $"Sale {sale.InvoiceNumber} voided. Stock returned"
+                        + (refunded > 0 ? $", {refunded:0.00} refunded" : "")
+                        + (reversed > 0 ? $", {reversed:0.00} supplier settlement reversed" : "")
+                        + ".",
                     Data = new
                     {
                         sale.Id,
@@ -178,7 +187,8 @@ namespace Inventory_Management_System.Features.Sales.Command.VoidSale
                         Status = sale.Status.ToString(),
                         sale.VoidedAt,
                         sale.VoidReason,
-                        Refunded = refunded
+                        Refunded = refunded,
+                        SettlementReversed = reversed
                     }
                 };
             }

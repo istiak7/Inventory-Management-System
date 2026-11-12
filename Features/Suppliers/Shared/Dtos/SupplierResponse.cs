@@ -12,6 +12,9 @@ namespace Inventory_Management_System.Features.Suppliers.Shared.Dtos
         decimal OpeningBalance,
         // What is owed now: the supplier ledger's latest running balance.
         decimal Balance,
-        DateTime CreatedAt
+        DateTime CreatedAt,
+        string Address = "",
+        // The linked customer row of the same party (every supplier gets one).
+        int? CustomerId = null
     );
 }

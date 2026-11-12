@@ -23,25 +23,41 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
                 if (request.SupplierId is int supplierId)
                     query = query.Where(s => s.Id == supplierId);
 
-                var accounts = await query
+                var rows = await query
                     .OrderBy(s => s.Name)
-                    .Select(s => new SupplierAccountResponse(
+                    .Select(s => new
+                    {
                         s.Id,
                         s.Name,
                         s.Group,
-                        s.SupplierTransactions.Where(t => t.TransactionType == "Purchase").Sum(t => (decimal?)t.Debit) ?? 0m,
-                        s.SupplierTransactions.Where(t => t.TransactionType == "Payment").Sum(t => (decimal?)t.Credit) ?? 0m,
-                        (s.SupplierTransactions.Sum(t => (decimal?)t.Debit) ?? 0m)
+                        TotalPurchases = s.SupplierTransactions.Where(t => t.TransactionType == "Purchase").Sum(t => (decimal?)t.Debit) ?? 0m,
+                        // Settled = paid: cash payments plus cross-ledger adjustments (net of reversals).
+                        TotalPayments = (s.SupplierTransactions.Where(t => t.TransactionType == "Payment" || t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Credit) ?? 0m)
+                            - (s.SupplierTransactions.Where(t => t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Debit) ?? 0m),
+                        Payable = (s.SupplierTransactions.Sum(t => (decimal?)t.Debit) ?? 0m)
                             - (s.SupplierTransactions.Sum(t => (decimal?)t.Credit) ?? 0m),
-                        s.SupplierTransactions
+                        Receivable = s.Customer == null
+                            ? 0m
+                            : (s.Customer.CustomerTransactions.Sum(t => (decimal?)t.Credit) ?? 0m)
+                                - (s.Customer.CustomerTransactions.Sum(t => (decimal?)t.Debit) ?? 0m),
+                        LastTransactionDate = s.SupplierTransactions
                             .OrderByDescending(t => t.Id)
                             .Select(t => (DateTime?)t.TransactionDate)
                             .FirstOrDefault(),
                         s.PhoneNumber,
                         s.Email,
-                        s.Description,
-                        s.OpeningBalance))
+                        // Older suppliers kept their address in Description.
+                        Address = s.Address != "" ? s.Address : s.Description,
+                        s.OpeningBalance,
+                        CustomerId = s.Customer == null ? (int?)null : s.Customer.Id,
+                    })
                     .ToListAsync(cancellationToken);
+
+                var accounts = rows.Select(r => new SupplierAccountResponse(
+                    r.Id, r.Name, r.Group, r.TotalPurchases, r.TotalPayments, r.Payable, r.LastTransactionDate,
+                    r.PhoneNumber, r.Email, r.Address, r.OpeningBalance,
+                    r.Receivable, r.Payable, r.Receivable - r.Payable, r.CustomerId))
+                    .ToList();
 
                 return new Result
                 {

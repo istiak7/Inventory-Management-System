@@ -3,11 +3,14 @@ using Inventory_Management_System.Features.Customers.Shared;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Repository;
 using MediatR;
+using Inventory_Management_System.Database;
+using Inventory_Management_System.Features.Parties.Shared;
 
 namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
 {
     public class CreateCustomerCommandHandler(
         IBaseRepository<Customer> _customerRepository,
+        AppDbContext _db,
         ILogger<CreateCustomerCommandHandler> _logger
     ) : IRequestHandler<CreateCustomerCommand, Result>
     {
@@ -52,6 +55,14 @@ namespace Inventory_Management_System.Features.Customers.Command.CreateCustomer
                 // and every statement include it.
                 if (customer.OpeningBalance != 0)
                     customer.CustomerTransactions.Add(CustomerTransaction.ForOpening(customer));
+
+                // A credit customer also sells to us: give it a linked supplier row.
+                if (request.IsCreditParty)
+                {
+                    var (_, linkError) = await new PartyLink(_db).EnsureSupplierForCustomerAsync(customer, cancellationToken);
+                    if (linkError != null)
+                        return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = linkError };
+                }
 
                 await _customerRepository.AddAsync(customer, cancellationToken);
                 await _customerRepository.SaveChangesAsync(cancellationToken);

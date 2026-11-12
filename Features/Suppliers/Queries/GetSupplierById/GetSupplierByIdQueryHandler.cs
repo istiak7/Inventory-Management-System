@@ -4,6 +4,7 @@ using Inventory_Management_System.Features.Suppliers.Shared.Repository;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
 {
@@ -44,7 +45,9 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierById
                     supplier.NID,
                     supplier.OpeningBalance,
                     balance,
-                    supplier.CreatedAt);
+                    supplier.CreatedAt,
+                    supplier.Address,
+                    await _dbContext.Customers.Where(c => c.SupplierId == supplier.Id).Select(c => (int?)c.Id).FirstOrDefaultAsync(cancellationToken));
 
                 return new Result
                 {
