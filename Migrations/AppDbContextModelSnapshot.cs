@@ -555,6 +555,10 @@ namespace Inventory_Management_System.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<decimal>("ReturnedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<DateTime>("SaleDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -643,6 +647,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int?>("SaleId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SalesReturnId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -662,6 +669,8 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("CustomerPaymentId");
 
                     b.HasIndex("SaleId");
+
+                    b.HasIndex("SalesReturnId");
 
                     b.HasIndex("CustomerId", "TransactionDate");
 
@@ -1032,6 +1041,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsReturnable")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ProductDescription")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1307,6 +1319,199 @@ namespace Inventory_Management_System.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "GIN");
 
                     b.ToTable("ProductVariants");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("CashRefunded")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("DueReduced")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("ReturnDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReturnNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("SettlementReversed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("PurchaseId");
+
+                    b.HasIndex("ReturnDate");
+
+                    b.HasIndex("ReturnNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("PurchaseReturns");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturnLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseReturnId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SupplierPurchaseDetailsId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("PurchaseReturnId");
+
+                    b.HasIndex("SupplierPurchaseDetailsId");
+
+                    b.ToTable("PurchaseReturnLines");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturnSerial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductSerialId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseReturnLineId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductSerialId");
+
+                    b.HasIndex("PurchaseReturnLineId");
+
+                    b.ToTable("PurchaseReturnSerials");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Quotation", b =>
@@ -1661,6 +1866,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ReturnedQuantity")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SaleId")
                         .HasColumnType("integer");
 
@@ -1695,13 +1903,184 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("ProductSerialId")
                         .IsUnique()
                         .HasDatabaseName("IX_SaleDetails_ProductSerialId")
-                        .HasFilter("\"Status\" <> 'Voided'");
+                        .HasFilter("\"Status\" <> 'Voided' AND \"ReturnedQuantity\" < \"Quantity\"");
 
                     b.HasIndex("ProductVariantId");
 
                     b.HasIndex("SaleId");
 
                     b.ToTable("SaleDetails");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SalesReturn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("CashRefunded")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("DueReduced")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("ReturnDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReturnNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("SaleId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("SettlementReversed")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ReturnDate");
+
+                    b.HasIndex("ReturnNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SaleId");
+
+                    b.ToTable("SalesReturns");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SalesReturnLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ProductSerialId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductVariantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Restock")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SaleDetailsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SalesReturnId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductSerialId");
+
+                    b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("SaleDetailsId");
+
+                    b.HasIndex("SalesReturnId");
+
+                    b.ToTable("SalesReturnLines");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SeedHistory", b =>
@@ -2073,6 +2452,10 @@ namespace Inventory_Management_System.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<decimal>("ReturnedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -2241,6 +2624,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("IsActive")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PurchaseReturnId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SupplierId")
                         .HasColumnType("integer");
 
@@ -2265,6 +2651,8 @@ namespace Inventory_Management_System.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PurchaseReturnId");
 
                     b.HasIndex("SupplierPaymentId");
 
@@ -2633,11 +3021,17 @@ namespace Inventory_Management_System.Migrations
                         .HasForeignKey("SaleId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Inventory_Management_System.Entities.SalesReturn", "SalesReturn")
+                        .WithMany()
+                        .HasForeignKey("SalesReturnId");
+
                     b.Navigation("Customer");
 
                     b.Navigation("CustomerPayment");
 
                     b.Navigation("CustomerSale");
+
+                    b.Navigation("SalesReturn");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Expense", b =>
@@ -2822,6 +3216,79 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturn", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchase", "SupplierPurchase")
+                        .WithMany()
+                        .HasForeignKey("PurchaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Supplier");
+
+                    b.Navigation("SupplierPurchase");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturnLine", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.PurchaseReturn", "PurchaseReturn")
+                        .WithMany("Lines")
+                        .HasForeignKey("PurchaseReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SupplierPurchaseDetails", "SupplierPurchaseDetails")
+                        .WithMany()
+                        .HasForeignKey("SupplierPurchaseDetailsId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("PurchaseReturn");
+
+                    b.Navigation("SupplierPurchaseDetails");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturnSerial", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.ProductSerial", "ProductSerial")
+                        .WithMany()
+                        .HasForeignKey("ProductSerialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.PurchaseReturnLine", "PurchaseReturnLine")
+                        .WithMany("Serials")
+                        .HasForeignKey("PurchaseReturnLineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductSerial");
+
+                    b.Navigation("PurchaseReturnLine");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Quotation", b =>
                 {
                     b.HasOne("Inventory_Management_System.Entities.CustomerSale", "ConvertedSale")
@@ -2939,6 +3406,67 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("ProductSerial");
 
                     b.Navigation("ProductVariant");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SalesReturn", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.CustomerSale", "CustomerSale")
+                        .WithMany()
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("CustomerSale");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SalesReturnLine", b =>
+                {
+                    b.HasOne("Inventory_Management_System.Entities.ProductSerial", "ProductSerial")
+                        .WithMany()
+                        .HasForeignKey("ProductSerialId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Inventory_Management_System.Entities.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SaleDetails", "SaleDetails")
+                        .WithMany()
+                        .HasForeignKey("SaleDetailsId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventory_Management_System.Entities.SalesReturn", "SalesReturn")
+                        .WithMany("Lines")
+                        .HasForeignKey("SalesReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductSerial");
+
+                    b.Navigation("ProductVariant");
+
+                    b.Navigation("SaleDetails");
+
+                    b.Navigation("SalesReturn");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.Stock", b =>
@@ -3076,6 +3604,10 @@ namespace Inventory_Management_System.Migrations
 
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierTransaction", b =>
                 {
+                    b.HasOne("Inventory_Management_System.Entities.PurchaseReturn", "PurchaseReturn")
+                        .WithMany()
+                        .HasForeignKey("PurchaseReturnId");
+
                     b.HasOne("Inventory_Management_System.Entities.Supplier", "Supplier")
                         .WithMany("SupplierTransactions")
                         .HasForeignKey("SupplierId")
@@ -3091,6 +3623,8 @@ namespace Inventory_Management_System.Migrations
                         .WithMany()
                         .HasForeignKey("SupplierPurchaseId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PurchaseReturn");
 
                     b.Navigation("Supplier");
 
@@ -3283,6 +3817,16 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("SupplierPurchaseDetails");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturn", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.PurchaseReturnLine", b =>
+                {
+                    b.Navigation("Serials");
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.Quotation", b =>
                 {
                     b.Navigation("QuotationDetails");
@@ -3293,6 +3837,11 @@ namespace Inventory_Management_System.Migrations
                     b.Navigation("RoleMenuActions");
 
                     b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.SalesReturn", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.StockTransfer", b =>

@@ -7,6 +7,9 @@ namespace Inventory_Management_System.Entities
         public int SaleId { get; set; } 
         public int ProductVariantId { get; set; }
         public int Quantity { get; set; }
+        // Units taken back by active sales returns (kept in step by create/cancel sales return).
+        // A fully returned serial line no longer holds its serial (see the unique index).
+        public int ReturnedQuantity { get; set; }
         public decimal UnitPrice { get; set; }           
         // What this unit cost us, snapshotted when the sale is made so gross profit stays fixed
         // even if the product is later bought in at a different price. Serialized units carry the

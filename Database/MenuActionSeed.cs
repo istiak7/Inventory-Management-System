@@ -95,6 +95,26 @@ namespace Inventory_Management_System.Database
                 View("reports.view"),
             ],
             [], InsertBefore: true, ShareWithRolesOn: ReportPages),
+            // Partial returns of a sale's lines. Whoever already works on Sales may view and make
+            // returns; cancelling one is granted by an admin.
+            new("MenuPage.SalesReturn", "/sales-returns", "Sales Return", "/sales", "sales.view",
+            [
+                View("sales.view", "GET /get-sales-returns", "GET /get-sales-return/{id:int}", Branches),
+                Create("sales.manage", "POST /create-sales-return", "GET /get-sale-returnable/{saleId:int}",
+                    "GET /get-all-sales", "GET /get-sale/{id:int}"),
+                Step("Cancel Return", "cancel", "sales.manage", "POST /cancel-sales-return/{id:int}"),
+            ],
+            ["view", "create"], ShareWithRolesOn: ["/sales"]),
+            // Goods sent back to a supplier. Purchase roles see the page; making or cancelling a
+            // return is granted by an admin (the Salesman role gets nothing here).
+            new("MenuPage.PurchaseReturn", "/purchase-returns", "Purchase Return", "/purchases", "purchases.view",
+            [
+                View("purchases.view", "GET /get-purchase-returns", "GET /get-purchase-return/{id:int}", Branches),
+                Create("purchases.manage", "POST /create-purchase-return", "GET /get-purchase-returnable/{purchaseId:int}",
+                    "GET /get-all-purchase-orders", "GET /get-purchase-order/{id:int}"),
+                Step("Cancel Return", "cancel", "purchases.manage", "POST /cancel-purchase-return/{id:int}"),
+            ],
+            [], ShareWithRolesOn: ["/purchases"]),
         ];
 
         private static readonly Dictionary<string, ActionDef[]> Defaults = new(StringComparer.OrdinalIgnoreCase)
@@ -561,7 +581,12 @@ namespace Inventory_Management_System.Database
                                 .Where(g => g.MenuActionId == action.Id)
                                 .Select(g => g.RoleId)
                                 .ToListAsync(cancellationToken);
-                        foreach (var roleId in roleIds.Except(already))
+                        // Grants added above in this same run (the Salesman ones) are not saved yet;
+                        // adding them again would break the unique (RoleId, MenuActionId) index.
+                        var pending = db.RoleMenuActions.Local
+                            .Where(g => g.MenuAction == action)
+                            .Select(g => g.RoleId);
+                        foreach (var roleId in roleIds.Except(already).Except(pending).ToList())
                             db.RoleMenuActions.Add(new RoleMenuAction { RoleId = roleId, MenuAction = action });
                     }
                 }

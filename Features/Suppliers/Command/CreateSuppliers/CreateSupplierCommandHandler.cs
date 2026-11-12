@@ -39,11 +39,11 @@ namespace Inventory_Management_System.Features.Suppliers.Command.CreateSuppliers
                 {
                     Group = request.Group,
                     Name = request.Name,
-                    Description = request.Description,
+                    Description = request.Description ?? string.Empty,
                     PhoneNumber = phoneNumber,
                     Email = request.Email?.Trim() ?? string.Empty,
                     Address = request.Address?.Trim() ?? string.Empty,
-                    NID = request.NID,
+                    NID = request.NID?.Trim() ?? string.Empty,
                     OpeningBalance = request.OpeningBalance,
                     CreatedAt = DateTime.UtcNow,
                 };

@@ -31,8 +31,10 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerAcco
                         c.Name,
                         c.Group,
                         // A voided sale takes itself back off sales, and its refund off payments.
+                        // Returns come off sales too (a cancelled return, booked as Credit, adds back).
                         TotalSales = (c.CustomerTransactions.Where(t => t.TransactionType == "Sale").Sum(t => (decimal?)t.Credit) ?? 0m)
-                            - (c.CustomerTransactions.Where(t => t.TransactionType == "Void").Sum(t => (decimal?)t.Debit) ?? 0m),
+                            - (c.CustomerTransactions.Where(t => t.TransactionType == "Void").Sum(t => (decimal?)t.Debit) ?? 0m)
+                            - (c.CustomerTransactions.Where(t => t.TransactionType == "Return").Sum(t => (decimal?)(t.Debit - t.Credit)) ?? 0m),
                         // Settled = paid: cash payments plus cross-ledger adjustments (net of reversals).
                         TotalPayments = (c.CustomerTransactions.Where(t => t.TransactionType == "Payment" || t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Debit) ?? 0m)
                             - (c.CustomerTransactions.Where(t => t.TransactionType == "Refund" || t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Credit) ?? 0m),

@@ -30,7 +30,16 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetDailyGrossProf
                 if (request.BranchId is int branchId)
                     sales = sales.Where(s => s.BranchId == branchId);
 
-                var totals = await sales.ToGrossProfitTotalsAsync(cancellationToken);
+                // Returns made this day come off it (not off the day of the original sale).
+                var returns = _dbContext.SalesReturns
+                    .AsNoTracking()
+                    .Where(r => r.ReturnDate >= dayStart && r.ReturnDate < nextDayStart)
+                    .WhereCountsTowardProfit();
+                if (request.BranchId is int returnBranchId)
+                    returns = returns.Where(r => r.BranchId == returnBranchId);
+
+                var totals = await (await sales.ToGrossProfitTotalsAsync(cancellationToken))
+                    .LessReturnsAsync(returns, cancellationToken);
 
                 var response = new DailyGrossProfitResponse(
                     DateOnly.FromDateTime(day),

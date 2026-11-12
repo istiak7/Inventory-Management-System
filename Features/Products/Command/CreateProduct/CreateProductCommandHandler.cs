@@ -37,6 +37,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                     ProductName = request.ProductName,
                     ProductDescription = request.ProductDescription,
                     ProductImageUrl = request.ProductImageUrl,
+                    IsReturnable = request.IsReturnable,
                     ProductSubCategoryId = request.ProductSubCategoryId,
                     ProductSubCategories = subCategory,
                     BrandId = request.BrandId,

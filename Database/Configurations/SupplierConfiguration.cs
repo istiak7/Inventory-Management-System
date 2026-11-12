@@ -40,6 +40,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
             builder.Property(s => s.PaidAmount).HasPrecision(18, 2);
             builder.Property(s => s.DueAmount).HasPrecision(18, 2);
+            builder.Property(s => s.ReturnedAmount).HasPrecision(18, 2);
 
             builder.HasOne(s => s.Supplier)
                    .WithMany(s => s.SupplierPurchases)

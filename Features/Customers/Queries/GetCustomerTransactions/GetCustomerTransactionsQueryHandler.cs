@@ -52,7 +52,9 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                         t.Customer.Name,
                         t.TransactionType,
                         t.TransactionDate,
-                        t.SaleId != null
+                        t.SalesReturnId != null
+                            ? t.SalesReturn!.ReturnNumber
+                        : t.SaleId != null
                             ? (t.CustomerSale!.InvoiceNumber ?? ("SAL-" + t.SaleId))
                             : t.CustomerPaymentId != null
                                 ? ("RCV-" + t.CustomerPaymentId)
@@ -68,7 +70,9 @@ namespace Inventory_Management_System.Features.Customers.Queries.GetCustomerTran
                                     .Select(sp => sp.CustomerSale.InvoiceNumber ?? ("SAL-" + sp.SaleId))
                                     .ToList()
                                 : new List<string>(),
-                        t.SaleId != null
+                        t.SalesReturnId != null
+                            ? t.SalesReturn!.Reason
+                        : t.SaleId != null
                             ? t.CustomerSale!.Remarks
                             : t.CustomerPaymentId != null
                                 ? t.CustomerPayment!.Remarks

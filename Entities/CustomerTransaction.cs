@@ -11,11 +11,13 @@ namespace Inventory_Management_System.Entities
 
         public int? SaleId { get; set; }
         public int? CustomerPaymentId { get; set; }
+        public int? SalesReturnId { get; set; }
 
         // Navigation property
         public required Customer Customer { get; set; }
         public CustomerSale? CustomerSale { get; set; }
         public CustomerPayment? CustomerPayment { get; set; }
+        public SalesReturn? SalesReturn { get; set; }
 
         // What the customer already owed before using this system. First row of their ledger.
         public static CustomerTransaction ForOpening(Customer customer)
@@ -113,6 +115,24 @@ namespace Inventory_Management_System.Entities
                 Customer = customer,
                 CustomerPayment = payment,
                 CustomerSale = sale
+            };
+        }
+
+        // A sales return: a positive amount takes the returned goods off what the customer owes;
+        // a negative amount (the return was cancelled) puts it back.
+        public static CustomerTransaction ForReturn(SalesReturn salesReturn, Customer customer, decimal amount, DateTime date, decimal runningBalance)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "Return",
+                TransactionDate = date,
+                Debit = amount > 0 ? amount : 0m,
+                Credit = amount < 0 ? -amount : 0m,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerSale = salesReturn.CustomerSale,
+                SalesReturn = salesReturn
             };
         }
 

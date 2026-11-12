@@ -15,7 +15,10 @@ namespace Inventory_Management_System.Entities
         /// <summary>Net payable: the lines, less DiscountAmount.</summary>
         public decimal TotalAmount { get; set; }   
         public decimal PaidAmount { get; set; }  
-        public decimal DueAmount { get; set; }      
+        public decimal DueAmount { get; set; }
+        // Value of goods returned (active returns only). TotalAmount is never changed by a
+        // return, so Total = Paid + Due + Returned.
+        public decimal ReturnedAmount { get; set; }      
         public string ? Remarks { get; set; } = string.Empty;
 
         // Navigation property

@@ -15,7 +15,10 @@ namespace Inventory_Management_System.Entities
         public decimal TaxAmount { get; set; }      
         public decimal TotalAmount { get; set; }     
         public decimal PaidAmount { get; set; }  
-        public decimal DueAmount { get; set; }  
+        public decimal DueAmount { get; set; }
+        // Value of goods returned (active returns only). TotalAmount is never changed by a
+        // return, so Total = Paid + Due + Returned.
+        public decimal ReturnedAmount { get; set; }  
         public string? Remarks { get; set; }
 
         // Set when the sale is voided (see SaleStatus.Voided); who voided it is UpdatedById.
@@ -37,6 +40,18 @@ namespace Inventory_Management_System.Entities
 
             PaidAmount += amount;
             DueAmount -= amount;
+        }
+
+        // Undoes part of an earlier payment (a cash refund or a reversed settlement on a return).
+        public void ReversePayment(decimal amount)
+        {
+            if (amount <= 0)
+                throw new InvalidOperationException("Reversal amount must be positive.");
+            if (amount > PaidAmount)
+                throw new InvalidOperationException($"Reversal {amount} exceeds the paid amount {PaidAmount}.");
+
+            PaidAmount -= amount;
+            DueAmount += amount;
         }
 
         // A discount given while taking a payment: we waive part of what the customer owes.

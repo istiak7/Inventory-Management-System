@@ -104,5 +104,64 @@ namespace Inventory_Management_System.Features.Reports.Shared
                 })
                 .ToList();
         }
+
+        // ---------------------------------------------------------------- returns
+        // A sales return takes its revenue (net of discount, without tax) off the day it was
+        // returned, not the original sale day. Restocked units also take their cost back out;
+        // damaged units do not, so their cost stays as a loss.
+
+        public static IQueryable<SalesReturn> WhereCountsTowardProfit(this IQueryable<SalesReturn> returns) =>
+            returns.Where(r => r.Status == ReturnStatus.Completed
+                               && r.IsActive != (int)EntityStatus.Deleted);
+
+        private static Task<List<ReturnProfitRow>> ReturnRowsAsync(
+            IQueryable<SalesReturn> returns, CancellationToken cancellationToken) =>
+            returns
+                .Select(r => new ReturnProfitRow(
+                    r.ReturnDate,
+                    r.SubTotal - r.DiscountAmount,
+                    r.Lines.Where(l => l.Restock).Sum(l => (decimal?)(l.UnitCost * l.Quantity)) ?? 0m,
+                    r.Lines.Sum(l => (int?)l.Quantity) ?? 0))
+                .ToListAsync(cancellationToken);
+
+        private sealed record ReturnProfitRow(DateTime ReturnDate, decimal Revenue, decimal CostOfGoodsSold, int Units);
+
+        private static GrossProfitTotals Less(GrossProfitTotals totals, IEnumerable<ReturnProfitRow> rows)
+        {
+            var list = rows.ToList();
+            if (list.Count == 0) return totals;
+            var revenue = GrossProfitMath.Round(totals.Revenue - list.Sum(r => r.Revenue));
+            var cogs = GrossProfitMath.Round(totals.CostOfGoodsSold - list.Sum(r => r.CostOfGoodsSold));
+            return new GrossProfitTotals(
+                revenue, cogs, GrossProfitMath.Round(revenue - cogs),
+                totals.SalesCount, totals.UnitsSold - list.Sum(r => r.Units));
+        }
+
+        // Totals less the returns made in the same period (the caller filters `returns` the same way).
+        public static async Task<GrossProfitTotals> LessReturnsAsync(
+            this GrossProfitTotals totals, IQueryable<SalesReturn> returns, CancellationToken cancellationToken) =>
+            Less(totals, await ReturnRowsAsync(returns, cancellationToken));
+
+        // Day-by-day totals less each day's returns; a day with only returns gets its own row.
+        public static async Task<IReadOnlyList<(DateOnly Day, GrossProfitTotals Totals)>> LessReturnsAsync(
+            this IReadOnlyList<(DateOnly Day, GrossProfitTotals Totals)> byDay, IQueryable<SalesReturn> returns,
+            CancellationToken cancellationToken)
+        {
+            var returnsByDay = (await ReturnRowsAsync(returns, cancellationToken))
+                .GroupBy(r => BusinessClock.LocalDateOf(r.ReturnDate))
+                .ToDictionary(g => g.Key, g => g.ToList());
+            if (returnsByDay.Count == 0) return byDay;
+
+            var empty = new GrossProfitTotals(0m, 0m, 0m, 0, 0);
+            return byDay.Select(d => d.Day)
+                .Union(returnsByDay.Keys)
+                .OrderBy(day => day)
+                .Select(day =>
+                {
+                    var totals = byDay.FirstOrDefault(d => d.Day == day).Totals ?? empty;
+                    return (day, Less(totals, returnsByDay.GetValueOrDefault(day) ?? []));
+                })
+                .ToList();
+        }
     }
 }

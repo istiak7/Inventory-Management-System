@@ -40,6 +40,13 @@ namespace Inventory_Management_System.Entities.Common
 
     // How a sale is settled. Cash is paid in full at the point of sale; Debit books the whole
     // amount onto the customer account to be collected later.
+    // A sales or purchase return. Cancelled = undone; kept for the record.
+    public enum ReturnStatus
+    {
+        Completed,
+        Cancelled
+    }
+
     public enum SaleType
     {
         Cash,

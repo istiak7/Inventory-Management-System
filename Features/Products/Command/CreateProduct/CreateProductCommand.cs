@@ -8,6 +8,8 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
         public string ProductName { get; set; }
         public string ProductDescription { get; set; } = string.Empty;
         public string ProductImageUrl { get; set; } = string.Empty;
+        // Can this product be returned? Defaults to yes.
+        public bool IsReturnable { get; set; } = true;
         public int ProductSubCategoryId { get; set; }
         public int BrandId { get; set; }
 

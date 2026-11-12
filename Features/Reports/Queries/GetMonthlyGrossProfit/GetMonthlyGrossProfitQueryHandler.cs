@@ -54,7 +54,16 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetMonthlyGrossPr
 
                 // One pass, grouped by day. The month total is the sum of the days, so the
                 // headline figure and the breakdown can never disagree.
-                var byDay = await sales.ToDailyGrossProfitAsync(cancellationToken);
+                // Returns made this month come off the day they were made.
+                var returns = _dbContext.SalesReturns
+                    .AsNoTracking()
+                    .Where(r => r.ReturnDate >= monthStart && r.ReturnDate < monthEnd)
+                    .WhereCountsTowardProfit();
+                if (request.BranchId is int returnBranchId)
+                    returns = returns.Where(r => r.BranchId == returnBranchId);
+
+                var byDay = await (await sales.ToDailyGrossProfitAsync(cancellationToken))
+                    .LessReturnsAsync(returns, cancellationToken);
 
                 var days = byDay
                     .Select(d => new DailyGrossProfitResponse(

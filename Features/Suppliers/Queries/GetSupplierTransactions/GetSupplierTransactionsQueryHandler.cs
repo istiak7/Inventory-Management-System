@@ -59,7 +59,9 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                         t.Supplier.Name,
                         t.TransactionType,
                         t.TransactionDate,
-                        t.SupplierPurchaseId != null
+                        t.PurchaseReturnId != null
+                            ? t.PurchaseReturn!.ReturnNumber
+                        : t.SupplierPurchaseId != null
                             ? (t.SupplierPurchase!.InvoiceNumber ?? ("PUR-" + t.SupplierPurchaseId))
                             : t.SupplierPaymentId != null
                                 ? ("PAY-" + t.SupplierPaymentId)
@@ -75,7 +77,9 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierTran
                                     .Select(pp => pp.SupplierPurchase.InvoiceNumber ?? ("PUR-" + pp.SupplierPurchaseId))
                                     .ToList()
                                 : new List<string>(),
-                        t.SupplierPurchaseId != null
+                        t.PurchaseReturnId != null
+                            ? t.PurchaseReturn!.Reason
+                        : t.SupplierPurchaseId != null
                             ? t.SupplierPurchase!.Remarks
                             : t.SupplierPaymentId != null
                                 ? t.SupplierPayment!.Remarks

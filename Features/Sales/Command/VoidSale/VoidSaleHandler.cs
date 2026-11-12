@@ -53,6 +53,17 @@ namespace Inventory_Management_System.Features.Sales.Command.VoidSale
                 if (claim != null)
                     return Error(400, $"Sale {sale.InvoiceNumber} has warranty claim {claim}, so it cannot be voided.");
 
+                // Returned goods already came back and their money already moved; voiding on top
+                // would count them twice. Cancel the returns first, or return the rest instead.
+                var activeReturn = await _dbContext.SalesReturns
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .Where(r => r.SaleId == sale.Id && r.Status == ReturnStatus.Completed)
+                    .Select(r => r.ReturnNumber)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (activeReturn != null)
+                    return Error(400, $"Sale {sale.InvoiceNumber} has return {activeReturn}. Cancel that return first, or return the remaining items instead of voiding.");
+
                 foreach (var line in sale.SaleDetails)
                 {
                     if (line.ProductSerial is { } soldSerial && soldSerial.Status != SerialStatus.Sold)
@@ -129,10 +140,12 @@ namespace Inventory_Management_System.Features.Sales.Command.VoidSale
                 // undone first: those supplier bills become due again. That part is not cash,
                 // so only the rest is refunded.
                 var (reversed, balanceAfterReversal) = await new CrossLedgerSettlement(_dbContext)
-                    .ReverseForVoidedSaleAsync(sale, balance, now, cancellationToken);
+                    .ReverseOnSaleAsync(sale, null, balance, now,
+                        $"Settlement reversed: sale {sale.InvoiceNumber} voided", cancellationToken);
                 balance = balanceAfterReversal;
 
-                var refunded = sale.PaidAmount - reversed;
+                // The reversal already took its part off PaidAmount; what is left was cash.
+                var refunded = sale.PaidAmount;
                 if (refunded > 0)
                 {
                     var refund = new CustomerPayment

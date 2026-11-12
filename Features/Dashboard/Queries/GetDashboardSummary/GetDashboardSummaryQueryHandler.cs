@@ -190,11 +190,16 @@ namespace Inventory_Management_System.Features.Dashboard.Queries.GetDashboardSum
                 // Same revenue and cost rules as the gross profit reports.
                 var yearStart = BusinessClock.StartOfDayUtc(new DateTime(today.Year, 1, 1));
                 var yearEnd = BusinessClock.StartOfDayUtc(new DateTime(today.Year + 1, 1, 1));
-                var byDay = await _dbContext.CustomerSales
+                var byDay = await (await _dbContext.CustomerSales
                     .AsNoTracking()
                     .Where(s => s.SaleDate >= yearStart && s.SaleDate < yearEnd)
                     .WhereCountsTowardProfit()
-                    .ToDailyGrossProfitAsync(cancellationToken);
+                    .ToDailyGrossProfitAsync(cancellationToken))
+                    // Returns come off the month they were made in.
+                    .LessReturnsAsync(_dbContext.SalesReturns
+                        .AsNoTracking()
+                        .Where(r => r.ReturnDate >= yearStart && r.ReturnDate < yearEnd)
+                        .WhereCountsTowardProfit(), cancellationToken);
 
                 var revenueByMonth = Enumerable.Range(1, today.Month)
                     .Select(month =>

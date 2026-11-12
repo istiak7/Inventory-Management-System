@@ -66,6 +66,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(s => s.TotalAmount).HasPrecision(18, 2);
             builder.Property(s => s.PaidAmount).HasPrecision(18, 2);
             builder.Property(s => s.DueAmount).HasPrecision(18, 2);
+            builder.Property(s => s.ReturnedAmount).HasPrecision(18, 2);
 
             builder.HasOne(s => s.Customer)
                    .WithMany(c => c.CustomerSales)
@@ -101,8 +102,8 @@ namespace Inventory_Management_System.Database.Configurations
                    .HasForeignKey(d => d.ProductVariantId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            // A unit is on at most one live sale line. A voided line keeps its serial for the
-            // record, but no longer blocks the unit from being sold again.
+            // A unit is on at most one live sale line. A voided or fully returned line keeps its
+            // serial for the record, but no longer blocks the unit from being sold again.
             builder.HasOne(d => d.ProductSerial)
                    .WithMany()
                    .HasForeignKey(d => d.ProductSerialId)
@@ -110,7 +111,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.HasIndex(d => d.ProductSerialId)
                    .IsUnique()
                    .HasDatabaseName("IX_SaleDetails_ProductSerialId")
-                   .HasFilter("\"Status\" <> 'Voided'");
+                   .HasFilter("\"Status\" <> 'Voided' AND \"ReturnedQuantity\" < \"Quantity\"");
         }
     }
 

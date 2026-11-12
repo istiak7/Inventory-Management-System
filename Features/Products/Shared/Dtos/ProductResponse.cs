@@ -11,6 +11,8 @@ namespace Inventory_Management_System.Features.Products.Shared.Dtos
         int VariantId,
         string SKU,
         decimal SellingPrice,
-        bool IsSerialized
+        bool IsSerialized,
+        // False = cannot be taken back (sales return) or sent back (purchase return).
+        bool IsReturnable = true
     );
 }

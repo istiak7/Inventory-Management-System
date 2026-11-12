@@ -30,10 +30,13 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
                         s.Id,
                         s.Name,
                         s.Group,
-                        TotalPurchases = s.SupplierTransactions.Where(t => t.TransactionType == "Purchase").Sum(t => (decimal?)t.Debit) ?? 0m,
-                        // Settled = paid: cash payments plus cross-ledger adjustments (net of reversals).
+                        // Returns come off purchases (a cancelled return, booked as Debit, adds back).
+                        TotalPurchases = (s.SupplierTransactions.Where(t => t.TransactionType == "Purchase").Sum(t => (decimal?)t.Debit) ?? 0m)
+                            - (s.SupplierTransactions.Where(t => t.TransactionType == "Return").Sum(t => (decimal?)(t.Credit - t.Debit)) ?? 0m),
+                        // Settled = paid: cash payments plus cross-ledger adjustments (net of reversals),
+                        // less money the supplier refunded on returns.
                         TotalPayments = (s.SupplierTransactions.Where(t => t.TransactionType == "Payment" || t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Credit) ?? 0m)
-                            - (s.SupplierTransactions.Where(t => t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Debit) ?? 0m),
+                            - (s.SupplierTransactions.Where(t => t.TransactionType == "Adjustment" || t.TransactionType == "Refund").Sum(t => (decimal?)t.Debit) ?? 0m),
                         Payable = (s.SupplierTransactions.Sum(t => (decimal?)t.Debit) ?? 0m)
                             - (s.SupplierTransactions.Sum(t => (decimal?)t.Credit) ?? 0m),
                         Receivable = s.Customer == null

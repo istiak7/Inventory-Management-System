@@ -9,6 +9,8 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
         public string ProductName { get; set; }
         public string ProductDescription { get; set; } = string.Empty;
         public string ProductImageUrl { get; set; } = string.Empty;
+        // null = leave as it is (older clients do not send it).
+        public bool? IsReturnable { get; set; }
         public int ProductSubCategoryId { get; set; }
         public int BrandId { get; set; }
     }

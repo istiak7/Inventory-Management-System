@@ -56,6 +56,8 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                 product.ProductName = request.ProductName;
                 product.ProductDescription = request.ProductDescription;
                 product.ProductImageUrl = request.ProductImageUrl;
+                if (request.IsReturnable is bool isReturnable)
+                    product.IsReturnable = isReturnable;
                 product.ProductSubCategoryId = request.ProductSubCategoryId;
                 product.BrandId = request.BrandId;
                 product.UpDatedAt = DateTime.UtcNow;

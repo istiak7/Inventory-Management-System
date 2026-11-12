@@ -73,6 +73,10 @@ namespace Inventory_Management_System.Database
                 .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
             modelBuilder.Entity<SupplierPayment>()
                 .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<SalesReturn>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
+            modelBuilder.Entity<PurchaseReturn>()
+                .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
             modelBuilder.Entity<WarrantyClaim>()
                 .HasQueryFilter(e => !_filterByBranch || e.BranchId == _branchId);
 
@@ -254,6 +258,11 @@ namespace Inventory_Management_System.Database
         public DbSet<SaleCustomerPayment> SaleCustomerPayments { get; set; }
         public DbSet<CustomerTransaction> CustomerTransactions { get; set; }
         public DbSet<PartySettlement> PartySettlements { get; set; }
+        public DbSet<SalesReturn> SalesReturns { get; set; }
+        public DbSet<SalesReturnLine> SalesReturnLines { get; set; }
+        public DbSet<PurchaseReturn> PurchaseReturns { get; set; }
+        public DbSet<PurchaseReturnLine> PurchaseReturnLines { get; set; }
+        public DbSet<PurchaseReturnSerial> PurchaseReturnSerials { get; set; }
         public DbSet<Quotation> Quotations { get; set; }
         public DbSet<QuotationDetails> QuotationDetails { get; set; }
         public DbSet<Stock> Stocks { get; set; }
