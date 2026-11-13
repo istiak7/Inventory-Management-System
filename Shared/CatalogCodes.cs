@@ -48,6 +48,20 @@ namespace Inventory_Management_System.Shared
             return prefix.Length > 0 ? $"{prefix}-{name}" : name;
         }
 
+        /// <summary>Same as <see cref="UniqueAsync"/> for an in-memory set; the result is added to the set.</summary>
+        public static string Unique(string baseValue, int maxLength, HashSet<string> taken)
+        {
+            var candidate = baseValue.Length > maxLength ? baseValue[..maxLength] : baseValue;
+            for (var n = 2; taken.Contains(candidate); n++)
+            {
+                var suffix = $"-{n}";
+                var stem = baseValue.Length > maxLength - suffix.Length ? baseValue[..(maxLength - suffix.Length)] : baseValue;
+                candidate = stem + suffix;
+            }
+            taken.Add(candidate);
+            return candidate;
+        }
+
         /// <summary>First candidate (the base, then base-2, base-3 ...) that is not taken yet.</summary>
         public static async Task<string> UniqueAsync(string baseValue, int maxLength, Func<string, Task<bool>> exists)
         {

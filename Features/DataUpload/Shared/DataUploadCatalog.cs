@@ -15,15 +15,15 @@ namespace Inventory_Management_System.Features.DataUpload.Shared
                 Permissions.ProductsManage, BrandUploadImporter.Columns),
 
             new(DataUploadType.Category, "Product Category",
-                "Top-level product categories, each with its own unique code.",
+                "Top-level product categories.",
                 Permissions.ProductsManage, CategoryUploadImporter.Columns),
 
             new(DataUploadType.SubCategory, "Product Sub Category",
-                "Sub-categories, linked to an existing category by its code.",
+                "Sub-categories, linked to an existing category by its name.",
                 Permissions.ProductsManage, SubCategoryUploadImporter.Columns),
 
             new(DataUploadType.Product, "Product & Variant",
-                "One row per variant (SKU). Rows with the same product name, sub-category and brand become one product.",
+                "One row per variant. Rows with the same product name, sub-category and brand become one product.",
                 Permissions.ProductsManage, ProductUploadImporter.Columns),
 
             new(DataUploadType.Supplier, "Supplier",
