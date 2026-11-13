@@ -130,9 +130,8 @@ namespace Inventory_Management_System.Features.Parties.Shared
                 sourceSale: null, sourcePurchase: purchase, reversalOf: null, cancellationToken);
         }
 
-        // Undoes settlements sitting on a sale, newest first, up to `limit` (null = all of them).
-        // Used when the sale is voided (all) or goods on it are returned (only what the return
-        // needs). For each one:
+        // Undoes settlements sitting on a sale, newest first, up to `limit`.
+        // Used when goods on the sale are returned (only what the return needs). For each one:
         //   - the sale: an "Adjustment" payment of -x on it, so its PaidAmount drops by x;
         //   - the supplier side: the bills that settlement paid become due again, newest
         //     allocation first.
@@ -140,7 +139,7 @@ namespace Inventory_Management_System.Features.Parties.Shared
         // be saved yet). Returns how much was reversed and the new customer balance.
         // The caller holds the customer lock; supplier rows are locked here (customer before supplier).
         public async Task<(decimal Reversed, decimal CustomerBalance)> ReverseOnSaleAsync(
-            CustomerSale sale, decimal? limit, decimal customerBalance, DateTime date, string remarks,
+            CustomerSale sale, decimal limit, decimal customerBalance, DateTime date, string remarks,
             CancellationToken cancellationToken)
         {
             var onSale = (await db.SaleCustomerPayments
@@ -167,9 +166,7 @@ namespace Inventory_Management_System.Features.Parties.Shared
             decimal reversed = 0;
             foreach (var settlement in settlements)
             {
-                var amount = onSale[settlement.CustomerPaymentId];
-                if (limit is decimal max)
-                    amount = Math.Min(amount, max - reversed);
+                var amount = Math.Min(onSale[settlement.CustomerPaymentId], limit - reversed);
                 if (amount <= 0) break;
 
                 // Customer side: this sale is unpaid by `amount` again.

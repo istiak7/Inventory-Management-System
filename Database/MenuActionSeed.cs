@@ -47,6 +47,15 @@ namespace Inventory_Management_System.Database
             ("MenuActionRoutes.SaleChallan", "/sales", "view", [SaleChallan]),
         ];
 
+        // Actions whose API was removed after MenuActionDefaults.v1 had already run. On an existing
+        // database each one is soft-deleted once (SeedHistory name), so it leaves System Setup and
+        // the Users & Roles grid. Role grants stay on the deleted row (nothing reads them).
+        private static readonly (string SeedName, string MenuRoute, string ActionCode)[] ActionRemovals =
+        [
+            // Sale Void (POST /void-sale) was replaced by Sales Return, which also handles partial returns.
+            ("MenuActionRemoved.SaleVoid", "/sales", "void"),
+        ];
+
         // Price Quotation's API routes (Features/Quotations).
         private const string QuotationList = "GET /get-all-quotations";
         private const string QuotationById = "GET /get-quotation/{id:int}";
@@ -195,9 +204,8 @@ namespace Inventory_Management_System.Database
                 Create("sales.manage", "POST /create-sale", ProductSearch, "GET /get-available-serials",
                     "GET /get-customer-by-phone", Customers, Branches),
                 // Money and stock are committed when a sale is made; only its remark can change.
+                // Goods coming back go through Sales Return (/sales-returns).
                 Step("Update Remarks", "update", "sales.manage", "PUT /update-sale-remarks/{id:int}"),
-                // Cancels the sale: stock back, serials sellable, money refunded. Kept for audit.
-                Step("Void Sale", "void", "sales.manage", "POST /void-sale/{id:int}"),
             ],
             ["/customers"] =
             [
@@ -595,6 +603,36 @@ namespace Inventory_Management_System.Database
                 await db.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("Menu page seed {SeedName}: {Count} action(s) added on {Route}",
                     page.SeedName, created.Count, page.Route);
+            }
+        }
+
+        // Applies ActionRemovals (see there). Runs after SeedAsync.
+        public static async Task RemoveActionsAsync(
+            AppDbContext db,
+            ILogger logger,
+            CancellationToken cancellationToken)
+        {
+            const int active = (int)EntityStatus.Active;
+
+            foreach (var (seedName, menuRoute, actionCode) in ActionRemovals)
+            {
+                if (await db.SeedHistory.AnyAsync(s => s.Name == seedName, cancellationToken)) continue;
+
+                var actions = await db.AppMenuActions
+                    .Where(a => a.IsActive == active
+                                && a.ComponentCode == actionCode
+                                && a.Menu.FrontendRoute == menuRoute)
+                    .ToListAsync(cancellationToken);
+                foreach (var action in actions)
+                {
+                    action.Delete();
+                    action.UpDatedAt = DateTime.UtcNow;
+                }
+
+                db.SeedHistory.Add(new SeedHistory { Name = seedName, CreatedAt = DateTime.UtcNow });
+                await db.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("Menu action seed {SeedName}: {Count} action(s) removed from {MenuRoute}",
+                    seedName, actions.Count, menuRoute);
             }
         }
 

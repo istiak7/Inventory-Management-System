@@ -20,7 +20,7 @@ namespace Inventory_Management_System.Features.SalesReturns.Command.CreateSalesR
     //   1. what is still due on the sale is reduced first, up to R;
     //   2. the rest was already paid: a part paid by a cross-ledger Adjustment is reversed
     //      (we owe the party as a supplier again, no cash moves);
-    //   3. anything still left is refunded in cash (a negative "Refund" payment, like Void).
+    //   3. anything still left is refunded in cash (a negative "Refund" payment).
     // The sale's TotalAmount stays; its ReturnedAmount grows by R.
     public class CreateSalesReturnHandler(
         AppDbContext _dbContext,
