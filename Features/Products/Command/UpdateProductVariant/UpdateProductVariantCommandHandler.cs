@@ -20,9 +20,11 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProductVar
             if (variant is null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Variant with id {request.Id} was not found." };
 
-            var clash = await _variantRepository.GetAsync(v => v.SKU == request.SKU && v.Id != request.Id, asNoTracking: true, cancellationToken);
+            // SKU not sent = keep the current one.
+            var sku = string.IsNullOrWhiteSpace(request.SKU) ? variant.SKU : request.SKU.Trim();
+            var clash = await _variantRepository.GetAsync(v => v.SKU == sku && v.Id != request.Id, asNoTracking: true, cancellationToken);
             if (clash is not null)
-                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A variant with SKU '{request.SKU}' already exists." };
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A variant with SKU '{sku}' already exists." };
 
             // Switching serial tracking on or off while units exist would break them: serialized
             // stock without serials could never be sold, and serials would be left behind.
@@ -49,11 +51,11 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProductVar
 
             try
             {
-                variant.SKU = request.SKU;
-                variant.Barcode = request.Barcode;
+                variant.SKU = sku;
+                if (request.Barcode is not null) variant.Barcode = request.Barcode;
                 variant.SellingPrice = request.SellingPrice;
                 variant.IsSerialized = request.IsSerialized;
-                variant.AttributesJson = string.IsNullOrWhiteSpace(request.AttributesJson) ? "{}" : request.AttributesJson;
+                if (request.AttributesJson is not null) variant.AttributesJson = string.IsNullOrWhiteSpace(request.AttributesJson) ? "{}" : request.AttributesJson;
 
                 await _variantRepository.UpdateAsync(variant, cancellationToken);
                 await _variantRepository.SaveChangesAsync(cancellationToken);

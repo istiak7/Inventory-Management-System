@@ -26,17 +26,22 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
             if (brand is null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Brand with id {request.BrandId} was not found." };
 
-            var existing = await _variantRepository.GetAsync(v => v.SKU == request.SKU, asNoTracking: true, cancellationToken);
+            // SKU is optional: built from the sub-category code + product name (made unique) when not sent.
+            var sku = string.IsNullOrWhiteSpace(request.SKU)
+                ? await CatalogCodes.UniqueAsync(CatalogCodes.SkuBase(subCategory.Code, request.ProductName), CatalogCodes.SkuMaxLength,
+                    async s => await _variantRepository.GetAsync(v => v.SKU == s, asNoTracking: true, cancellationToken) is not null)
+                : request.SKU.Trim();
+            var existing = await _variantRepository.GetAsync(v => v.SKU == sku, asNoTracking: true, cancellationToken);
             if (existing is not null)
-                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A variant with SKU '{request.SKU}' already exists." };
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"A variant with SKU '{sku}' already exists." };
 
             try
             {
                 var product = new Product
                 {
                     ProductName = request.ProductName,
-                    ProductDescription = request.ProductDescription,
-                    ProductImageUrl = request.ProductImageUrl,
+                    ProductDescription = request.ProductDescription ?? string.Empty,
+                    ProductImageUrl = request.ProductImageUrl ?? string.Empty,
                     IsReturnable = request.IsReturnable,
                     ProductSubCategoryId = request.ProductSubCategoryId,
                     ProductSubCategories = subCategory,
@@ -47,8 +52,8 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
 
                 var variant = new ProductVariant
                 {
-                    SKU = request.SKU,
-                    Barcode = request.Barcode,
+                    SKU = sku,
+                    Barcode = request.Barcode ?? string.Empty,
                     SellingPrice = request.SellingPrice,
                     IsSerialized = request.IsSerialized,
                     AttributesJson = string.IsNullOrWhiteSpace(request.AttributesJson) ? "{}" : request.AttributesJson,

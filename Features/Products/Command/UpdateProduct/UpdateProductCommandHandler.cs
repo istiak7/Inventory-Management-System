@@ -54,8 +54,9 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
             try
             {
                 product.ProductName = request.ProductName;
-                product.ProductDescription = request.ProductDescription;
-                product.ProductImageUrl = request.ProductImageUrl;
+                // Fields the form no longer sends (null) keep what is stored.
+                if (request.ProductDescription is not null) product.ProductDescription = request.ProductDescription;
+                if (request.ProductImageUrl is not null) product.ProductImageUrl = request.ProductImageUrl;
                 if (request.IsReturnable is bool isReturnable)
                     product.IsReturnable = isReturnable;
                 product.ProductSubCategoryId = request.ProductSubCategoryId;

@@ -31,9 +31,10 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateCategory
             try
             {
                 category.CategoryName = request.CategoryName;
-                category.Description = request.Description;
-                category.ImageUrl = request.ImageUrl;
-                category.Code = request.Code;
+                // Fields the form no longer sends (null) keep what is stored.
+                if (request.Description is not null) category.Description = request.Description;
+                if (request.ImageUrl is not null) category.ImageUrl = request.ImageUrl;
+                if (!string.IsNullOrWhiteSpace(request.Code)) category.Code = request.Code.Trim();
                 category.UpDatedAt = DateTime.UtcNow;
 
                 await _categoryRepository.UpdateAsync(category, cancellationToken);

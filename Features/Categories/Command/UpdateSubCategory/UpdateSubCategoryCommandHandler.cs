@@ -47,9 +47,10 @@ namespace Inventory_Management_System.Features.Categories.Command.UpdateSubCateg
             try
             {
                 subCategory.SubCategoryName = request.SubCategoryName;
-                subCategory.Description = request.Description;
-                subCategory.ImageUrl = request.ImageUrl;
-                subCategory.Code = request.Code;
+                // Fields the form no longer sends (null) keep what is stored.
+                if (request.Description is not null) subCategory.Description = request.Description;
+                if (request.ImageUrl is not null) subCategory.ImageUrl = request.ImageUrl;
+                if (!string.IsNullOrWhiteSpace(request.Code)) subCategory.Code = request.Code.Trim();
                 subCategory.ProductCategoryId = request.ProductCategoryId;
                 subCategory.UpDatedAt = DateTime.UtcNow;
 

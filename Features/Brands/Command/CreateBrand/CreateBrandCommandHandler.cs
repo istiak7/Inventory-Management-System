@@ -32,8 +32,8 @@ namespace Inventory_Management_System.Features.Brands.Command.CreateBrand
                 var brand = new Brand
                 {
                     Name = request.Name,
-                    Description = request.Description,
-                    LogoUrl = request.LogoUrl,
+                    Description = request.Description ?? string.Empty,
+                    LogoUrl = request.LogoUrl ?? string.Empty,
                     CreatedAt = DateTime.UtcNow
                 };
 

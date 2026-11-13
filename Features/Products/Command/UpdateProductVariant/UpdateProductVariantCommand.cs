@@ -6,10 +6,10 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProductVar
     public class UpdateProductVariantCommand : IRequest<Result>
     {
         public int Id { get; set; }
-        public string SKU { get; set; }
-        public string Barcode { get; set; } = string.Empty;
+        public string? SKU { get; set; }
+        public string? Barcode { get; set; }
         public decimal SellingPrice { get; set; }
         public bool IsSerialized { get; set; } = false;
-        public string AttributesJson { get; set; } = "{}";
+        public string? AttributesJson { get; set; }
     }
 }

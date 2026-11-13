@@ -29,8 +29,9 @@ namespace Inventory_Management_System.Features.Brands.Command.UpdateBrand
             try
             {
                 brand.Name = request.Name;
-                brand.Description = request.Description;
-                brand.LogoUrl = request.LogoUrl;
+                // Fields the form no longer sends (null) keep what is stored.
+                if (request.Description is not null) brand.Description = request.Description;
+                if (request.LogoUrl is not null) brand.LogoUrl = request.LogoUrl;
                 brand.UpDatedAt = DateTime.UtcNow;
 
                 await _brandRepository.UpdateAsync(brand, cancellationToken);

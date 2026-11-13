@@ -30,7 +30,11 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
                 };
             }
 
-            var existing = await _subCategoryRepository.GetAsync(s => s.Code == request.Code);
+            var code = string.IsNullOrWhiteSpace(request.Code)
+                ? await CatalogCodes.UniqueAsync(CatalogCodes.CodeBase(request.SubCategoryName), CatalogCodes.CodeMaxLength,
+                    async c => await _subCategoryRepository.GetAsync(x => x.Code == c, true, cancellationToken) is not null)
+                : request.Code.Trim();
+            var existing = await _subCategoryRepository.GetAsync(s => s.Code == code);
 
             if (existing is not null)
             {
@@ -39,7 +43,7 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = $"A sub-category with code '{request.Code}' already exists."
+                    Message = $"A sub-category with code '{code}' already exists."
                 };
             }
 
@@ -48,9 +52,9 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateSubCateg
                 var subCategory = new ProductSubCategories
                 {
                     SubCategoryName = request.SubCategoryName,
-                    Description = request.Description,
-                    ImageUrl = request.ImageUrl,
-                    Code = request.Code,
+                    Description = request.Description ?? string.Empty,
+                    ImageUrl = request.ImageUrl ?? string.Empty,
+                    Code = code,
                     ProductCategoryId = request.ProductCategoryId,
                     ProductCategories = category,
                     CreatedAt = DateTime.UtcNow

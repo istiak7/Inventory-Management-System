@@ -14,7 +14,12 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateCategory
             CreateCategoryCommand request,
             CancellationToken cancellationToken)
         {
-            var existing = await _categoryRepository.GetAsync(c => c.Code == request.Code);
+            // Code is optional: derived from the name (and made unique) when the form does not send one.
+            var code = string.IsNullOrWhiteSpace(request.Code)
+                ? await CatalogCodes.UniqueAsync(CatalogCodes.CodeBase(request.CategoryName), CatalogCodes.CodeMaxLength,
+                    async c => await _categoryRepository.GetAsync(x => x.Code == c, true, cancellationToken) is not null)
+                : request.Code.Trim();
+            var existing = await _categoryRepository.GetAsync(c => c.Code == code);
             if (existing is not null)
             {
                 return new Result
@@ -22,7 +27,7 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateCategory
                     IsSuccess = false,
                     StatusCode = 400,
                     Status = "Error",
-                    Message = $"A category with code '{request.Code}' already exists."
+                    Message = $"A category with code '{code}' already exists."
                 };
             }
 
@@ -31,9 +36,9 @@ namespace Inventory_Management_System.Features.Categories.Command.CreateCategory
                 var category = new ProductCategories
                 {
                     CategoryName = request.CategoryName,
-                    Description = request.Description,
-                    ImageUrl = request.ImageUrl,
-                    Code = request.Code,
+                    Description = request.Description ?? string.Empty,
+                    ImageUrl = request.ImageUrl ?? string.Empty,
+                    Code = code,
                     CreatedAt = DateTime.UtcNow
                 };
 
