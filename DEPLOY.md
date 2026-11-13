@@ -6,10 +6,11 @@ One command starts everything on the server:
 |------------|-----------------------------------|----------------------------------------|
 | `frontend` | The website (nginx)               | Everyone, on port 80 (or `APP_PORT`)   |
 | `backend`  | The API (.NET)                    | Only the website, through `/api/...`   |
-| `postgres-db` | The database (PostgreSQL 16)   | Only the backend                       |
+| `postgres-db` | The database (PostgreSQL 16)   | The backend, and SQL tools on the server itself (SSH tunnel for remote, see below) |
 
 The browser only talks to the website. The website forwards `/api/...` to the backend.
-So you open **one** address, and the database is never open to the network.
+So you open **one** address, and the database is never open to the network: its port is bound to
+`127.0.0.1` of the server and is reached remotely only through an SSH tunnel.
 
 ---
 
@@ -89,6 +90,7 @@ Change **every** value:
 | `SEED_ADMIN_EMAIL` | Email of the first admin account |
 | `SEED_ADMIN_PASSWORD` | Password of the first admin (at least 8 characters) |
 | `APP_URL` | The address people open, e.g. `http://10.70.34.59` |
+| `POSTGRES_EXTERNAL_PORT` | Optional. Server port for SQL tools (default `5433`). Only open on the server itself. |
 | `APP_PORT` | `80`, or another port if 80 is busy (then `APP_URL` must include it, e.g. `http://10.70.34.59:8080`) |
 
 `.env` is ignored by git. **Never commit it and never share it.**
@@ -207,6 +209,93 @@ Keep copies of the backups on another machine.
 
 ---
 
+## Connect to the database (DBeaver, pgAdmin, any SQL tool)
+
+The database port is published **only on the server's own `127.0.0.1`** (port
+`POSTGRES_EXTERNAL_PORT`, default `5433`). Nobody on the network or the internet can reach it
+directly. You get in through an **SSH tunnel**: your SSH login to the server carries the database
+connection. The backend is not affected: it still uses `Host=postgres-db;Port=5432` inside Docker.
+
+### DBeaver (recommended)
+
+New Connection → **PostgreSQL**.
+
+**Main tab**
+
+| Setting | Value |
+|---|---|
+| Host | `localhost` (this is the address *as seen from the server*, through the tunnel) |
+| Port | `5433` (your `POSTGRES_EXTERNAL_PORT`) |
+| Database | `Inventory-Management` |
+| Username | `postgres` |
+| Password | the `POSTGRES_PASSWORD` value from the server's `.env` |
+
+**SSH tab** → tick **Use SSH Tunnel**
+
+| Setting | Value |
+|---|---|
+| Host/IP | the server address, e.g. `10.70.34.59` |
+| Port | `22` (your SSH port) |
+| User Name | the server's SSH user (the same one you log in with) |
+| Authentication Method | **Public Key** (best: pick your private key file, plus its passphrase if any). *Password* also works if the server allows password login. |
+
+Press **Test Connection**, then **Finish**. pgAdmin works the same way (Connection tab: host
+`localhost`, port `5433`; SSH Tunnel tab: same SSH values).
+
+No SSH tool? Open the tunnel yourself and point DBeaver at `localhost:5433` without the SSH tab:
+
+```bash
+ssh -N -L 5433:127.0.0.1:5433 <ssh-user>@<server-ip>
+```
+
+(If your own PC already uses 5433, use another local port: `-L 6543:127.0.0.1:5433` and connect to 6543.)
+
+### Security rules
+
+- Keep `POSTGRES_BIND_ADDRESS` unset (= `127.0.0.1`). Then the port cannot be reached from outside,
+  and no firewall rule is needed for it. Do **not** open `5433` in the firewall.
+- Use a long random `POSTGRES_PASSWORD`; never put it in git, chat or screenshots.
+- Prefer SSH key login, and give the SSH login only to people who may see production data.
+- A database tool can change or delete data: use a read-only database user for people who only look.
+  ```bash
+  docker exec -it inventory-postgres-db psql -U postgres -d Inventory-Management -c "CREATE ROLE readonly LOGIN PASSWORD 'another-long-random-password'; GRANT CONNECT ON DATABASE \"Inventory-Management\" TO readonly; GRANT USAGE ON SCHEMA public TO readonly; GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly;"
+  ```
+
+### Direct remote access (only if a tunnel is truly impossible)
+
+1. In `.env` set `POSTGRES_BIND_ADDRESS=0.0.0.0` (and apply, below).
+2. **Firewall first, allowlist only your IPs.** Docker bypasses `ufw` rules for published ports, so
+   put the rule in the `DOCKER-USER` chain, or in your cloud/provider firewall:
+   ```bash
+   sudo iptables -I DOCKER-USER -p tcp --dport 5433 -j DROP
+   sudo iptables -I DOCKER-USER -p tcp --dport 5433 -s <your-office-ip> -j ACCEPT
+   ```
+   (the ACCEPT is inserted last, so it is checked first; repeat it for each allowed IP, and make the
+   rules permanent with `iptables-persistent`). Check from a non-allowed network that the port is closed.
+3. Use a strong password, and prefer the read-only user above. For encrypted traffic use an SSH
+   tunnel or configure PostgreSQL SSL: plain PostgreSQL over the internet is not encrypted.
+
+### Apply the change on the server (data is kept)
+
+The database data lives in the Docker volume `postgres_data`. These commands only recreate the
+containers; they never touch the volume. **Never use `docker compose down -v`** (it deletes it).
+
+```bash
+cd ~/Inventory-Management-System && git pull
+# optional: add POSTGRES_EXTERNAL_PORT=5433 to .env (5433 is the default anyway)
+
+docker compose exec postgres-db pg_dump -U postgres -d Inventory-Management -Fc > ~/backup_before_port_$(date +%F).dump   # safety backup
+docker compose config >/dev/null && echo "compose file OK"
+docker compose up -d postgres-db     # recreates only the database container (a few seconds), same volume
+docker compose up -d                 # backend/frontend start or stay as they are
+docker compose ps                    # postgres-db should show 127.0.0.1:5433->5432/tcp and be healthy
+docker volume ls | grep postgres_data   # the data volume is still there
+```
+
+On the server itself you can test with: `psql -h 127.0.0.1 -p 5433 -U postgres -d Inventory-Management`.
+
+---
+
 ## Moving from the old setup (server already has data)
 
 If this server ran the old `docker-compose.yml` before:
@@ -222,7 +311,8 @@ If this server ran the old `docker-compose.yml` before:
    with the well-known password `Admin@123`. Log in with it once and change the password
    (Settings → Security). The `SEED_ADMIN_*` values are then not used, but they must still be set.
 3. **New address.** The website is now on `APP_PORT` (default 80, before it was 3000), and the API
-   is at `APP_URL/api` (before it was port 8080). The database port 5432 is no longer open.
+   is at `APP_URL/api` (before it was port 8080). The database port 5432 is no longer open to the
+   network; use the SSH tunnel in "Connect to the database" below.
 4. **Backup first** (see above), then run step 4.
 
 ---

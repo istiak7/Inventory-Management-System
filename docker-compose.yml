@@ -17,8 +17,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: Inventory-Management
-    # No "ports:" on purpose: the database is reachable only by the backend container,
-    # never from the network.
+    # The backend reaches the database over the Docker network as postgres-db:5432 (unchanged).
+    # This mapping only adds a way in for DBeaver / pgAdmin ON THE SERVER ITSELF: it is bound to
+    # 127.0.0.1 by default, so it is NOT reachable from the network. Remote people connect through
+    # an SSH tunnel (see DEPLOY.md). Change POSTGRES_BIND_ADDRESS only with a firewall allowlist.
+    ports:
+      - "${POSTGRES_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_EXTERNAL_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
