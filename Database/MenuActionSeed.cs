@@ -46,6 +46,7 @@ namespace Inventory_Management_System.Database
         [
             ("MenuActionRoutes.SaleChallan", "/sales", "view", [SaleChallan]),
             ("MenuActionRoutes.SaleEdits", "/sales", "view", [SaleEdits]),
+            ("MenuActionRoutes.PurchaseEdits", "/purchases", "view", [PurchaseEdits]),
         ];
 
         // Whole actions added to an existing page after MenuActionDefaults.v1 had already run
@@ -54,6 +55,7 @@ namespace Inventory_Management_System.Database
         private static readonly (string SeedName, string MenuRoute, string Name, string Code, string[] ApiRoutes)[] ActionAdditions =
         [
             ("MenuActionAdded.SaleEdit", "/sales", "Edit Invoice", "edit", [EditSale, ProductSearch, "GET /get-available-serials"]),
+            ("MenuActionAdded.PurchaseEdit", "/purchases", "Edit Approved Purchase", "edit", [EditPurchase, ProductSearch, "POST /check-serial-numbers"]),
         ];
 
         // Actions whose API was removed after MenuActionDefaults.v1 had already run. On an existing
@@ -67,6 +69,8 @@ namespace Inventory_Management_System.Database
 
         private const string EditSale = "PUT /edit-sale/{id:int}";
         private const string SaleEdits = "GET /get-sale-edits/{saleId:int}";
+        private const string EditPurchase = "PUT /edit-purchase-order/{id:int}";
+        private const string PurchaseEdits = "GET /get-purchase-edits/{purchaseId:int}";
 
         // Price Quotation's API routes (Features/Quotations).
         private const string QuotationList = "GET /get-all-quotations";
@@ -185,12 +189,15 @@ namespace Inventory_Management_System.Database
             ["/purchases"] =
             [
                 View("purchases.view", "GET /get-all-purchase-orders", "GET /get-purchase-order/{id:int}",
-                    "GET /get-invoice-supplier-ledger", Branches),
+                    "GET /get-invoice-supplier-ledger", PurchaseEdits, Branches),
                 Create("purchases.manage", "POST /create-purchase-order", Suppliers, ProductSearch, Branches),
                 Update("purchases.manage", "PUT /update-purchase-order/{id:int}", Suppliers, ProductSearch),
                 Delete("purchases.manage", "DELETE /delete-purchase-order/{id:int}"),
                 Step("Receive", "receive", "purchases.manage", "POST /receive-purchase-order/{id:int}"),
                 Step("Reject", "reject", "purchases.manage", "POST /reject-purchase-order/{id}"),
+                // Changing an APPROVED purchase (lines, costs, serials, discount): stock, payments
+                // and cross-ledger settlement are adjusted with it. Admin only until an admin grants it.
+                Step("Edit Approved Purchase", "edit", "admin", EditPurchase, ProductSearch, "POST /check-serial-numbers"),
             ],
             ["/suppliers"] =
             [

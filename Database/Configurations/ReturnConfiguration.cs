@@ -28,6 +28,28 @@ namespace Inventory_Management_System.Database.Configurations
         }
     }
 
+    public class PurchaseEditConfiguration : IEntityTypeConfiguration<PurchaseEdit>
+    {
+        public void Configure(EntityTypeBuilder<PurchaseEdit> builder)
+        {
+            builder.HasKey(e => e.Id);
+            builder.Property(e => e.Reason).IsRequired().HasMaxLength(500);
+            builder.Property(e => e.ChangesJson).IsRequired().HasColumnType("text");
+            foreach (var name in new[]
+            {
+                nameof(PurchaseEdit.OldDiscountAmount), nameof(PurchaseEdit.OldTotalAmount), nameof(PurchaseEdit.OldPaidAmount),
+                nameof(PurchaseEdit.OldDueAmount), nameof(PurchaseEdit.NewDiscountAmount), nameof(PurchaseEdit.NewTotalAmount),
+                nameof(PurchaseEdit.NewPaidAmount), nameof(PurchaseEdit.NewDueAmount), nameof(PurchaseEdit.ReturnedAmount),
+                nameof(PurchaseEdit.SettlementReversed), nameof(PurchaseEdit.SettlementRedone), nameof(PurchaseEdit.CashReleased),
+                nameof(PurchaseEdit.CashRefunded), nameof(PurchaseEdit.CashReapplied), nameof(PurchaseEdit.AdditionalPayment),
+            })
+                builder.Property(name).HasPrecision(18, 2);
+
+            builder.HasOne(e => e.SupplierPurchase).WithMany().HasForeignKey(e => e.PurchaseId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasIndex(e => e.PurchaseId);
+        }
+    }
+
     public class SalesReturnConfiguration : IEntityTypeConfiguration<SalesReturn>
     {
         public void Configure(EntityTypeBuilder<SalesReturn> builder)

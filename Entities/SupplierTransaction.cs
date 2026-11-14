@@ -86,6 +86,41 @@
             };
         }
 
+        // An edit of an approved purchase: a positive amount is what the bill grew by (we owe more);
+        // a negative one is what it shrank by (we owe less).
+        public static SupplierTransaction ForPurchaseEdit(SupplierPurchase purchase, Supplier supplier, decimal amount, DateTime date, decimal runningBalance)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "PurchaseEdit",
+                TransactionDate = date,
+                Debit = amount > 0 ? amount : 0m,
+                Credit = amount < 0 ? -amount : 0m,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPurchase = purchase
+            };
+        }
+
+        // Money the supplier pays back to us because an edit made the bill smaller than what we
+        // had paid. Like any refund it puts the payable back up (a Debit).
+        public static SupplierTransaction ForEditRefund(SupplierPayment refund, Supplier supplier, decimal amount, decimal runningBalance, SupplierPurchase purchase)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "Refund",
+                TransactionDate = refund.PaymentDate,
+                Debit = amount,
+                Credit = 0m,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPayment = refund,
+                SupplierPurchase = purchase
+            };
+        }
+
         // A purchase return: a positive amount takes the returned goods off what we owe;
         // a negative amount (the return was cancelled) puts it back.
         public static SupplierTransaction ForReturn(PurchaseReturn purchaseReturn, Supplier supplier, decimal amount, DateTime date, decimal runningBalance)
