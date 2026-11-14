@@ -122,13 +122,13 @@ namespace Inventory_Management_System.Entities
 
         // Cancelling a completed sale: what is still owed on it (its total less goods already
         // returned, which have their own "Return" rows) comes off the receivable. Stored as the
-        // long-standing "Void" ledger type, which every account total and statement already reads.
+        // "SaleCancel" ledger type (the counterpart of the supplier ledger's "PurchaseCancel").
         public static CustomerTransaction ForCancel(CustomerSale sale, Customer customer, decimal amount, DateTime date, decimal runningBalance)
         {
             return new CustomerTransaction
             {
                 CustomerId = customer.Id,
-                TransactionType = "Void",
+                TransactionType = "SaleCancel",
                 TransactionDate = date,
                 Debit = amount,
                 Credit = 0m,

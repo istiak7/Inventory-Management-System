@@ -30,7 +30,8 @@ namespace Inventory_Management_System.Features.Products.Queries.GetProductById
                         p.ProductVariants.OrderBy(v => v.Id).Select(v => v.SKU).FirstOrDefault() ?? string.Empty,
                         p.ProductVariants.OrderBy(v => v.Id).Select(v => v.SellingPrice).FirstOrDefault(),
                         p.ProductVariants.OrderBy(v => v.Id).Select(v => v.IsSerialized).FirstOrDefault(),
-                    p.IsReturnable))
+                    p.IsReturnable,
+                    p.Warranty))
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (response is null)

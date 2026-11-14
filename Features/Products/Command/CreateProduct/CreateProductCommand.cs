@@ -10,6 +10,8 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
         public string? ProductImageUrl { get; set; }
         // Can this product be returned? Defaults to yes.
         public bool IsReturnable { get; set; } = true;
+        // Optional warranty terms (free text).
+        public string? Warranty { get; set; }
         public int ProductSubCategoryId { get; set; }
         public int BrandId { get; set; }
 

@@ -9,6 +9,8 @@
         public string ProductImageUrl { get; set; } = string.Empty;
         // False = this product can never be taken back (sales return) or sent back (purchase return).
         public bool IsReturnable { get; set; } = true;
+        // Optional free-text warranty terms for the product, e.g. "1 Year". Null = none recorded.
+        public string? Warranty { get; set; }
 
         // Navigation property
         public required ProductSubCategories ProductSubCategories { get; set; }

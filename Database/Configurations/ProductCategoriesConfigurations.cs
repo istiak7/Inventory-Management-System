@@ -39,6 +39,7 @@ namespace Inventory_Management_System.Database.Configurations
             builder.Property(p => p.ProductName).IsRequired().HasMaxLength(100);
             builder.Property(p => p.ProductDescription).HasMaxLength(500);
             builder.Property(p => p.ProductImageUrl).HasMaxLength(200);
+            builder.Property(p => p.Warranty).HasMaxLength(100);
 
             builder.HasOne(p => p.ProductSubCategories)
                    .WithMany(psc => psc.Products)

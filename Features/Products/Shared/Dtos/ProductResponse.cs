@@ -13,6 +13,8 @@ namespace Inventory_Management_System.Features.Products.Shared.Dtos
         decimal SellingPrice,
         bool IsSerialized,
         // False = cannot be taken back (sales return) or sent back (purchase return).
-        bool IsReturnable = true
+        bool IsReturnable = true,
+        // Optional warranty terms; null when none recorded.
+        string? Warranty = null
     );
 }

@@ -43,6 +43,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                     ProductDescription = request.ProductDescription ?? string.Empty,
                     ProductImageUrl = request.ProductImageUrl ?? string.Empty,
                     IsReturnable = request.IsReturnable,
+                    Warranty = string.IsNullOrWhiteSpace(request.Warranty) ? null : request.Warranty.Trim(),
                     ProductSubCategoryId = request.ProductSubCategoryId,
                     ProductSubCategories = subCategory,
                     BrandId = request.BrandId,

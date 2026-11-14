@@ -59,6 +59,8 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                 if (request.ProductImageUrl is not null) product.ProductImageUrl = request.ProductImageUrl;
                 if (request.IsReturnable is bool isReturnable)
                     product.IsReturnable = isReturnable;
+                if (request.Warranty is not null)
+                    product.Warranty = string.IsNullOrWhiteSpace(request.Warranty) ? null : request.Warranty.Trim();
                 product.ProductSubCategoryId = request.ProductSubCategoryId;
                 product.BrandId = request.BrandId;
                 product.UpDatedAt = DateTime.UtcNow;

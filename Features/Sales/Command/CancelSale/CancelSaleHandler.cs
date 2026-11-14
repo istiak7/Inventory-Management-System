@@ -21,7 +21,7 @@ namespace Inventory_Management_System.Features.Sales.Command.CancelSale
     //            by their own return, so they are not restored twice. One Adjustment row per variant
     //   Credit   only a Credit sale: its exact cross-ledger settlements are reversed (the supplier
     //            bills they paid are due again). A Cash sale never touches settlement
-    //   Ledger   a "Void" row takes total - returned off the receivable (returns keep their rows)
+    //   Ledger   a "SaleCancel" row takes total - returned off the receivable (returns keep their rows)
     //   Money    payments are never deleted: their share on this invoice is released with negative
     //            allocations and stays the customer's advance. A cash refund exists only if asked
     //   Record   sale + lines -> Voided (shown as Cancelled), one SaleEdits audit row with every
