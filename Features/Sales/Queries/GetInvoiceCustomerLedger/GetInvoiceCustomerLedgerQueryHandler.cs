@@ -1,3 +1,4 @@
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
@@ -31,6 +32,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetInvoiceCustomerL
                         s.TaxAmount,
                         s.TotalAmount,
                         Items = s.SaleDetails
+                            .Where(d => s.Status == SaleStatus.Voided || d.Status == SaleLineStatus.Completed)
                             .OrderBy(d => d.Id)
                             .Select(d => new
                             {

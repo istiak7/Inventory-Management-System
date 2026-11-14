@@ -45,6 +45,15 @@ namespace Inventory_Management_System.Database
         private static readonly (string SeedName, string MenuRoute, string ActionCode, string[] ApiRoutes)[] RouteAdditions =
         [
             ("MenuActionRoutes.SaleChallan", "/sales", "view", [SaleChallan]),
+            ("MenuActionRoutes.SaleEdits", "/sales", "view", [SaleEdits]),
+        ];
+
+        // Whole actions added to an existing page after MenuActionDefaults.v1 had already run
+        // (once each, recorded in SeedHistory). Nobody is granted them: Admin always has every
+        // action, and an admin ticks them for other roles in Users & Roles.
+        private static readonly (string SeedName, string MenuRoute, string Name, string Code, string[] ApiRoutes)[] ActionAdditions =
+        [
+            ("MenuActionAdded.SaleEdit", "/sales", "Edit Invoice", "edit", [EditSale, ProductSearch, "GET /get-available-serials"]),
         ];
 
         // Actions whose API was removed after MenuActionDefaults.v1 had already run. On an existing
@@ -55,6 +64,9 @@ namespace Inventory_Management_System.Database
             // Sale Void (POST /void-sale) was replaced by Sales Return, which also handles partial returns.
             ("MenuActionRemoved.SaleVoid", "/sales", "void"),
         ];
+
+        private const string EditSale = "PUT /edit-sale/{id:int}";
+        private const string SaleEdits = "GET /get-sale-edits/{saleId:int}";
 
         // Price Quotation's API routes (Features/Quotations).
         private const string QuotationList = "GET /get-all-quotations";
@@ -200,12 +212,15 @@ namespace Inventory_Management_System.Database
             ["/sales"] =
             [
                 View("sales.view", "GET /get-all-sales", "GET /get-sale/{id:int}", "GET /get-invoice-customer-ledger",
-                    SaleChallan, Branches),
+                    SaleChallan, SaleEdits, Branches),
                 Create("sales.manage", "POST /create-sale", ProductSearch, "GET /get-available-serials",
                     "GET /get-customer-by-phone", Customers, Branches),
                 // Money and stock are committed when a sale is made; only its remark can change.
                 // Goods coming back go through Sales Return (/sales-returns).
                 Step("Update Remarks", "update", "sales.manage", "PUT /update-sale-remarks/{id:int}"),
+                // Changing a completed invoice (lines, prices, discount, tax): stock, payments and
+                // cross-ledger settlement are adjusted with it. Admin only until an admin grants it.
+                Step("Edit Invoice", "edit", "admin", EditSale, ProductSearch, "GET /get-available-serials"),
             ],
             ["/customers"] =
             [
@@ -603,6 +618,47 @@ namespace Inventory_Management_System.Database
                 await db.SaveChangesAsync(cancellationToken);
                 logger.LogInformation("Menu page seed {SeedName}: {Count} action(s) added on {Route}",
                     page.SeedName, created.Count, page.Route);
+            }
+        }
+
+        // Applies ActionAdditions (see there). Runs after SeedAsync.
+        public static async Task AddActionsAsync(
+            AppDbContext db,
+            IReadOnlySet<string> knownRoutes,
+            ILogger logger,
+            CancellationToken cancellationToken)
+        {
+            const int active = (int)EntityStatus.Active;
+
+            foreach (var (seedName, menuRoute, name, code, apiRoutes) in ActionAdditions)
+            {
+                if (await db.SeedHistory.AnyAsync(s => s.Name == seedName, cancellationToken)) continue;
+
+                var menu = await db.AppMenus
+                    .Include(m => m.Actions)
+                    .FirstOrDefaultAsync(m => m.IsActive == active && m.FrontendRoute == menuRoute, cancellationToken);
+                if (menu == null)
+                {
+                    logger.LogWarning("Menu action seed {SeedName}: page {Route} not found, action not added", seedName, menuRoute);
+                    continue;
+                }
+
+                // A new database already got it from Defaults; only an existing page needs it created.
+                if (!menu.Actions.Any(a => a.IsActive == active && a.ComponentCode == code))
+                {
+                    db.AppMenuActions.Add(new AppMenuAction
+                    {
+                        Menu = menu,
+                        Name = name,
+                        ComponentCode = code,
+                        ApiRoutes = apiRoutes.Where(knownRoutes.Contains).Distinct().ToList(),
+                        CreatedAt = DateTime.UtcNow,
+                    });
+                }
+
+                db.SeedHistory.Add(new SeedHistory { Name = seedName, CreatedAt = DateTime.UtcNow });
+                await db.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("Menu action seed {SeedName}: action {Code} ensured on {Route}", seedName, code, menuRoute);
             }
         }
 

@@ -11,6 +11,8 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         decimal TotalAmount,
         int? WarrantyDays,
         string Status,
-        string? SerialNumber
+        string? SerialNumber,
+        // Units taken back by sales returns; the invoice edit keeps the quantity at or above it.
+        int ReturnedQuantity = 0
     );
 }

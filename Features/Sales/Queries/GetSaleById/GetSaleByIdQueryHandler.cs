@@ -1,3 +1,5 @@
+using Inventory_Management_System.Entities;
+using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Database;
 using Inventory_Management_System.Features.Sales.Shared.Dtos;
 using Inventory_Management_System.Shared;
@@ -38,15 +40,18 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                         s.TotalAmount,
                         s.PaidAmount,
                         s.DueAmount,
+                        s.ReturnedAmount,
                         s.VoidedAt,
                         s.VoidReason,
                         PreparedBy = _dbContext.Users
                             .Where(u => u.Id == s.CreatedById)
                             .Select(u => u.Name)
                             .FirstOrDefault(),
-                        Lines = s.SaleDetails.Select(d => new
+                        // Lines an invoice edit dropped stay on the record but are not on the invoice.
+                        Lines = s.SaleDetails.Where(d => s.Status == SaleStatus.Voided || d.Status == SaleLineStatus.Completed).Select(d => new
                         {
                             d.Id,
+                            d.ReturnedQuantity,
                             d.ProductVariantId,
                             Sku = d.ProductVariant.SKU,
                             ProductName = d.ProductVariant.Product.ProductName,
@@ -79,6 +84,17 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                     };
                 }
 
+                // Money from earlier edits of this invoice that was released from it and is still
+                // free (the customer's advance). An edit that grows the invoice puts it back first.
+                var free = await _dbContext.CustomerPayments.IgnoreQueryFilters()
+                    .Where(p => p.Amount > 0
+                                && p.PaymentMethod != PartySettlement.PaymentMethod
+                                && p.PaymentMethod != "Refund"
+                                && p.SaleCustomerPayments.Any(a => a.SaleId == request.Id))
+                    .Select(p => p.Amount - p.SaleCustomerPayments.Sum(a => a.Amount))
+                    .ToListAsync(cancellationToken);
+                var releasedPayment = free.Where(x => x > 0).Sum();
+
                 var response = new SaleDetailResponse(
                     sale.Id, sale.CustomerId, sale.CustomerName, sale.CustomerPhoneNumber, sale.CustomerAddress,
                     sale.BranchId, sale.BranchName, sale.InvoiceNumber, sale.Remarks, sale.SaleDate,
@@ -88,12 +104,14 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleById
                     sale.Lines.Select(l => new SaleLineResponse(
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.TotalAmount,
-                        l.WarrantyDays, l.Status.ToString(), l.SerialNumber)).ToList(),
+                        l.WarrantyDays, l.Status.ToString(), l.SerialNumber, l.ReturnedQuantity)).ToList(),
                     sale.Payments.Select(p => new SalePaymentResponse(
                         p.CustomerPaymentId, p.Amount, p.PaymentDate, p.PaymentMethod)).ToList(),
                     sale.PreparedBy,
                     sale.VoidedAt,
-                    sale.VoidReason);
+                    sale.VoidReason,
+                    sale.ReturnedAmount,
+                    releasedPayment);
 
                 return new Result
                 {

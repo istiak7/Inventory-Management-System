@@ -27,6 +27,10 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         string? PreparedBy,
         // Set when the sale was voided (Status "Voided").
         DateTime? VoidedAt = null,
-        string? VoidReason = null
+        string? VoidReason = null,
+        // Value of goods taken back by sales returns (TotalAmount itself is never reduced by one).
+        decimal ReturnedAmount = 0,
+        // Paid money released from this invoice by earlier edits and not used elsewhere.
+        decimal ReleasedPayment = 0
     );
 }

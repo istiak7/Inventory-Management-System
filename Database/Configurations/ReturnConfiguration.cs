@@ -4,6 +4,30 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Inventory_Management_System.Database.Configurations
 {
+    public class SaleEditConfiguration : IEntityTypeConfiguration<SaleEdit>
+    {
+        public void Configure(EntityTypeBuilder<SaleEdit> builder)
+        {
+            builder.HasKey(e => e.Id);
+            builder.Property(e => e.Reason).IsRequired().HasMaxLength(500);
+            builder.Property(e => e.ChangesJson).IsRequired().HasColumnType("text");
+            foreach (var name in new[]
+            {
+                nameof(SaleEdit.OldSubTotal), nameof(SaleEdit.OldDiscountAmount), nameof(SaleEdit.OldTaxAmount),
+                nameof(SaleEdit.OldTotalAmount), nameof(SaleEdit.OldPaidAmount), nameof(SaleEdit.OldDueAmount),
+                nameof(SaleEdit.NewSubTotal), nameof(SaleEdit.NewDiscountAmount), nameof(SaleEdit.NewTaxAmount),
+                nameof(SaleEdit.NewTotalAmount), nameof(SaleEdit.NewPaidAmount), nameof(SaleEdit.NewDueAmount),
+                nameof(SaleEdit.ReturnedAmount), nameof(SaleEdit.SettlementReversed), nameof(SaleEdit.SettlementRedone),
+                nameof(SaleEdit.CashReleased), nameof(SaleEdit.CashRefunded), nameof(SaleEdit.CashReapplied),
+                nameof(SaleEdit.AdditionalPayment),
+            })
+                builder.Property(name).HasPrecision(18, 2);
+
+            builder.HasOne(e => e.CustomerSale).WithMany().HasForeignKey(e => e.SaleId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasIndex(e => e.SaleId);
+        }
+    }
+
     public class SalesReturnConfiguration : IEntityTypeConfiguration<SalesReturn>
     {
         public void Configure(EntityTypeBuilder<SalesReturn> builder)

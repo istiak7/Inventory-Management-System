@@ -46,6 +46,8 @@ namespace Inventory_Management_System.Database
                 await MenuActionSeed.AddRoutesAsync(db, knownApiRoutes, logger, cancellationToken);
                 // Pages added since (menu row if missing, its actions, Salesman's grants), once each.
                 await MenuActionSeed.AddPagesAsync(db, knownApiRoutes, logger, cancellationToken);
+                // Whole actions added to existing pages since (e.g. Sales > Edit Invoice), once each.
+                await MenuActionSeed.AddActionsAsync(db, knownApiRoutes, logger, cancellationToken);
                 // Actions whose API was removed since (e.g. Sale Void), soft-deleted once each.
                 await MenuActionSeed.RemoveActionsAsync(db, logger, cancellationToken);
             }

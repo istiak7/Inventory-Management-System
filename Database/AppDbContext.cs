@@ -258,6 +258,7 @@ namespace Inventory_Management_System.Database
         public DbSet<SaleCustomerPayment> SaleCustomerPayments { get; set; }
         public DbSet<CustomerTransaction> CustomerTransactions { get; set; }
         public DbSet<PartySettlement> PartySettlements { get; set; }
+        public DbSet<SaleEdit> SaleEdits { get; set; }
         public DbSet<SalesReturn> SalesReturns { get; set; }
         public DbSet<SalesReturnLine> SalesReturnLines { get; set; }
         public DbSet<PurchaseReturn> PurchaseReturns { get; set; }

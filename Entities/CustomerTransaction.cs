@@ -103,6 +103,23 @@ namespace Inventory_Management_System.Entities
             };
         }
 
+        // An edit of a completed sale: a positive amount is what the sale grew by (it adds to what
+        // the customer owes); a negative one is what it shrank by (it takes off what they owe).
+        public static CustomerTransaction ForSaleEdit(CustomerSale sale, Customer customer, decimal amount, DateTime date, decimal runningBalance)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "SaleEdit",
+                TransactionDate = date,
+                Debit = amount < 0 ? -amount : 0m,
+                Credit = amount > 0 ? amount : 0m,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerSale = sale
+            };
+        }
+
         // A sales return: a positive amount takes the returned goods off what the customer owes;
         // a negative amount (the return was cancelled) puts it back.
         public static CustomerTransaction ForReturn(SalesReturn salesReturn, Customer customer, decimal amount, DateTime date, decimal runningBalance)

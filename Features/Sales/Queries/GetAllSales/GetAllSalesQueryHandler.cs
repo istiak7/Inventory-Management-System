@@ -77,8 +77,8 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         s.DueAmount,
                         s.VoidedAt,
                         s.VoidReason,
-                        ItemsCount = s.SaleDetails.Count,
-                        Lines = s.SaleDetails.Select(d => new
+                        ItemsCount = s.SaleDetails.Count(d => s.Status == SaleStatus.Voided || d.Status == SaleLineStatus.Completed),
+                        Lines = s.SaleDetails.Where(d => s.Status == SaleStatus.Voided || d.Status == SaleLineStatus.Completed).Select(d => new
                         {
                             d.Id,
                             d.ProductVariantId,
