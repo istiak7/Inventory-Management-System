@@ -16,6 +16,8 @@ namespace Inventory_Management_System.Features.Purchases.Shared.Dtos
         decimal DueAmount,
         decimal DiscountAmount,
         int ItemsCount,
-        IReadOnlyList<PurchaseOrderLineResponse> Items
+        IReadOnlyList<PurchaseOrderLineResponse> Items,
+        // Value of goods already sent back to the supplier (the total itself is never reduced).
+        decimal ReturnedAmount = 0
     );
 }

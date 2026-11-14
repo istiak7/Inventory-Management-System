@@ -50,6 +50,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.UpdatePurchaseO
                     Message = "This purchase order is completed and can no longer be edited."
                 };
 
+            if (purchase.Status == PurchaseStatus.Cancelled)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "A cancelled purchase order can no longer be edited."
+                };
+
             if (purchase.Status == PurchaseStatus.Rejected)
                 return new Result
                 {

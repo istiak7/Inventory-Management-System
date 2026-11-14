@@ -112,7 +112,9 @@ namespace Inventory_Management_System.Features.Reports.Shared
 
         public static IQueryable<SalesReturn> WhereCountsTowardProfit(this IQueryable<SalesReturn> returns) =>
             returns.Where(r => r.Status == ReturnStatus.Completed
-                               && r.IsActive != (int)EntityStatus.Deleted);
+                               && r.IsActive != (int)EntityStatus.Deleted
+                               // A cancelled sale leaves profit entirely, so its earlier returns do too.
+                               && r.CustomerSale.Status == SaleStatus.Completed);
 
         private static Task<List<ReturnProfitRow>> ReturnRowsAsync(
             IQueryable<SalesReturn> returns, CancellationToken cancellationToken) =>

@@ -56,6 +56,8 @@ namespace Inventory_Management_System.Database
         [
             ("MenuActionAdded.SaleEdit", "/sales", "Edit Invoice", "edit", [EditSale, ProductSearch, "GET /get-available-serials"]),
             ("MenuActionAdded.PurchaseEdit", "/purchases", "Edit Approved Purchase", "edit", [EditPurchase, ProductSearch, "POST /check-serial-numbers"]),
+            ("MenuActionAdded.SaleCancel", "/sales", "Delete Invoice", "cancel", [CancelSale]),
+            ("MenuActionAdded.PurchaseCancel", "/purchases", "Delete Approved Purchase", "cancel", [CancelPurchase]),
         ];
 
         // Actions whose API was removed after MenuActionDefaults.v1 had already run. On an existing
@@ -67,6 +69,8 @@ namespace Inventory_Management_System.Database
             ("MenuActionRemoved.SaleVoid", "/sales", "void"),
         ];
 
+        private const string CancelSale = "POST /cancel-sale/{id:int}";
+        private const string CancelPurchase = "POST /cancel-purchase-order/{id:int}";
         private const string EditSale = "PUT /edit-sale/{id:int}";
         private const string SaleEdits = "GET /get-sale-edits/{saleId:int}";
         private const string EditPurchase = "PUT /edit-purchase-order/{id:int}";
@@ -198,6 +202,9 @@ namespace Inventory_Management_System.Database
                 // Changing an APPROVED purchase (lines, costs, serials, discount): stock, payments
                 // and cross-ledger settlement are adjusted with it. Admin only until an admin grants it.
                 Step("Edit Approved Purchase", "edit", "admin", EditPurchase, ProductSearch, "POST /check-serial-numbers"),
+                // Deleting an APPROVED purchase cancels it: stock, payable and settlement are reversed,
+                // the record stays. Admin only until an admin grants it.
+                Step("Delete Approved Purchase", "cancel", "admin", CancelPurchase),
             ],
             ["/suppliers"] =
             [
@@ -228,6 +235,9 @@ namespace Inventory_Management_System.Database
                 // Changing a completed invoice (lines, prices, discount, tax): stock, payments and
                 // cross-ledger settlement are adjusted with it. Admin only until an admin grants it.
                 Step("Edit Invoice", "edit", "admin", EditSale, ProductSearch, "GET /get-available-serials"),
+                // Deleting a completed invoice cancels it: stock, receivable and settlement are
+                // reversed, the record stays. Admin only until an admin grants it.
+                Step("Delete Invoice", "cancel", "admin", CancelSale),
             ],
             ["/customers"] =
             [

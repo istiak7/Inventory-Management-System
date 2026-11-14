@@ -120,6 +120,24 @@ namespace Inventory_Management_System.Entities
             };
         }
 
+        // Cancelling a completed sale: what is still owed on it (its total less goods already
+        // returned, which have their own "Return" rows) comes off the receivable. Stored as the
+        // long-standing "Void" ledger type, which every account total and statement already reads.
+        public static CustomerTransaction ForCancel(CustomerSale sale, Customer customer, decimal amount, DateTime date, decimal runningBalance)
+        {
+            return new CustomerTransaction
+            {
+                CustomerId = customer.Id,
+                TransactionType = "Void",
+                TransactionDate = date,
+                Debit = amount,
+                Credit = 0m,
+                BalanceAfter = runningBalance,
+                Customer = customer,
+                CustomerSale = sale
+            };
+        }
+
         // A sales return: a positive amount takes the returned goods off what the customer owes;
         // a negative amount (the return was cancelled) puts it back.
         public static CustomerTransaction ForReturn(SalesReturn salesReturn, Customer customer, decimal amount, DateTime date, decimal runningBalance)

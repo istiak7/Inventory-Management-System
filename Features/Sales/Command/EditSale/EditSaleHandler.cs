@@ -52,7 +52,7 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                 if (sale == null)
                     return Error(404, "Sale not found.");
                 if (sale.Status == SaleStatus.Voided)
-                    return Error(400, $"Sale {sale.InvoiceNumber} is voided and cannot be edited.");
+                    return Error(400, $"Sale {sale.InvoiceNumber} is cancelled and cannot be edited.");
 
                 var existing = sale.SaleDetails.Where(d => d.Status == SaleLineStatus.Completed).ToDictionary(d => d.Id);
 

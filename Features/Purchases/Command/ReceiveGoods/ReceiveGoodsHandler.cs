@@ -49,6 +49,14 @@ namespace Inventory_Management_System.Features.Purchases.Command.ReceiveGoods
                     Status = "Error",
                     Message = "A rejected purchase order cannot be received."
                 };
+            if (purchase.Status == PurchaseStatus.Cancelled)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "A cancelled purchase order cannot be received."
+                };
             if (purchase.Status == PurchaseStatus.Approved)
                 return new Result
                 {

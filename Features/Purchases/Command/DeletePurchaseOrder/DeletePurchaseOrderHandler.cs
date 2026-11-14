@@ -47,6 +47,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.DeletePurchaseO
                     Message = "This purchase order is completed and can no longer be deleted."
                 };
 
+            if (purchase.Status == PurchaseStatus.Cancelled)
+                return new Result
+                {
+                    IsSuccess = false,
+                    StatusCode = 400,
+                    Status = "Error",
+                    Message = "This purchase order was cancelled. It stays on the record and cannot be deleted."
+                };
+
             if (purchase.Status == PurchaseStatus.PartiallyReceived)
                 return new Result
                 {

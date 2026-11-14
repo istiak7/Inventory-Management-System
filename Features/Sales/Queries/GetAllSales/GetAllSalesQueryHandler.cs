@@ -77,6 +77,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         s.DueAmount,
                         s.VoidedAt,
                         s.VoidReason,
+                        s.ReturnedAmount,
                         ItemsCount = s.SaleDetails.Count(d => s.Status == SaleStatus.Voided || d.Status == SaleLineStatus.Completed),
                         Lines = s.SaleDetails.Where(d => s.Status == SaleStatus.Voided || d.Status == SaleLineStatus.Completed).Select(d => new
                         {
@@ -105,7 +106,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
                         l.Id, l.ProductVariantId, l.Sku, l.ProductName, l.IsSerialized,
                         l.Quantity, l.UnitPrice, l.TotalAmount,
                         l.WarrantyDays, l.Status.ToString(), l.SerialNumber)).ToList(),
-                    s.VoidedAt, s.VoidReason))
+                    s.VoidedAt, s.VoidReason, s.ReturnedAmount))
                     .ToList();
 
                 var pagedResult = new PagedResult<SaleListResponse>

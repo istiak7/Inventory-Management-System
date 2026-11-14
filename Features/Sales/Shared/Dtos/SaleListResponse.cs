@@ -21,6 +21,8 @@ namespace Inventory_Management_System.Features.Sales.Shared.Dtos
         int ItemsCount,
         IReadOnlyList<SaleLineResponse> Items,
         DateTime? VoidedAt = null,
-        string? VoidReason = null
+        string? VoidReason = null,
+        // Value of goods already returned (the total itself is never reduced by a return).
+        decimal ReturnedAmount = 0
     );
 }

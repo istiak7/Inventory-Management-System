@@ -16,6 +16,9 @@ namespace Inventory_Management_System.Features.Sales.Command.UpdateSaleRemarks
             if (sale is null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Sale with id {request.Id} was not found." };
 
+            if (sale.Status == Entities.Common.SaleStatus.Voided)
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Invoice {sale.InvoiceNumber} is cancelled and can no longer be changed." };
+
             try
             {
                 sale.Remarks = string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim();

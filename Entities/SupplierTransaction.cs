@@ -103,6 +103,23 @@
             };
         }
 
+        // Cancelling an approved purchase: what is still owed on it (its total less goods already
+        // returned, which have their own "Return" rows) comes off the payable.
+        public static SupplierTransaction ForPurchaseCancel(SupplierPurchase purchase, Supplier supplier, decimal amount, DateTime date, decimal runningBalance)
+        {
+            return new SupplierTransaction
+            {
+                SupplierId = supplier.Id,
+                TransactionType = "PurchaseCancel",
+                TransactionDate = date,
+                Debit = 0m,
+                Credit = amount,
+                BalanceAfter = runningBalance,
+                Supplier = supplier,
+                SupplierPurchase = purchase
+            };
+        }
+
         // Money the supplier pays back to us because an edit made the bill smaller than what we
         // had paid. Like any refund it puts the payable back up (a Debit).
         public static SupplierTransaction ForEditRefund(SupplierPayment refund, Supplier supplier, decimal amount, decimal runningBalance, SupplierPurchase purchase)

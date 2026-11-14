@@ -26,6 +26,11 @@ namespace Inventory_Management_System.Features.SalesReturns.Command.CancelSalesR
             try
             {
                 await _dbContext.LockRowAsync<SalesReturn>(request.Id, cancellationToken);
+                // The sale is locked too, so this cannot run beside cancelling the invoice.
+                var saleId = await _dbContext.SalesReturns.AsNoTracking()
+                    .Where(r => r.Id == request.Id).Select(r => (int?)r.SaleId).FirstOrDefaultAsync(cancellationToken);
+                if (saleId is int lockedSaleId)
+                    await _dbContext.LockRowAsync<CustomerSale>(lockedSaleId, cancellationToken);
                 var salesReturn = await _dbContext.SalesReturns
                     .Include(r => r.CustomerSale)
                     .Include(r => r.Customer)
@@ -40,6 +45,8 @@ namespace Inventory_Management_System.Features.SalesReturns.Command.CancelSalesR
                     return Error(400, $"Return {salesReturn.ReturnNumber} is already cancelled.");
 
                 var sale = salesReturn.CustomerSale;
+                if (sale.Status == SaleStatus.Voided)
+                    return Error(400, $"Invoice {sale.InvoiceNumber} is cancelled, so this return can no longer be cancelled.");
                 var restocked = salesReturn.Lines.Where(l => l.Restock).ToList();
                 if (restocked.Count > 0)
                     await _dbContext.LockStocksAsync([salesReturn.BranchId], restocked.Select(l => l.ProductVariantId), cancellationToken);

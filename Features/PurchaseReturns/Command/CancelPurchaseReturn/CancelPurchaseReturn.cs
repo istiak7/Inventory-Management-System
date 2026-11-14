@@ -54,6 +54,11 @@ namespace Inventory_Management_System.Features.PurchaseReturns.Command.CancelPur
             try
             {
                 await _dbContext.LockRowAsync<PurchaseReturn>(request.Id, cancellationToken);
+                // The bill is locked too, so this cannot run beside cancelling the purchase.
+                var purchaseId = await _dbContext.PurchaseReturns.AsNoTracking()
+                    .Where(r => r.Id == request.Id).Select(r => (int?)r.PurchaseId).FirstOrDefaultAsync(cancellationToken);
+                if (purchaseId is int lockedPurchaseId)
+                    await _dbContext.LockRowAsync<SupplierPurchase>(lockedPurchaseId, cancellationToken);
                 var purchaseReturn = await _dbContext.PurchaseReturns
                     .Include(r => r.SupplierPurchase)
                     .Include(r => r.Supplier)
@@ -66,6 +71,8 @@ namespace Inventory_Management_System.Features.PurchaseReturns.Command.CancelPur
                     return Error(404, "Return not found.");
                 if (purchaseReturn.Status == ReturnStatus.Cancelled)
                     return Error(400, $"Return {purchaseReturn.ReturnNumber} is already cancelled.");
+                if (purchaseReturn.SupplierPurchase.Status == PurchaseStatus.Cancelled)
+                    return Error(400, $"Purchase {purchaseReturn.SupplierPurchase.InvoiceNumber} is cancelled, so this return can no longer be cancelled.");
 
                 foreach (var serial in purchaseReturn.Lines.SelectMany(l => l.Serials).Select(s => s.ProductSerial))
                 {

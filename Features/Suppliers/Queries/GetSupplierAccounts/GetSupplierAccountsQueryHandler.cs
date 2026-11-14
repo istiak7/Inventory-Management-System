@@ -33,7 +33,8 @@ namespace Inventory_Management_System.Features.Suppliers.Queries.GetSupplierAcco
                         // Returns come off purchases (a cancelled return, booked as Debit, adds back).
                         TotalPurchases = (s.SupplierTransactions.Where(t => t.TransactionType == "Purchase").Sum(t => (decimal?)t.Debit) ?? 0m)
                             - (s.SupplierTransactions.Where(t => t.TransactionType == "Return").Sum(t => (decimal?)(t.Credit - t.Debit)) ?? 0m)
-                            + (s.SupplierTransactions.Where(t => t.TransactionType == "PurchaseEdit").Sum(t => (decimal?)(t.Debit - t.Credit)) ?? 0m),
+                            + (s.SupplierTransactions.Where(t => t.TransactionType == "PurchaseEdit").Sum(t => (decimal?)(t.Debit - t.Credit)) ?? 0m)
+                            - (s.SupplierTransactions.Where(t => t.TransactionType == "PurchaseCancel").Sum(t => (decimal?)t.Credit) ?? 0m),
                         // Settled = paid: cash payments plus cross-ledger adjustments (net of reversals),
                         // less money the supplier refunded on returns.
                         TotalPayments = (s.SupplierTransactions.Where(t => t.TransactionType == "Payment" || t.TransactionType == "Adjustment").Sum(t => (decimal?)t.Credit) ?? 0m)

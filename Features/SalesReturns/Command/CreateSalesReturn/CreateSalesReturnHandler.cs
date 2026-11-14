@@ -44,7 +44,7 @@ namespace Inventory_Management_System.Features.SalesReturns.Command.CreateSalesR
                 if (sale == null)
                     return Error(404, "Sale not found.");
                 if (sale.Status == SaleStatus.Voided)
-                    return Error(400, $"Sale {sale.InvoiceNumber} is voided, so nothing can be returned from it.");
+                    return Error(400, $"Sale {sale.InvoiceNumber} is cancelled, so nothing can be returned from it.");
 
                 var returnDate = request.ReturnDate ?? DateTime.UtcNow;
                 if (returnDate < sale.SaleDate)

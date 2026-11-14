@@ -5,6 +5,7 @@ using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Parties.Shared;
 using Inventory_Management_System.Features.Purchases.Shared;
 using Inventory_Management_System.Features.Returns.Shared;
+using Inventory_Management_System.Features.Reversals.Shared;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
 using Inventory_Management_System.Shared.Extensions.LockExtensions;
@@ -603,27 +604,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
 
         // ------------------------------------------------------------------ helpers
 
-        // Serials that a sale, a sales return, a warranty claim or a purchase return has touched:
-        // they carry history and must not disappear from the record.
-        private async Task<HashSet<int>> SerialsWithHistoryAsync(List<int> serialIds, CancellationToken cancellationToken)
-        {
-            var used = new HashSet<int>();
-            if (serialIds.Count == 0) return used;
-
-            used.UnionWith(await _dbContext.SaleDetails.IgnoreQueryFilters()
-                .Where(d => d.ProductSerialId != null && serialIds.Contains(d.ProductSerialId.Value))
-                .Select(d => d.ProductSerialId!.Value).ToListAsync(cancellationToken));
-            used.UnionWith(await _dbContext.SalesReturnLines.IgnoreQueryFilters()
-                .Where(l => l.ProductSerialId != null && serialIds.Contains(l.ProductSerialId.Value))
-                .Select(l => l.ProductSerialId!.Value).ToListAsync(cancellationToken));
-            used.UnionWith(await _dbContext.WarrantyClaims.IgnoreQueryFilters()
-                .Where(c => serialIds.Contains(c.ProductSerialId))
-                .Select(c => c.ProductSerialId).ToListAsync(cancellationToken));
-            used.UnionWith(await _dbContext.PurchaseReturnSerials.IgnoreQueryFilters()
-                .Where(r => serialIds.Contains(r.ProductSerialId))
-                .Select(r => r.ProductSerialId).ToListAsync(cancellationToken));
-            return used;
-        }
+        private Task<HashSet<int>> SerialsWithHistoryAsync(List<int> serialIds, CancellationToken cancellationToken) =>
+            new TransactionReversal(_dbContext).SerialsWithHistoryAsync(serialIds, cancellationToken);
 
         private static string SerialReason(ProductSerial s, HashSet<int> inUse) =>
             s.Status != SerialStatus.InStock ? $"{s.Status}" :

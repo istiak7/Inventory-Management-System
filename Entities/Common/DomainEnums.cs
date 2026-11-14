@@ -5,7 +5,10 @@ namespace Inventory_Management_System.Entities.Common
         Pending,
         PartiallyReceived,
         Approved,
-        Rejected
+        Rejected,
+        // An approved purchase that was cancelled afterwards: its stock was taken back out and its
+        // payable reversed, the record stays (see CancelPurchaseOrder).
+        Cancelled
     }
 
     public enum LineStatus
