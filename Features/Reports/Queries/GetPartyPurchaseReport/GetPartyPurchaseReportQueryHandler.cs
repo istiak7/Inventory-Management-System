@@ -166,7 +166,7 @@ namespace Inventory_Management_System.Features.Reports.Queries.GetPartyPurchaseR
         {
             var query = _dbContext.SupplierPurchases
                 .AsNoTracking()
-                .Where(p => p.IsActive != (int)EntityStatus.Deleted);
+                .Where(p => p.IsActive != (int)EntityStatus.Deleted && p.Status != PurchaseStatus.Cancelled);
 
             var range = ReportDateRange.From(request.StartDate, request.EndDate);
 

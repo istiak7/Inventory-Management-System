@@ -18,7 +18,10 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetAllSales
         {
             try
             {
-                var query = _dbContext.CustomerSales.AsNoTracking();
+                // A cancelled (Voided) invoice stays in the database and the customer ledger for audit, but
+                // is not an active sale, so it never appears in the list (rows, counts or pages).
+                var query = _dbContext.CustomerSales.AsNoTracking()
+                    .Where(s => s.Status != SaleStatus.Voided);
 
                 if (request.CustomerId is int customerId)
                     query = query.Where(s => s.CustomerId == customerId);

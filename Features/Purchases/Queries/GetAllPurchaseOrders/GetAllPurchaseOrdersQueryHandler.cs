@@ -22,7 +22,9 @@ namespace Inventory_Management_System.Features.Purchases.Queries.GetAllPurchaseO
             {
                 var query = _dbContext.SupplierPurchases
                     .AsNoTracking()
-                    .Where(p => p.IsActive != (int)EntityStatus.Deleted);
+                    // A cancelled bill stays on record and in the supplier ledger for audit, but is not
+                    // an active purchase, so it never appears in the list (rows, counts or pages).
+                    .Where(p => p.IsActive != (int)EntityStatus.Deleted && p.Status != PurchaseStatus.Cancelled);
 
                 if (!string.IsNullOrWhiteSpace(request.Status) &&
                     Enum.TryParse<PurchaseStatus>(request.Status, true, out var statusFilter))
