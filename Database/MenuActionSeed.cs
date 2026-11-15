@@ -47,6 +47,10 @@ namespace Inventory_Management_System.Database
             ("MenuActionRoutes.SaleChallan", "/sales", "view", [SaleChallan]),
             ("MenuActionRoutes.SaleEdits", "/sales", "view", [SaleEdits]),
             ("MenuActionRoutes.PurchaseEdits", "/purchases", "view", [PurchaseEdits]),
+            // The product form reads the unit list.
+            ("MenuActionRoutes.ProductUnitsView", "/products", "view", [UomList]),
+            ("MenuActionRoutes.ProductUnitsCreate", "/products", "create", [UomList]),
+            ("MenuActionRoutes.ProductUnitsUpdate", "/products", "update", [UomList]),
         ];
 
         // Whole actions added to an existing page after MenuActionDefaults.v1 had already run
@@ -69,6 +73,7 @@ namespace Inventory_Management_System.Database
             ("MenuActionRemoved.SaleVoid", "/sales", "void"),
         ];
 
+        private const string UomList = "GET /get-all-units-of-measure";
         private const string CancelSale = "POST /cancel-sale/{id:int}";
         private const string CancelPurchase = "POST /cancel-purchase-order/{id:int}";
         private const string EditSale = "PUT /edit-sale/{id:int}";
@@ -104,6 +109,15 @@ namespace Inventory_Management_System.Database
 
         private static readonly PageAddition[] PageAdditions =
         [
+            // Catalog > Unit of Measurement. Nobody but Admin gets it until an admin ticks the actions.
+            new("MenuPage.UnitOfMeasure", "/units-of-measure", "Unit of Measurement", "/brands", "products.view",
+            [
+                View("products.view", UomList, "GET /get-units-of-measure/{id:int}"),
+                Create("products.manage", "POST /create-units-of-measure"),
+                Update("products.manage", "PUT /update-units-of-measure/{id:int}"),
+                Delete("products.manage", "DELETE /delete-units-of-measure/{id:int}"),
+            ],
+            []),
             new("MenuPage.PriceQuotation", "/quotations", "Price Quotation", "/sales", "sales.view",
             [
                 View("sales.view", QuotationList, QuotationById, Customers),
@@ -160,11 +174,11 @@ namespace Inventory_Management_System.Database
             ["/products"] =
             [
                 View("products.view", "GET /get-all-products", "GET /get-products/{id:int}", "GET /get-product-variants",
-                    "GET /get-all-brands", "GET /get-all-categories", "GET /get-all-sub-categories"),
+                    "GET /get-all-brands", "GET /get-all-categories", "GET /get-all-sub-categories", UomList),
                 Create("products.manage", "POST /create-products", "POST /create-product-variants",
-                    "GET /get-all-brands", "GET /get-all-sub-categories"),
+                    "GET /get-all-brands", "GET /get-all-sub-categories", UomList),
                 Update("products.manage", "PUT /update-products/{id:int}", "PUT /update-product-variants/{id:int}",
-                    "GET /get-products/{id:int}", "GET /get-all-brands", "GET /get-all-sub-categories"),
+                    "GET /get-products/{id:int}", "GET /get-all-brands", "GET /get-all-sub-categories", UomList),
                 Delete("products.manage", "DELETE /delete-products/{id:int}"),
             ],
             ["/products/variants"] =
@@ -189,6 +203,13 @@ namespace Inventory_Management_System.Database
                 Create("products.manage", "POST /create-brands"),
                 Update("products.manage", "PUT /update-brands/{id:int}"),
                 Delete("products.manage", "DELETE /delete-brands/{id:int}"),
+            ],
+            ["/units-of-measure"] =
+            [
+                View("products.view", UomList, "GET /get-units-of-measure/{id:int}"),
+                Create("products.manage", "POST /create-units-of-measure"),
+                Update("products.manage", "PUT /update-units-of-measure/{id:int}"),
+                Delete("products.manage", "DELETE /delete-units-of-measure/{id:int}"),
             ],
             ["/purchases"] =
             [

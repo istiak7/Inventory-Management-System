@@ -68,7 +68,8 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                             v.Product.ProductSubCategoryId,
                             v.Product.ProductSubCategories.SubCategoryName,
                             v.Product.BrandId,
-                            v.Product.Brand.Name));
+                            v.Product.Brand.Name,
+                            v.Product.UnitOfMeasure == null ? null : v.Product.UnitOfMeasure.ShortName));
                 }
                 else
                 {
@@ -94,7 +95,8 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
                             v.Product.ProductSubCategoryId,
                             v.Product.ProductSubCategories.SubCategoryName,
                             v.Product.BrandId,
-                            v.Product.Brand.Name));
+                            v.Product.Brand.Name,
+                            v.Product.UnitOfMeasure == null ? null : v.Product.UnitOfMeasure.ShortName));
                 }
 
                 var pagedResult = await projected.ToPagedResultAsync(pageNumber, pageSize, cancellationToken);

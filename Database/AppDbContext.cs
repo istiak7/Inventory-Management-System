@@ -240,6 +240,7 @@ namespace Inventory_Management_System.Database
 
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Brand> Brands { get; set; }
+        public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
         public DbSet<ProductCategories> ProductCategories { get; set; }
         public DbSet<ProductSubCategories> ProductSubCategories { get; set; }
         public DbSet<Product> Products { get; set; }

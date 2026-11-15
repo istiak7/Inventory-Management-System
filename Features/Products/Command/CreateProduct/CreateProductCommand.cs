@@ -14,6 +14,8 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
         public string? Warranty { get; set; }
         public int ProductSubCategoryId { get; set; }
         public int BrandId { get; set; }
+        // The unit this product is counted in (an active UnitOfMeasure).
+        public int UnitOfMeasureId { get; set; }
 
         public string? SKU { get; set; }
         public string? Barcode { get; set; }

@@ -3,6 +3,9 @@ using Inventory_Management_System.Features.Categories.Shared.Repository;
 using Inventory_Management_System.Features.Products.Shared.Repository;
 using Inventory_Management_System.Shared;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Inventory_Management_System.Database;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
 {
@@ -10,6 +13,7 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
         IProductRepository _productRepository,
         IProductSubCategoryRepository _subCategoryRepository,
         IBrandRepository _brandRepository,
+        AppDbContext _db,
         ILogger<UpdateProductCommandHandler> _logger
     ) : IRequestHandler<UpdateProductCommand, Result>
     {
@@ -51,6 +55,18 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                 };
             }
 
+            // A product may keep its current unit even after it was made inactive; picking a
+            // different one needs an Active unit.
+            var unit = await _db.UnitOfMeasures.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.UnitOfMeasureId, cancellationToken);
+            if (unit is null)
+            {
+                return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Unit of measurement with id {request.UnitOfMeasureId} was not found." };
+            }
+            if (unit.IsActive != (int)EntityStatus.Active && product.UnitOfMeasureId != unit.Id)
+            {
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Unit of measurement '{unit.Name}' is inactive and cannot be chosen." };
+            }
+
             try
             {
                 product.ProductName = request.ProductName;
@@ -63,6 +79,7 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
                     product.Warranty = string.IsNullOrWhiteSpace(request.Warranty) ? null : request.Warranty.Trim();
                 product.ProductSubCategoryId = request.ProductSubCategoryId;
                 product.BrandId = request.BrandId;
+                product.UnitOfMeasureId = unit.Id;
                 product.UpDatedAt = DateTime.UtcNow;
 
                 await _productRepository.UpdateAsync(product, cancellationToken);

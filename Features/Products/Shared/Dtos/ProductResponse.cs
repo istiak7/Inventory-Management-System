@@ -15,6 +15,10 @@ namespace Inventory_Management_System.Features.Products.Shared.Dtos
         // False = cannot be taken back (sales return) or sent back (purchase return).
         bool IsReturnable = true,
         // Optional warranty terms; null when none recorded.
-        string? Warranty = null
+        string? Warranty = null,
+        // The unit the product is counted in; null only for rows made before units existed.
+        int? UnitOfMeasureId = null,
+        string? UomName = null,
+        string? UomShortName = null
     );
 }

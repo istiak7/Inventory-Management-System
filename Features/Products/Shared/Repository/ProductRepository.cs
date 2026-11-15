@@ -73,6 +73,9 @@ namespace Inventory_Management_System.Features.Products.Shared.Repository
                     p.ProductVariants.OrderBy(v => v.Id).Select(v => v.SellingPrice).FirstOrDefault(),
                     p.ProductVariants.OrderBy(v => v.Id).Select(v => v.IsSerialized).FirstOrDefault(),
                     p.IsReturnable,
-                    p.Warranty));
+                    p.Warranty,
+                    p.UnitOfMeasureId,
+                    p.UnitOfMeasure == null ? null : p.UnitOfMeasure.Name,
+                    p.UnitOfMeasure == null ? null : p.UnitOfMeasure.ShortName));
     }
 }

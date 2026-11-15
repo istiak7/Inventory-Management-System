@@ -109,6 +109,10 @@ namespace Inventory_Management_System.Features.DataUpload.Shared.Importers
             }
             if (errors.Count > 0) return new UploadCheckResult(errors, 0, string.Empty);
 
+            // Uploaded products have no unit column: new ones start in the default unit (pcs).
+            var defaultUomId = await _db.UnitOfMeasures.Where(u => u.ShortName == "pcs")
+                .Select(u => (int?)u.Id).FirstOrDefaultAsync(cancellationToken);
+
             var products = new Dictionary<string, Product>();
             var newProducts = 0;
 
@@ -127,6 +131,7 @@ namespace Inventory_Management_System.Features.DataUpload.Shared.Importers
                             ProductSubCategories = item.Sub,
                             BrandId = item.Brand.Id,
                             Brand = item.Brand,
+                            UnitOfMeasureId = defaultUomId,
                             CreatedAt = DateTime.UtcNow,
                         };
                         _db.Products.Add(product);

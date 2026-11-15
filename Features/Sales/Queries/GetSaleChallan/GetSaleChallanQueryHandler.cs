@@ -20,10 +20,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleChallan
         ILogger<GetSaleChallanQueryHandler> _logger
     ) : IRequestHandler<GetSaleChallanQuery, Result>
     {
-        /// <summary>
-        /// Products carry no unit of measure — every sale line is counted in pieces — so the
-        /// challan prints PCS, as the reference does. One place to change once a UoM field exists.
-        /// </summary>
+        /// <summary>Used when a product has no unit set (rows made before units existed).</summary>
         private const string DefaultUom = "PCS";
 
         public async Task<Result> Handle(GetSaleChallanQuery request, CancellationToken cancellationToken)
@@ -54,6 +51,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleChallan
                             {
                                 d.ProductVariantId,
                                 ProductName = d.ProductVariant.Product.ProductName,
+                                Uom = d.ProductVariant.Product.UnitOfMeasure != null ? d.ProductVariant.Product.UnitOfMeasure.ShortName : null,
                                 d.Quantity,
                                 SerialNumber = d.ProductSerial != null ? d.ProductSerial.SerialNumber : null,
                             })
@@ -89,7 +87,7 @@ namespace Inventory_Management_System.Features.Sales.Queries.GetSaleChallan
                             .Select(l => l.SerialNumber!)
                             .ToList(),
                         g.Sum(l => l.Quantity),
-                        DefaultUom))
+                        g.First().Uom?.ToUpperInvariant() ?? DefaultUom))
                     .ToList();
 
                 var response = new GetSaleChallanResponse(

@@ -14,6 +14,8 @@ namespace Inventory_Management_System.Features.Products.Queries.SearchProducts
         int SubCategoryId,
         string SubCategoryName,
         int BrandId,
-        string BrandName
+        string BrandName,
+        // Short name of the product's unit (pcs, kg ...); null when none is set.
+        string? UomShortName = null
     );
 }

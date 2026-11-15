@@ -1062,6 +1062,9 @@ namespace Inventory_Management_System.Migrations
                     b.Property<int>("ProductSubCategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("UnitOfMeasureId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UpDatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1077,6 +1080,8 @@ namespace Inventory_Management_System.Migrations
                     b.HasIndex("BrandId");
 
                     b.HasIndex("ProductSubCategoryId");
+
+                    b.HasIndex("UnitOfMeasureId");
 
                     b.ToTable("Products");
                 });
@@ -2887,6 +2892,55 @@ namespace Inventory_Management_System.Migrations
                     b.ToTable("SupplierTransactions");
                 });
 
+            modelBuilder.Entity("Inventory_Management_System.Entities.UnitOfMeasure", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("IsActive")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpDatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("ShortName")
+                        .IsUnique();
+
+                    b.ToTable("UnitOfMeasures", (string)null);
+                });
+
             modelBuilder.Entity("Inventory_Management_System.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -3379,9 +3433,16 @@ namespace Inventory_Management_System.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Inventory_Management_System.Entities.UnitOfMeasure", "UnitOfMeasure")
+                        .WithMany("Products")
+                        .HasForeignKey("UnitOfMeasureId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Brand");
 
                     b.Navigation("ProductSubCategories");
+
+                    b.Navigation("UnitOfMeasure");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.ProductSerial", b =>
@@ -4121,6 +4182,11 @@ namespace Inventory_Management_System.Migrations
             modelBuilder.Entity("Inventory_Management_System.Entities.SupplierPurchaseDetails", b =>
                 {
                     b.Navigation("ProductSerials");
+                });
+
+            modelBuilder.Entity("Inventory_Management_System.Entities.UnitOfMeasure", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("Inventory_Management_System.Entities.User", b =>

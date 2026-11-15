@@ -1,4 +1,4 @@
-﻿namespace Inventory_Management_System.Entities
+namespace Inventory_Management_System.Entities
 {
     public class Product : BaseEntity
     {
@@ -11,10 +11,13 @@
         public bool IsReturnable { get; set; } = true;
         // Optional free-text warranty terms for the product, e.g. "1 Year". Null = none recorded.
         public string? Warranty { get; set; }
+        // The unit this product is counted in. Null only for rows made before units existed.
+        public int? UnitOfMeasureId { get; set; }
 
         // Navigation property
         public required ProductSubCategories ProductSubCategories { get; set; }
         public required Brand Brand { get; set; }
+        public UnitOfMeasure? UnitOfMeasure { get; set; }
         public ICollection<ProductVariant> ProductVariants { get; set; } = [];
     }
 }

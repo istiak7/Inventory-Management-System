@@ -15,5 +15,7 @@ namespace Inventory_Management_System.Features.Products.Command.UpdateProduct
         public string? Warranty { get; set; }
         public int ProductSubCategoryId { get; set; }
         public int BrandId { get; set; }
+        // The unit this product is counted in.
+        public int UnitOfMeasureId { get; set; }
     }
 }

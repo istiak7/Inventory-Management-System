@@ -5,6 +5,9 @@ using Inventory_Management_System.Features.Products.Shared.Repository;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Repository;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Inventory_Management_System.Database;
+using static Inventory_Management_System.Entities.Common.EntityConstant;
 
 namespace Inventory_Management_System.Features.Products.Command.CreateProduct
 {
@@ -13,6 +16,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
         IBaseRepository<ProductVariant> _variantRepository,
         IProductSubCategoryRepository _subCategoryRepository,
         IBrandRepository _brandRepository,
+        AppDbContext _db,
         ILogger<CreateProductCommandHandler> _logger
     ) : IRequestHandler<CreateProductCommand, Result>
     {
@@ -25,6 +29,13 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
             var brand = await _brandRepository.GetByIdAsync(request.BrandId, cancellationToken);
             if (brand is null)
                 return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Brand with id {request.BrandId} was not found." };
+
+            // The unit must exist and be Active: inactive units stay on old products only.
+            var unit = await _db.UnitOfMeasures.AsNoTracking().FirstOrDefaultAsync(u => u.Id == request.UnitOfMeasureId, cancellationToken);
+            if (unit is null)
+                return new Result { IsSuccess = false, StatusCode = 404, Status = "Not Found", Message = $"Unit of measurement with id {request.UnitOfMeasureId} was not found." };
+            if (unit.IsActive != (int)EntityStatus.Active)
+                return new Result { IsSuccess = false, StatusCode = 400, Status = "Error", Message = $"Unit of measurement '{unit.Name}' is inactive and cannot be used for a new product." };
 
             // SKU is optional: built from the sub-category code + product name (made unique) when not sent.
             var sku = string.IsNullOrWhiteSpace(request.SKU)
@@ -48,6 +59,7 @@ namespace Inventory_Management_System.Features.Products.Command.CreateProduct
                     ProductSubCategories = subCategory,
                     BrandId = request.BrandId,
                     Brand = brand,
+                    UnitOfMeasureId = unit.Id,
                     CreatedAt = DateTime.UtcNow
                 };
 
