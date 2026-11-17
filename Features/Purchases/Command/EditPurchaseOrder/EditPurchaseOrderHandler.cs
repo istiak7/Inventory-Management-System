@@ -64,6 +64,12 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                 if (purchase.PurchaseType == null)
                     return Error(400, "This purchase has no payment type, so it cannot be edited.");
 
+                var newInvoice = request.InvoiceNumber?.Trim();
+                if (!string.IsNullOrEmpty(newInvoice) && newInvoice != purchase.InvoiceNumber
+                    && await _dbContext.SupplierPurchases.IgnoreQueryFilters()
+                        .AnyAsync(p => p.InvoiceNumber == newInvoice && p.Id != purchase.Id, cancellationToken))
+                    return Error(409, $"Invoice number '{newInvoice}' already exists.");
+
                 var existing = purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected).ToDictionary(d => d.Id);
 
                 var named = new HashSet<int>();
@@ -232,6 +238,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
 
                 purchase.DiscountAmount = request.DiscountAmount;
                 purchase.TotalAmount = newTotal;
+                if (!string.IsNullOrEmpty(newInvoice)) purchase.InvoiceNumber = newInvoice;
+                if (request.PurchaseDate is DateTime newDate) purchase.PurchaseDate = newDate;
                 purchase.Remarks = string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim();
                 purchase.DueAmount = newTotal - purchase.PaidAmount - returned;
                 purchase.UpDatedAt = now;

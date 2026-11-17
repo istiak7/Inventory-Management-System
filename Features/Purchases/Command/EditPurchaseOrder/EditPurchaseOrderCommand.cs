@@ -19,11 +19,14 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
         public List<string>? SerialNumbers { get; set; }
     }
 
-    // Edits an approved purchase. The supplier, warehouse, invoice number, date and Cash / Credit
-    // type stay as they are; lines, costs, discount and remarks can change.
+    // Edits an approved purchase. The supplier, warehouse and Cash / Credit type stay as they are;
+    // the invoice number, date, lines, costs, discount and remarks can change.
     public class EditPurchaseOrderCommand : IRequest<Result>
     {
         public int Id { get; set; }
+        // Null / blank keeps the current value. The invoice number must stay unique.
+        public string? InvoiceNumber { get; set; }
+        public DateTime? PurchaseDate { get; set; }
         public List<EditPurchaseItemRequest> Items { get; set; } = [];
         public decimal DiscountAmount { get; set; }
         public string? Remarks { get; set; }

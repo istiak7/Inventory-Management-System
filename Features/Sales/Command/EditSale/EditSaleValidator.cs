@@ -8,6 +8,9 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
         public EditSaleValidator()
         {
             RuleFor(x => x.Id).GreaterThan(0).WithMessage("A valid sale id is required.");
+            RuleFor(x => x.InvoiceNumber).MaximumLength(50)
+                .When(x => x.InvoiceNumber != null)
+                .WithMessage("Invoice number must be 50 characters or fewer.");
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one sale item is required.");
             RuleFor(x => x.Reason).NotEmpty().WithMessage("Say why the invoice is being edited.")
                 .MaximumLength(500).WithMessage("Reason must be 500 characters or fewer.");

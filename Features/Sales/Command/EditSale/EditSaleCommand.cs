@@ -16,11 +16,14 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
         public string? SerialNumber { get; set; }
     }
 
-    // Edits a completed sale. The customer, branch, invoice number, date and Cash / Credit type
-    // stay as they are; lines, prices, discount, tax and remarks can change.
+    // Edits a completed sale. The customer, branch and Cash / Credit type stay as they are; the
+    // invoice number, date, lines, prices, discount, tax and remarks can change.
     public class EditSaleCommand : IRequest<Result>
     {
         public int Id { get; set; }
+        // Null / blank keeps the current value. The invoice number must stay unique.
+        public string? InvoiceNumber { get; set; }
+        public DateTime? SaleDate { get; set; }
         public List<EditSaleItemRequest> Items { get; set; } = [];
         public decimal DiscountAmount { get; set; }
         public decimal TaxAmount { get; set; }

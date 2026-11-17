@@ -54,6 +54,14 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                 if (sale.Status == SaleStatus.Voided)
                     return Error(400, $"Sale {sale.InvoiceNumber} is cancelled and cannot be edited.");
 
+                var newInvoice = request.InvoiceNumber?.Trim();
+                if (!string.IsNullOrEmpty(newInvoice) && newInvoice != sale.InvoiceNumber)
+                {
+                    if (await _dbContext.CustomerSales.IgnoreQueryFilters()
+                            .AnyAsync(s => s.InvoiceNumber == newInvoice && s.Id != sale.Id, cancellationToken))
+                        return Error(409, $"Invoice number '{newInvoice}' already exists.");
+                }
+
                 var existing = sale.SaleDetails.Where(d => d.Status == SaleLineStatus.Completed).ToDictionary(d => d.Id);
 
                 // Which lines the request keeps, and that it does not name one twice or a stranger.
@@ -218,6 +226,14 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                 sale.DiscountAmount = request.DiscountAmount;
                 sale.TaxAmount = request.TaxAmount;
                 sale.TotalAmount = newTotal;
+                if (!string.IsNullOrEmpty(newInvoice)) sale.InvoiceNumber = newInvoice;
+                if (request.SaleDate is DateTime newDate && newDate != sale.SaleDate)
+                {
+                    sale.SaleDate = newDate;
+                    // Sold units carry the sale date (warranty runs from it).
+                    foreach (var l in liveLines.Where(l => l.ProductSerial != null))
+                        l.ProductSerial!.SoldDate = newDate;
+                }
                 sale.Remarks = string.IsNullOrWhiteSpace(request.Remarks) ? null : request.Remarks.Trim();
                 sale.DueAmount = newTotal - sale.PaidAmount - returned;
                 sale.UpDatedAt = now;
