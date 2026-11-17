@@ -11,6 +11,12 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
             RuleFor(x => x.InvoiceNumber).MaximumLength(50)
                 .When(x => x.InvoiceNumber != null)
                 .WithMessage("Invoice number must be 50 characters or fewer.");
+            RuleFor(x => x.CustomerId).GreaterThan(0).When(x => x.CustomerId.HasValue)
+                .WithMessage("A valid customer is required.");
+            RuleFor(x => x.PaymentType)
+                .Must(t => string.Equals(t, "Cash", StringComparison.OrdinalIgnoreCase) || string.Equals(t, "Debit", StringComparison.OrdinalIgnoreCase))
+                .When(x => !string.IsNullOrWhiteSpace(x.PaymentType))
+                .WithMessage("PaymentType must be Cash or Debit.");
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one sale item is required.");
             RuleFor(x => x.Reason).NotEmpty().WithMessage("Say why the invoice is being edited.")
                 .MaximumLength(500).WithMessage("Reason must be 500 characters or fewer.");

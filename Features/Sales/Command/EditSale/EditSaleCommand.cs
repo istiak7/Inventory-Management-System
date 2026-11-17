@@ -16,14 +16,21 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
         public string? SerialNumber { get; set; }
     }
 
-    // Edits a completed sale. The customer, branch and Cash / Credit type stay as they are; the
-    // invoice number, date, lines, prices, discount, tax and remarks can change.
+    // Edits a completed sale. The branch stays as it is; the customer, Cash / Credit type, invoice
+    // number, date, lines, prices, discount, tax and remarks can change.
     public class EditSaleCommand : IRequest<Result>
     {
         public int Id { get; set; }
         // Null / blank keeps the current value. The invoice number must stay unique.
         public string? InvoiceNumber { get; set; }
         public DateTime? SaleDate { get; set; }
+        // Null keeps the current customer. A different one moves the invoice: it comes off the old
+        // customer's account (their cash on it is kept as their advance, or refunded when
+        // RefundExcess is set) and is booked in full to the new customer. Not allowed once
+        // anything has been returned on the invoice.
+        public int? CustomerId { get; set; }
+        // "Cash" or "Debit"; null keeps the current one. Not allowed once anything was returned.
+        public string? PaymentType { get; set; }
         public List<EditSaleItemRequest> Items { get; set; } = [];
         public decimal DiscountAmount { get; set; }
         public decimal TaxAmount { get; set; }

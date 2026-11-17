@@ -70,6 +70,27 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                         .AnyAsync(p => p.InvoiceNumber == newInvoice && p.Id != purchase.Id, cancellationToken))
                     return Error(409, $"Invoice number '{newInvoice}' already exists.");
 
+                // Changing who the bill is from, or how it is settled, rewrites money already booked,
+                // so it is refused once part of the bill has been sent back.
+                Supplier? newSupplier = null;
+                if (request.SupplierId is int wantedSupplierId && wantedSupplierId != purchase.SupplierId)
+                {
+                    newSupplier = await _dbContext.Suppliers.FirstOrDefaultAsync(s => s.Id == wantedSupplierId, cancellationToken);
+                    if (newSupplier == null)
+                        return Error(404, "The selected supplier was not found.");
+                }
+                PurchaseType? newType = null;
+                if (!string.IsNullOrWhiteSpace(request.PaymentType))
+                {
+                    if (!Enum.TryParse<PurchaseType>(request.PaymentType.Trim(), true, out var parsedType))
+                        return Error(400, "PaymentType must be Cash or Debit.");
+                    if (parsedType != purchase.PurchaseType) newType = parsedType;
+                }
+                if ((newSupplier != null || newType != null) && purchase.ReturnedAmount > 0)
+                    return Error(400, $"Purchase {purchase.InvoiceNumber} has returns booked, so its supplier and payment method can no longer be changed.");
+                var oldSupplierId = purchase.SupplierId;
+                var oldType = purchase.PurchaseType;
+
                 var existing = purchase.SupplierPurchaseDetails.Where(d => d.Status != LineStatus.Rejected).ToDictionary(d => d.Id);
 
                 var named = new HashSet<int>();
@@ -201,13 +222,16 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                 // ---------------------------------------------------------------- Phase B: undo settlements
                 // Linked customer first, then the supplier (lock order).
                 var supplier = purchase.Supplier;
-                var linkedCustomerId = await _dbContext.Customers
-                    .Where(c => c.SupplierId == purchase.SupplierId)
-                    .Select(c => (int?)c.Id)
-                    .FirstOrDefaultAsync(cancellationToken);
-                if (linkedCustomerId is int customerId)
+                var supplierIds = new[] { supplier.Id, newSupplier?.Id ?? supplier.Id }.Distinct().OrderBy(i => i).ToList();
+                var linkedCustomerIds = await _dbContext.Customers
+                    .Where(c => c.SupplierId != null && supplierIds.Contains(c.SupplierId.Value))
+                    .Select(c => c.Id)
+                    .OrderBy(i => i)
+                    .ToListAsync(cancellationToken);
+                foreach (var customerId in linkedCustomerIds)
                     await _dbContext.LockRowAsync<Customer>(customerId, cancellationToken);
-                await _dbContext.LockRowAsync<Supplier>(supplier.Id, cancellationToken);
+                foreach (var lockId in supplierIds)
+                    await _dbContext.LockRowAsync<Supplier>(lockId, cancellationToken);
                 var balance = await _dbContext.SupplierTransactions
                     .Where(t => t.SupplierId == supplier.Id)
                     .GetLatestBalanceAsync(cancellationToken);
@@ -225,6 +249,51 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                         purchase, settled, balance, now, $"Settlement undone: bill {purchase.InvoiceNumber} edited", cancellationToken);
                     settlementReversed = reversal.Reversed;
                     balance = reversal.SupplierBalance;
+                }
+
+                // ---------------------------------------------------------------- Phase B2: new type / supplier
+                if (newType != null)
+                    purchase.PurchaseType = newType.Value;
+
+                // The bill leaves the old supplier exactly as a cancellation would take it off (what we
+                // owe comes off their account; what we paid on it stays our advance with them, or is
+                // marked paid back), and is booked in full to the new supplier, whom we then owe.
+                decimal moveCashReleased = 0, moveCashRefunded = 0;
+                if (newSupplier != null)
+                {
+                    var reversal = new TransactionReversal(_dbContext);
+                    balance -= purchase.TotalAmount;
+                    await _dbContext.SupplierTransactions.AddAsync(
+                        SupplierTransaction.ForPurchaseCancel(purchase, supplier, purchase.TotalAmount, now, balance), cancellationToken);
+
+                    var cashPaid = purchase.PaidAmount;
+                    if (cashPaid > 0)
+                    {
+                        if (request.RefundExcess)
+                        {
+                            balance = await reversal.RefundFromSupplierAsync(purchase, supplier, cashPaid, balance, now, cancellationToken);
+                            moveCashRefunded = cashPaid;
+                        }
+                        else
+                        {
+                            var released = await reversal.ReleasePurchaseCashAsync(purchase, cashPaid, now, cancellationToken);
+                            if (released != cashPaid)
+                                return Error(500, "The bill's payments could not be released cleanly; nothing was changed.");
+                            moveCashReleased = cashPaid;
+                        }
+                        purchase.PaidAmount = 0;
+                    }
+
+                    supplier = newSupplier;
+                    purchase.Supplier = newSupplier;
+                    purchase.SupplierId = newSupplier.Id;
+                    balance = await _dbContext.SupplierTransactions
+                        .Where(t => t.SupplierId == newSupplier.Id)
+                        .GetLatestBalanceAsync(cancellationToken);
+                    purchase.TotalAmount = newTotal;
+                    balance += newTotal;
+                    await _dbContext.SupplierTransactions.AddAsync(
+                        SupplierTransaction.ForPurchase(purchase, supplier, balance), cancellationToken);
                 }
 
                 // ---------------------------------------------------------------- Phase D: redo
@@ -404,8 +473,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                     ReturnedAmount = returned,
                     SettlementReversed = settlementReversed,
                     SettlementRedone = settlementRedone,
-                    CashReleased = cashReleased,
-                    CashRefunded = cashRefunded,
+                    CashReleased = cashReleased + moveCashReleased,
+                    CashRefunded = cashRefunded + moveCashRefunded,
                     CashReapplied = cashReapplied,
                     AdditionalPayment = additional,
                     ChangesJson = JsonSerializer.Serialize(new
@@ -414,13 +483,15 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                         after = afterLines,
                         removedLineIds = removed.Select(r => r.Id),
                         stock = stockMoves,
+                        supplierChange = newSupplier == null ? null : new { fromSupplierId = oldSupplierId, toSupplierId = newSupplier.Id },
+                        paymentTypeChange = newType == null ? null : new { from = oldType?.ToString(), to = newType.Value.ToString() },
                     }, Json),
                 }, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                var advance = cashReleased - cashRefunded;
+                var advance = cashReleased + moveCashReleased - cashRefunded - moveCashRefunded;
                 return new Result
                 {
                     IsSuccess = true,
@@ -430,7 +501,9 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                               + (purchase.DueAmount > 0 ? $", {purchase.DueAmount:0.00} due" : "")
                               + (settlementRedone > 0 ? $", {settlementRedone:0.00} settled against what this party owes us as a customer" : "")
                               + (advance > 0 ? $", {advance:0.00} kept as our advance with the supplier" : "")
-                              + (cashRefunded > 0 ? $", {cashRefunded:0.00} refunded by the supplier in cash" : "")
+                              + (cashRefunded + moveCashRefunded > 0 ? $", {cashRefunded + moveCashRefunded:0.00} refunded by the supplier in cash" : "")
+                              + (newSupplier != null ? $", moved to supplier {newSupplier.Name}" : "")
+                              + (newType != null ? $", now a {(newType == PurchaseType.Cash ? "Cash" : "Credit")} purchase" : "")
                               + ".",
                     Data = new
                     {
@@ -443,8 +516,8 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
                         purchase.DueAmount,
                         SettlementReversed = settlementReversed,
                         SettlementRedone = settlementRedone,
-                        CashReleased = cashReleased,
-                        CashRefunded = cashRefunded,
+                        CashReleased = cashReleased + moveCashReleased,
+                        CashRefunded = cashRefunded + moveCashRefunded,
                         CashReapplied = cashReapplied,
                         AdditionalPayment = additional,
                         Advance = advance,

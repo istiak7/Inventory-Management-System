@@ -4,6 +4,7 @@ using Inventory_Management_System.Entities;
 using Inventory_Management_System.Entities.Common;
 using Inventory_Management_System.Features.Parties.Shared;
 using Inventory_Management_System.Features.Returns.Shared;
+using Inventory_Management_System.Features.Reversals.Shared;
 using Inventory_Management_System.Features.Sales.Shared;
 using Inventory_Management_System.Shared;
 using Inventory_Management_System.Shared.Extensions.LedgerExtensions;
@@ -61,6 +62,27 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                             .AnyAsync(s => s.InvoiceNumber == newInvoice && s.Id != sale.Id, cancellationToken))
                         return Error(409, $"Invoice number '{newInvoice}' already exists.");
                 }
+
+                // Changing who the invoice is for, or how it is settled, rewrites money already booked,
+                // so it is refused once part of the invoice has been taken back.
+                Customer? newCustomer = null;
+                if (request.CustomerId is int wantedCustomerId && wantedCustomerId != sale.CustomerId)
+                {
+                    newCustomer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.Id == wantedCustomerId, cancellationToken);
+                    if (newCustomer == null)
+                        return Error(404, "The selected customer was not found.");
+                }
+                SaleType? newType = null;
+                if (!string.IsNullOrWhiteSpace(request.PaymentType))
+                {
+                    if (!Enum.TryParse<SaleType>(request.PaymentType.Trim(), true, out var parsedType))
+                        return Error(400, "PaymentType must be Cash or Debit.");
+                    if (parsedType != sale.SaleType) newType = parsedType;
+                }
+                if ((newCustomer != null || newType != null) && sale.ReturnedAmount > 0)
+                    return Error(400, $"Invoice {sale.InvoiceNumber} has returns booked, so its customer and payment method can no longer be changed.");
+                var oldCustomerId = sale.CustomerId;
+                var oldType = sale.SaleType;
 
                 var existing = sale.SaleDetails.Where(d => d.Status == SaleLineStatus.Completed).ToDictionary(d => d.Id);
 
@@ -193,7 +215,8 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
 
                 // ---------------------------------------------------------------- Phase B: undo settlements
                 var customer = sale.Customer;
-                await _dbContext.LockRowAsync<Customer>(customer.Id, cancellationToken);
+                foreach (var lockId in new[] { customer.Id, newCustomer?.Id ?? customer.Id }.Distinct().OrderBy(i => i))
+                    await _dbContext.LockRowAsync<Customer>(lockId, cancellationToken);
                 var balance = await _dbContext.CustomerTransactions
                     .Where(t => t.CustomerId == customer.Id)
                     .GetLatestBalanceAsync(cancellationToken);
@@ -211,6 +234,51 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                         sale, settled, balance, now, $"Settlement undone: invoice {sale.InvoiceNumber} edited", cancellationToken);
                     settlementReversed = reversal.Reversed;
                     balance = reversal.CustomerBalance;
+                }
+
+                // ---------------------------------------------------------------- Phase B2: new type / customer
+                if (newType != null)
+                    sale.SaleType = newType.Value;
+
+                // The invoice leaves the old customer exactly as a cancellation would take it off (what
+                // is owed comes off the account; the cash paid on it stays their advance, or is handed
+                // back), and is booked in full to the new customer, who then owes all of it.
+                decimal moveCashReleased = 0, moveCashRefunded = 0;
+                if (newCustomer != null)
+                {
+                    var reversal = new TransactionReversal(_dbContext);
+                    balance -= sale.TotalAmount;
+                    await _dbContext.CustomerTransactions.AddAsync(
+                        CustomerTransaction.ForCancel(sale, customer, sale.TotalAmount, now, balance), cancellationToken);
+
+                    var cashPaid = sale.PaidAmount;
+                    if (cashPaid > 0)
+                    {
+                        if (request.RefundExcess)
+                        {
+                            balance = await reversal.RefundCustomerAsync(sale, customer, cashPaid, balance, now, cancellationToken);
+                            moveCashRefunded = cashPaid;
+                        }
+                        else
+                        {
+                            var released = await reversal.ReleaseSaleCashAsync(sale, cashPaid, now, cancellationToken);
+                            if (released != cashPaid)
+                                return Error(500, "The invoice's payments could not be released cleanly; nothing was changed.");
+                            moveCashReleased = cashPaid;
+                        }
+                        sale.PaidAmount = 0;
+                    }
+
+                    customer = newCustomer;
+                    sale.Customer = newCustomer;
+                    sale.CustomerId = newCustomer.Id;
+                    balance = await _dbContext.CustomerTransactions
+                        .Where(t => t.CustomerId == newCustomer.Id)
+                        .GetLatestBalanceAsync(cancellationToken);
+                    sale.TotalAmount = newTotal;
+                    balance += newTotal;
+                    await _dbContext.CustomerTransactions.AddAsync(
+                        CustomerTransaction.ForSale(sale, customer, balance), cancellationToken);
                 }
 
                 // ---------------------------------------------------------------- Phase D: redo
@@ -399,8 +467,8 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                     ReturnedAmount = returned,
                     SettlementReversed = settlementReversed,
                     SettlementRedone = settlementRedone,
-                    CashReleased = cashReleased,
-                    CashRefunded = cashRefunded,
+                    CashReleased = cashReleased + moveCashReleased,
+                    CashRefunded = cashRefunded + moveCashRefunded,
                     CashReapplied = cashReapplied,
                     AdditionalPayment = additional,
                     ChangesJson = JsonSerializer.Serialize(new
@@ -409,13 +477,15 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                         after = afterLines,
                         removedLineIds = removed.Select(r => r.Id),
                         stock = stockMoves,
+                        customerChange = newCustomer == null ? null : new { fromCustomerId = oldCustomerId, toCustomerId = newCustomer.Id },
+                        paymentTypeChange = newType == null ? null : new { from = oldType.ToString(), to = newType.Value.ToString() },
                     }, Json),
                 }, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                var advance = cashReleased - cashRefunded;
+                var advance = cashReleased + moveCashReleased - cashRefunded - moveCashRefunded;
                 return new Result
                 {
                     IsSuccess = true,
@@ -425,7 +495,9 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                               + (sale.DueAmount > 0 ? $", {sale.DueAmount:0.00} due" : "")
                               + (settlementRedone > 0 ? $", {settlementRedone:0.00} settled against what we owe this party as a supplier" : "")
                               + (advance > 0 ? $", {advance:0.00} kept as the customer's advance" : "")
-                              + (cashRefunded > 0 ? $", {cashRefunded:0.00} refunded in cash" : "")
+                              + (cashRefunded + moveCashRefunded > 0 ? $", {cashRefunded + moveCashRefunded:0.00} refunded in cash" : "")
+                              + (newCustomer != null ? $", moved to customer {newCustomer.Name}" : "")
+                              + (newType != null ? $", now a {(newType == SaleType.Cash ? "Cash" : "Credit")} sale" : "")
                               + ".",
                     Data = new
                     {
@@ -438,8 +510,8 @@ namespace Inventory_Management_System.Features.Sales.Command.EditSale
                         sale.DueAmount,
                         SettlementReversed = settlementReversed,
                         SettlementRedone = settlementRedone,
-                        CashReleased = cashReleased,
-                        CashRefunded = cashRefunded,
+                        CashReleased = cashReleased + moveCashReleased,
+                        CashRefunded = cashRefunded + moveCashRefunded,
                         CashReapplied = cashReapplied,
                         AdditionalPayment = additional,
                         Advance = advance,

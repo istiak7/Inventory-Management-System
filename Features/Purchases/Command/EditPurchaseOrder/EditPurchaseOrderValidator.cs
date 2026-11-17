@@ -8,6 +8,12 @@ namespace Inventory_Management_System.Features.Purchases.Command.EditPurchaseOrd
         public EditPurchaseOrderValidator()
         {
             RuleFor(x => x.Id).GreaterThan(0).WithMessage("A valid purchase id is required.");
+            RuleFor(x => x.SupplierId).GreaterThan(0).When(x => x.SupplierId.HasValue)
+                .WithMessage("A valid supplier is required.");
+            RuleFor(x => x.PaymentType)
+                .Must(t => string.Equals(t, "Cash", StringComparison.OrdinalIgnoreCase) || string.Equals(t, "Debit", StringComparison.OrdinalIgnoreCase))
+                .When(x => !string.IsNullOrWhiteSpace(x.PaymentType))
+                .WithMessage("PaymentType must be Cash or Debit.");
             RuleFor(x => x.Items).NotEmpty().WithMessage("At least one purchase item is required.");
             RuleFor(x => x.Reason).NotEmpty().WithMessage("Say why the purchase is being edited.")
                 .MaximumLength(500).WithMessage("Reason must be 500 characters or fewer.");
