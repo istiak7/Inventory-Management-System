@@ -45,10 +45,6 @@ services:
       - JwtSettings__SecretKey=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       - SeedAdmin__Email=${SEED_ADMIN_EMAIL:?Set SEED_ADMIN_EMAIL in .env}
       - SeedAdmin__Password=${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env}
-      # Optional: the maintenance team's Super Admin account (created once, only when both are set).
-      - SeedSuperAdmin__Email=${SEED_SUPERADMIN_EMAIL:-}
-      - SeedSuperAdmin__Password=${SEED_SUPERADMIN_PASSWORD:-}
-      - SeedSuperAdmin__UserName=${SEED_SUPERADMIN_USERNAME:-}
       - AllowedOrigins__0=${APP_URL:?Set APP_URL in .env}
     depends_on:
       postgres-db:

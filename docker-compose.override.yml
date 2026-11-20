@@ -1,0 +1,13 @@
+# Read automatically by "docker compose" together with docker-compose.yml (same folder).
+#
+# Optional: the maintenance team's Super Admin account. It is created once, on a start where
+# no Super Admin exists yet and both the email and the password are set in ".env"
+# (SEED_SUPERADMIN_EMAIL, SEED_SUPERADMIN_PASSWORD, optional SEED_SUPERADMIN_USERNAME).
+# Left empty, nothing is created and the system starts as usual. See DEPLOY.md.
+
+services:
+  backend:
+    environment:
+      - SeedSuperAdmin__Email=${SEED_SUPERADMIN_EMAIL:-}
+      - SeedSuperAdmin__Password=${SEED_SUPERADMIN_PASSWORD:-}
+      - SeedSuperAdmin__UserName=${SEED_SUPERADMIN_USERNAME:-}
