@@ -23,7 +23,8 @@ namespace Inventory_Management_System.Features.Users.Command.DeleteUser
             var user = await _db.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == request.Id && u.IsActive != deleted, cancellationToken);
-            if (user is null) return Fail(404, "User not found");
+            if (user is null || UserAccessRules.IsHiddenFrom(_currentUser, user.Role))
+                return Fail(404, "User not found");
 
             if (user.Id == _currentUser.UserId)
                 return Fail(400, "You cannot delete your own account");

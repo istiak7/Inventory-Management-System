@@ -17,6 +17,9 @@ namespace Inventory_Management_System.Features.MenuSetup.Shared
                 // Login, logout, /me and the menu belong to every logged-in user; they cannot be
                 // given to (or taken from) a role, so they are not offered.
                 .Where(r => !MenuActionAccess.AlwaysAllowedRoutes.Contains(r))
+                // Super Admin-only routes have a fixed rule that no menu action can change, so
+                // they are not offered either.
+                .Where(r => !r.EndsWith(" " + Features.Clients.Queries.GetClients.GetClientsEndpoint.Route, StringComparison.OrdinalIgnoreCase))
                 .Distinct()
                 .OrderBy(r => r.Split(' ', 2)[1])
                 .ThenBy(r => r)

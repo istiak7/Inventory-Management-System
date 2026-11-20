@@ -15,6 +15,14 @@ namespace Inventory_Management_System.Features.Users.Shared
         public static bool IsAdminRole(Role? role) =>
             role is not null && string.Equals(role.Name, MenuActionAccess.AdminRoleName, StringComparison.OrdinalIgnoreCase);
 
+        public static bool IsSuperAdminRole(Role? role) =>
+            role is not null && MenuActionAccess.IsSuperAdminRoleName(role.Name);
+
+        // The Super Admin role and its accounts belong to the maintenance team: for everyone
+        // else they do not exist (not listed, cannot be opened, changed, removed or handed out).
+        public static bool IsHiddenFrom(ICurrentUser currentUser, Role? role) =>
+            IsSuperAdminRole(role) && !currentUser.IsSuperAdmin;
+
         // An active role (not deleted) by id, or null.
         public static Task<Role?> FindRoleAsync(AppDbContext db, int roleId, CancellationToken cancellationToken) =>
             db.Roles.FirstOrDefaultAsync(r => r.Id == roleId && r.IsActive != (int)EntityStatus.Deleted, cancellationToken);
@@ -34,7 +42,9 @@ namespace Inventory_Management_System.Features.Users.Shared
             AppDbContext db, Role role, int? branchId, CancellationToken cancellationToken)
         {
             if (branchId is null)
-                return IsAdminRole(role) ? null : "Choose a branch. Only the Admin role works across all branches.";
+                return IsAdminRole(role) || IsSuperAdminRole(role)
+                    ? null
+                    : "Choose a branch. Only the Admin role works across all branches.";
 
             var branchExists = await db.Branches.AnyAsync(b => b.Id == branchId.Value, cancellationToken);
             return branchExists ? null : "Selected branch does not exist";

@@ -12,6 +12,7 @@ namespace Inventory_Management_System.Features.Roles.Command.DeleteRole
     public class DeleteRoleCommandHandler(
         AppDbContext _db,
         MenuActionAccess _access,
+        ICurrentUser _currentUser,
         ILogger<DeleteRoleCommandHandler> _logger
     ) : IRequestHandler<DeleteRoleCommand, Result>
     {
@@ -20,10 +21,11 @@ namespace Inventory_Management_System.Features.Roles.Command.DeleteRole
             const int deleted = (int)EntityStatus.Deleted;
             var role = await _db.Roles
                 .FirstOrDefaultAsync(r => r.Id == request.Id && r.IsActive != deleted, cancellationToken);
-            if (role is null) return Fail(404, "Role not found");
+            if (role is null || RoleMenuActionGrants.IsHiddenFrom(_currentUser, role))
+                return Fail(404, "Role not found");
 
             if (RoleMenuActionGrants.IsBuiltInAdmin(role))
-                return Fail(400, "The Admin role is built in and cannot be deleted");
+                return Fail(400, $"The {role.Name} role is built in and cannot be deleted");
 
             var activeUsers = await _db.Users
                 .CountAsync(u => u.RoleId == role.Id && u.IsActive != deleted, cancellationToken);

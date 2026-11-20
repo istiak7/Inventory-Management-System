@@ -8,8 +8,12 @@ namespace Inventory_Management_System.Features.Roles.Shared
     // Saves which menu actions (System Setup -> Menu Action) a role has.
     public static class RoleMenuActionGrants
     {
-        public static bool IsBuiltInAdmin(Role role) =>
-            string.Equals(role.Name, MenuActionAccess.AdminRoleName, StringComparison.OrdinalIgnoreCase);
+        // Admin and Super Admin: always have every menu and action, cannot be renamed or removed.
+        public static bool IsBuiltInAdmin(Role role) => MenuActionAccess.IsFullAccessRoleName(role.Name);
+
+        // The Super Admin role exists only for a Super Admin (see UserAccessRules.IsHiddenFrom).
+        public static bool IsHiddenFrom(ICurrentUser currentUser, Role role) =>
+            MenuActionAccess.IsSuperAdminRoleName(role.Name) && !currentUser.IsSuperAdmin;
 
         // Keeps only ids of menu actions that exist and are active, without duplicates.
         public static async Task<List<int>> ValidIdsAsync(

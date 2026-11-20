@@ -23,13 +23,13 @@ namespace Inventory_Management_System.Features.Users.Command.UpdateUser
                 .Include(u => u.UserPermissions)
                 .FirstOrDefaultAsync(u => u.Id == request.Id && u.IsActive != (int)EntityStatus.Deleted, cancellationToken);
 
-            if (user is null)
+            if (user is null || UserAccessRules.IsHiddenFrom(_currentUser, user.Role))
             {
                 return Fail(404, "User not found");
             }
 
             var newRole = await UserAccessRules.FindRoleAsync(_db, request.RoleId, cancellationToken);
-            if (newRole is null)
+            if (newRole is null || UserAccessRules.IsHiddenFrom(_currentUser, newRole))
             {
                 return Fail(400, "Selected role does not exist");
             }

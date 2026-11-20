@@ -10,6 +10,7 @@ namespace Inventory_Management_System.Features.Users.Queries.GetAllUsers
 {
     public class GetAllUsersQueryHandler(
         AppDbContext _db,
+        ICurrentUser _currentUser,
         ILogger<GetAllUsersQueryHandler> _logger
     ) : IRequestHandler<GetAllUsersQuery, Result>
     {
@@ -20,6 +21,10 @@ namespace Inventory_Management_System.Features.Users.Queries.GetAllUsers
                 var query = _db.Users
                     .AsNoTracking()
                     .Where(u => u.IsActive != (int)EntityStatus.Deleted);
+
+                // Super Admin accounts are only listed for a Super Admin.
+                if (!_currentUser.IsSuperAdmin)
+                    query = query.Where(u => u.Role.Name != MenuActionAccess.SuperAdminRoleName);
 
                 // Search by name or email.
                 if (!string.IsNullOrWhiteSpace(request.Search))

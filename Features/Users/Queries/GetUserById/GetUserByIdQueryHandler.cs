@@ -9,6 +9,7 @@ namespace Inventory_Management_System.Features.Users.Queries.GetUserById
 {
     public class GetUserByIdQueryHandler(
         AppDbContext _db,
+        ICurrentUser _currentUser,
         ILogger<GetUserByIdQueryHandler> _logger
     ) : IRequestHandler<GetUserByIdQuery, Result>
     {
@@ -16,9 +17,13 @@ namespace Inventory_Management_System.Features.Users.Queries.GetUserById
         {
             try
             {
+                // A Super Admin account can only be opened by a Super Admin (for anyone else it
+                // is "not found"). /me still works: it is the caller's own record.
+                var seesSuperAdmins = _currentUser.IsSuperAdmin;
                 var user = await _db.Users
                     .AsNoTracking()
                     .Where(u => u.Id == request.Id && u.IsActive != (int)EntityStatus.Deleted)
+                    .Where(u => seesSuperAdmins || u.Role.Name != MenuActionAccess.SuperAdminRoleName)
                     .Select(u => new
                     {
                         u.Id,

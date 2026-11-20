@@ -52,7 +52,7 @@ namespace Inventory_Management_System.Features.SystemSetup.Queries.GetSystemSetu
             new("ExpenseCategories", "Expense Categories", false, (h, s, ct) => h.CountAsync(s,
                 h.Db.ExpenseCategories.Where(x => x.IsActive != Deleted).Select(x => x.IsActive), "No expense category has been created yet.", ct)),
             new("StaffUsers", "Staff Users", false, (h, s, ct) => h.CountAsync(s,
-                h.Db.Users.Where(u => u.IsActive != Deleted && u.Role.Name != "Admin").Select(u => u.IsActive), "Only the administrator account exists.", ct)),
+                h.Db.Users.Where(u => u.IsActive != Deleted && u.Role.Name != "Admin" && u.Role.Name != MenuActionAccess.SuperAdminRoleName).Select(u => u.IsActive), "Only the administrator account exists.", ct)),
         ];
 
         public async Task<Result> Handle(GetSystemSetupStatusQuery request, CancellationToken cancellationToken)

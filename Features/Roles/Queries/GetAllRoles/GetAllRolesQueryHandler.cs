@@ -9,6 +9,7 @@ namespace Inventory_Management_System.Features.Roles.Queries.GetAllRoles
 {
     public class GetAllRolesQueryHandler(
         AppDbContext _db,
+        ICurrentUser _currentUser,
         ILogger<GetAllRolesQueryHandler> _logger
     ) : IRequestHandler<GetAllRolesQuery, Result>
     {
@@ -16,9 +17,12 @@ namespace Inventory_Management_System.Features.Roles.Queries.GetAllRoles
         {
             try
             {
+                // The Super Admin role is only listed for a Super Admin.
+                var seesSuperAdmin = _currentUser.IsSuperAdmin;
                 var roles = await _db.Roles
                     .AsNoTracking()
                     .Where(r => r.IsActive != (int)EntityStatus.Deleted)
+                    .Where(r => seesSuperAdmin || r.Name != MenuActionAccess.SuperAdminRoleName)
                     .OrderBy(r => r.Id)
                     .Select(r => new RoleResponse(
                         r.Id,
@@ -32,7 +36,8 @@ namespace Inventory_Management_System.Features.Roles.Queries.GetAllRoles
                                 && g.MenuAction.IsActive == (int)EntityStatus.Active)
                             .Select(g => g.MenuActionId)
                             .ToList(),
-                        r.Name == MenuActionAccess.AdminRoleName))
+                        r.Name == MenuActionAccess.AdminRoleName
+                            || r.Name == MenuActionAccess.SuperAdminRoleName))
                     .ToListAsync(cancellationToken);
 
                 return new Result

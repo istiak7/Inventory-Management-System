@@ -38,7 +38,7 @@ namespace Inventory_Management_System.Features.Users.Command.CreateUsers
             }
 
             var role = await UserAccessRules.FindRoleAsync(_db, request.RoleId, cancellationToken);
-            if (role is null)
+            if (role is null || UserAccessRules.IsHiddenFrom(_currentUser, role))
             {
                 return Fail(400, "Selected role does not exist");
             }

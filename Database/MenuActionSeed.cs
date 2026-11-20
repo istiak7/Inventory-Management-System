@@ -489,7 +489,9 @@ namespace Inventory_Management_System.Database
 
             // Step 2: existing roles keep exactly what their fixed permissions allowed.
             var roles = await db.Roles
-                .Where(r => r.IsActive == active && r.Name != MenuActionAccess.AdminRoleName)
+                .Where(r => r.IsActive == active
+                    && r.Name != MenuActionAccess.AdminRoleName
+                    && r.Name != MenuActionAccess.SuperAdminRoleName)
                 .Select(r => new
                 {
                     r.Id,

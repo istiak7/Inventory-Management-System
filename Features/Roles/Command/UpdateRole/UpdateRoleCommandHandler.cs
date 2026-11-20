@@ -23,7 +23,7 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
                     r => r.Id == request.Id && r.IsActive != (int)EntityStatus.Deleted,
                     cancellationToken);
 
-            if (role is null)
+            if (role is null || RoleMenuActionGrants.IsHiddenFrom(_currentUser, role))
             {
                 return Fail(404, "Role not found");
             }
@@ -33,7 +33,7 @@ namespace Inventory_Management_System.Features.Roles.Command.UpdateRole
             if (RoleMenuActionGrants.IsBuiltInAdmin(role)
                 && !string.Equals(request.Name.Trim(), role.Name, StringComparison.Ordinal))
             {
-                return Fail(400, "The Admin role cannot be renamed");
+                return Fail(400, $"The {role.Name} role cannot be renamed");
             }
 
             var notAllowed = await RoleMenuActionGrants.CheckEditorAsync(

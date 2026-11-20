@@ -46,7 +46,7 @@ namespace Inventory_Management_System.Features.DataUpload.Shared
         // Same rule as RequirePermission: admins may do everything, others need the permission claim.
         public static bool CanUpload(ClaimsPrincipal user, UploadTypeDefinition definition) =>
             definition.Permission is null
-            || user.IsInRole("Admin")
+            || user.IsAdmin()
             || user.Claims.Any(c => c.Type == "permission" && c.Value == definition.Permission);
 
         public static IResult Forbidden(UploadTypeDefinition definition) =>

@@ -17,6 +17,20 @@ namespace Inventory_Management_System.Shared.CurrentUser
         // The built-in administrative role: it always has every menu and action.
         public const string AdminRoleName = "Admin";
 
+        // The maintenance team's own built-in role. It has everything Admin has, plus the
+        // Super Admin-only APIs, and its accounts cannot be seen or changed by anyone else
+        // (so the client's admins cannot lock the maintenance team out, and the other way
+        // round the client's Admin account is never touched by it).
+        public const string SuperAdminRoleName = "SuperAdmin";
+
+        public static bool IsSuperAdminRoleName(string? roleName) =>
+            string.Equals(roleName, SuperAdminRoleName, StringComparison.OrdinalIgnoreCase);
+
+        // Admin or Super Admin: the roles with built-in full access.
+        public static bool IsFullAccessRoleName(string? roleName) =>
+            string.Equals(roleName, AdminRoleName, StringComparison.OrdinalIgnoreCase)
+            || IsSuperAdminRoleName(roleName);
+
         // Routes that are part of simply being logged in. They are never managed by menu
         // actions, so a mistake in System Setup cannot lock everyone out of logging in or out,
         // seeing their own account or loading the menu.

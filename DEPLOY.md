@@ -89,6 +89,7 @@ Change **every** value:
 | `JWT_SECRET_KEY` | A random secret, at least 32 characters. Make one with `openssl rand -base64 48` |
 | `SEED_ADMIN_EMAIL` | Email of the first admin account |
 | `SEED_ADMIN_PASSWORD` | Password of the first admin (at least 8 characters) |
+| `SEED_SUPERADMIN_EMAIL`, `SEED_SUPERADMIN_PASSWORD` | Optional. The maintenance team's own **Super Admin** login (password at least 12 characters). Created once on the next start when no Super Admin exists; never changed afterwards. `SEED_SUPERADMIN_USERNAME` sets the login name (default `superadmin`). |
 | `APP_URL` | The address people open, e.g. `http://10.70.34.59` |
 | `POSTGRES_EXTERNAL_PORT` | Optional. Server port for SQL tools (default `5433`). Only open on the server itself. |
 | `APP_PORT` | `80`, or another port if 80 is busy (then `APP_URL` must include it, e.g. `http://10.70.34.59:8080`) |

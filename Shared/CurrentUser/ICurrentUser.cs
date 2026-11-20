@@ -8,7 +8,11 @@ namespace Inventory_Management_System.Shared.CurrentUser
         int? UserId { get; }
         string? Role { get; }
         int? RoleId { get; }
+        // Built-in full access: the Admin role or the Super Admin role.
         bool IsAdmin { get; }
+
+        // The maintenance team's role (see MenuActionAccess.SuperAdminRoleName).
+        bool IsSuperAdmin { get; }
 
         // The fixed "permission" claims in the token (the fallback for routes and menus that no
         // menu action covers).
@@ -34,7 +38,9 @@ namespace Inventory_Management_System.Shared.CurrentUser
         public int? RoleId =>
             int.TryParse(Principal?.FindFirst("roleId")?.Value, out var roleId) ? roleId : null;
 
-        public bool IsAdmin => string.Equals(Role, MenuActionAccess.AdminRoleName, StringComparison.OrdinalIgnoreCase);
+        public bool IsAdmin => MenuActionAccess.IsFullAccessRoleName(Role);
+
+        public bool IsSuperAdmin => MenuActionAccess.IsSuperAdminRoleName(Role);
 
         public bool HasPermission(string permission) =>
             Principal?.Claims.Any(c => c.Type == "permission" && c.Value == permission) ?? false;

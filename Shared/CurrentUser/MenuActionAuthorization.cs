@@ -6,7 +6,7 @@ namespace Inventory_Management_System.Shared.CurrentUser
 {
     // The one authorization check every protected endpoint goes through.
     //
-    //   1. Admin role            -> allowed (built-in full access).
+    //   1. Admin / Super Admin   -> allowed (built-in full access).
     //   2. Route is on a menu action (System Setup -> Menu Action)
     //                            -> allowed only if the user's role has one of those actions.
     //   3. Route is on no action -> the endpoint's own fixed rule decides, as before:
@@ -34,7 +34,7 @@ namespace Inventory_Management_System.Shared.CurrentUser
             var user = context.User;
             if (user.Identity?.IsAuthenticated != true) return; // answered with 401
 
-            if (user.IsInRole(MenuActionAccess.AdminRoleName))
+            if (user.IsAdmin())
             {
                 context.Succeed(requirement);
                 return;
@@ -117,9 +117,22 @@ namespace Inventory_Management_System.Shared.CurrentUser
                 options.DefaultPolicy = MenuActionRequirement.Policy();
                 // Management endpoints: admins only unless a menu action grants the route.
                 options.AddPolicy("AdminOnly", MenuActionRequirement.Policy(adminOnly: true));
+                // Maintenance-team endpoints: the Super Admin role and nobody else. This is a
+                // fixed rule on purpose: no menu action can hand these routes to another role.
+                options.AddPolicy(SuperAdminOnlyPolicy, new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .RequireRole(MenuActionAccess.SuperAdminRoleName)
+                    .Build());
             });
         }
 
-        public static bool IsAdmin(this ClaimsPrincipal user) => user.IsInRole(MenuActionAccess.AdminRoleName);
+        public const string SuperAdminOnlyPolicy = "SuperAdminOnly";
+
+        // Built-in full access: the Admin role and the Super Admin role.
+        public static bool IsAdmin(this ClaimsPrincipal user) =>
+            user.IsInRole(MenuActionAccess.AdminRoleName) || user.IsSuperAdmin();
+
+        public static bool IsSuperAdmin(this ClaimsPrincipal user) =>
+            user.IsInRole(MenuActionAccess.SuperAdminRoleName);
     }
 }

@@ -15,6 +15,7 @@ namespace Inventory_Management_System.Database
         private const string DevAdminEmail = "admin@inventory.com";
         private const string DevAdminPassword = "Admin@123";
         private const int MinimumPasswordLength = 8;
+        private const int MinimumSuperAdminPasswordLength = 12;
 
         // The permission list and staff defaults live in Shared/CurrentUser/Permissions.cs
         // so the seeder and the endpoints always use the same names.
@@ -34,6 +35,8 @@ namespace Inventory_Management_System.Database
             await SeedPermissionsAsync(db, cancellationToken);
             var adminRoleId = await SeedRolesAsync(db, cancellationToken);
             await SeedAdminUserAsync(db, adminRoleId, configuration, environment, cancellationToken);
+            // The maintenance team's own account (only when configured, see SeedSuperAdminUserAsync).
+            await SeedSuperAdminUserAsync(db, configuration, logger, cancellationToken);
 
             // The first menu tree (System Setup), only while there is none yet.
             await NavigationSeed.SeedAsync(db, cancellationToken);
@@ -87,6 +90,12 @@ namespace Inventory_Management_System.Database
                 db, "Admin", "Full access to everything, including all branches",
                 allPermissions.Select(p => p.Id), cancellationToken);
 
+            // Super Admin: the maintenance team's role. Every permission, like Admin.
+            await EnsureRoleAsync(
+                db, MenuActionAccess.SuperAdminRoleName,
+                "Maintenance team: full access to everything, independent of the Admin accounts",
+                allPermissions.Select(p => p.Id), cancellationToken);
+
             // Staff: a limited day-to-day set, tied to a single branch.
             var staffPermissionIds = allPermissions
                 .Where(p => StaffPermissions.Contains(p.Name))
@@ -119,8 +128,9 @@ namespace Inventory_Management_System.Database
 
             // Default permissions are given only when the role is first created, so a permission
             // an admin later removed from Staff does not come back on the next restart.
-            // Admin is the exception: it always gets every permission, including new ones.
-            if (!isNew && name != "Admin")
+            // Admin and Super Admin are the exception: they always get every permission,
+            // including new ones.
+            if (!isNew && !MenuActionAccess.IsFullAccessRoleName(name))
                 return role;
 
             var current = role.RolePermissions.Select(rp => rp.PermissionId).ToHashSet();
@@ -177,6 +187,76 @@ namespace Inventory_Management_System.Database
 
             await db.Users.AddAsync(admin, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
+        }
+
+        // The maintenance team's login, separate from the client's Admin accounts (which this
+        // never reads or changes). It comes only from configuration:
+        //   SeedSuperAdmin:Email, SeedSuperAdmin:Password, optional SeedSuperAdmin:UserName
+        //   (environment: SeedSuperAdmin__Email, SeedSuperAdmin__Password, SeedSuperAdmin__UserName).
+        // There is no built-in default, so a server never gets a known password.
+        //
+        // Safe to run on every start: once a Super Admin account exists nothing is created or
+        // changed (the password is NOT reset from configuration; change it in the app). A problem
+        // here is logged and skipped, never thrown: it must not stop the application starting.
+        private static async Task SeedSuperAdminUserAsync(
+            AppDbContext db,
+            IConfiguration configuration,
+            ILogger? logger,
+            CancellationToken cancellationToken)
+        {
+            var roleId = await db.Roles
+                .Where(r => r.Name == MenuActionAccess.SuperAdminRoleName)
+                .Select(r => (int?)r.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (roleId is null) return;
+
+            if (await db.Users.AnyAsync(u => u.RoleId == roleId, cancellationToken)) return;
+
+            var email = configuration["SeedSuperAdmin:Email"]?.Trim().ToLowerInvariant();
+            var password = configuration["SeedSuperAdmin:Password"];
+            var userName = configuration["SeedSuperAdmin:UserName"]?.Trim();
+            if (string.IsNullOrWhiteSpace(userName)) userName = "superadmin";
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                logger?.LogInformation(
+                    "No Super Admin account exists and SeedSuperAdmin__Email / SeedSuperAdmin__Password are not set; none was created.");
+                return;
+            }
+
+            if (password.Length < MinimumSuperAdminPasswordLength)
+            {
+                logger?.LogError(
+                    "Super Admin account not created: SeedSuperAdmin__Password must be at least {Length} characters.",
+                    MinimumSuperAdminPasswordLength);
+                return;
+            }
+
+            // Never take over an account that already uses this email or user name.
+            var lowerName = userName.ToLowerInvariant();
+            var taken = await db.Users.AnyAsync(
+                u => u.Email.ToLower() == email || u.Name.ToLower() == lowerName, cancellationToken);
+            if (taken)
+            {
+                logger?.LogError(
+                    "Super Admin account not created: another user already has the email or user name set in SeedSuperAdmin.");
+                return;
+            }
+
+            await db.Users.AddAsync(new User
+            {
+                Name = userName,
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                RoleId = roleId.Value,
+                BranchId = null, // all branches
+                IsActive = (int)EntityStatus.Active,
+                RefreshToken = Guid.NewGuid().ToString(),
+                RefreshTokenExpireTime = DateTime.UtcNow.AddDays(7)
+            }, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+
+            logger?.LogInformation("Super Admin account '{UserName}' created.", userName);
         }
     }
 }
